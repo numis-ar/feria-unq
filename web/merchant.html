@@ -1,0 +1,993 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="header_title">FairPay Merchant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+            .modal-active {
+        overflow: hidden;
+      }
+      @keyframes fade-green {
+        0% { background-color: #d1fae5; }
+        100% { background-color: transparent; }
+      }
+      .animate-fade-green {
+        animation: fade-green 3s ease-out;
+      }
+      @keyframes fade-red {
+        0% { background-color: #ffe4e6; }
+        100% { background-color: transparent; }
+      }
+      .animate-fade-red {
+        animation: fade-red 3s ease-out;
+      }
+      .toast-enter {
+        animation: slide-in 0.3s ease-out forwards;
+      }
+      .toast-exit {
+        animation: fade-out 0.3s ease-in forwards;
+      }
+      @keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes fade-out {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+    </style>
+  </head>
+
+  <body class="text-slate-800 antialiased bg-slate-50 min-h-screen">
+    <!-- Login Modal Overlay -->
+    <div
+      id="auth-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm"
+    >
+      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4">
+        <h2 class="text-2xl font-bold text-slate-900 mb-6" data-i18n="login_title">Merchant Login</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="username_lbl">Username</label>
+            <input
+              id="auth-user"
+              type="text"
+              placeholder="default"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="password_lbl">Password</label>
+            <input
+              id="auth-pass"
+              type="password"
+              placeholder="..."
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+          <button
+            id="btn-login"
+            data-i18n="login_btn"
+            class="w-full mt-4 bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Modal Overlay -->
+    <div
+      id="qr-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
+    >
+      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
+        <button id="btn-close-qr" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <h2 id="qr-modal-title" class="text-2xl font-bold text-slate-900 mb-2">
+          <span data-i18n="modal_qr_withdrawing">Withdrawing $ </span><span id="qr-modal-amount">xx</span>
+        </h2>
+        <p id="qr-modal-desc" class="text-slate-500 mb-6 text-sm" data-i18n="modal_qr_scan">
+          Scan the qr code with a taler wallet
+        </p>
+
+        <div id="qr-content" class="flex justify-center items-center min-h-[224px]">
+          <div id="qr-spinner-modal" class="hidden">
+            <svg class="animate-spin h-10 w-10 text-rose-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <img id="qr-modal-img" class="w-56 h-56 hidden" alt="QR code" />
+        </div>
+        
+        <div id="qr-confirm-actions" class="hidden mt-6 space-y-3">
+          <button id="btn-qr-confirm" class="w-full bg-emerald-600 text-white rounded-xl py-3 font-semibold hover:bg-emerald-700 transition" data-i18n="btn_confirm">Confirm Transfer</button>
+          <button id="btn-qr-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
+        </div>
+        <p id="qr-modal-error" class="hidden mt-4 text-red-600 font-medium"></p>
+      </div>
+    </div>
+
+    <!-- Top bar -->
+    <header
+      class="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-40 flex items-center px-6 justify-between"
+    >
+      <div class="flex items-center gap-3">
+        <svg class="w-8 h-8 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 7H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z" />
+          <path d="M17 7V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2" />
+          <circle cx="12" cy="14" r="2" />
+        </svg>
+        <span class="text-xl font-bold text-slate-900" data-i18n="header_title">FairPay Merchant</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <select id="lang-selector" class="bg-white rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 outline-none cursor-pointer">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+        <div id="logged-in-user" class="hidden flex items-center gap-4">
+          <div class="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+            <span data-i18n="header_user">Username:</span>
+            <span id="display-instance" class="text-indigo-600 font-bold"></span>
+          </div>
+          <button id="btn-logout" class="text-sm font-semibold text-slate-500 hover:text-slate-800 transition" data-i18n="btn_logout">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="pt-24 pb-16 px-6 max-w-7xl mx-auto space-y-12">
+      <!-- SECTION 1: Dashboard (Orders & Stats) -->
+      <section id="dashboard" class="space-y-8">
+        <div class="flex justify-between items-end">
+          <div>
+            <h1 class="text-3xl font-extrabold text-slate-900" data-i18n="dash_title">Dashboard</h1>
+            <p class="text-slate-500 mt-1" data-i18n="dash_desc">Overview of your sales and balances.</p>
+          </div>
+        </div>
+
+        <!-- 3 Totals Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_sold">Sold</div>
+            <div class="text-3xl font-bold text-slate-800" id="stat-sold">0.00</div>
+            <div class="text-xs text-slate-400 mt-2" data-i18n="stat_sold_desc">Paid minus Refunded</div>
+          </div>
+          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_intransit">In Transit</div>
+            <div class="text-3xl font-bold text-yellow-600" id="stat-intransit">0.00</div>
+            <div class="text-xs text-slate-400 mt-2" data-i18n="stat_intransit_desc">Pending wire deadline</div>
+          </div>
+          <a href="#withdraw" class="group bg-indigo-600 rounded-3xl p-6 shadow-lg border border-indigo-700 flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition relative overflow-hidden">
+            <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="stat_settled">Settled</div>
+            <div class="relative z-10 text-3xl font-bold text-white" id="stat-available">0.00</div>
+            <div class="relative z-10 text-xs text-indigo-200 mt-2 flex justify-between items-center">
+              <span data-i18n="stat_settled_desc">Present in bank account</span>
+              <span class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition" data-i18n="stat_withdraw">Withdraw &rarr;</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Latest Orders Table -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <h2 class="text-lg font-bold text-slate-800" data-i18n="orders_title">Latest Orders</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
+                <tr>
+                  <th class="px-6 py-4 font-semibold" data-i18n="col_summary">Order Summary</th>
+                  <th class="px-6 py-4 font-semibold" data-i18n="col_time">Timestamp</th>
+                  <th class="px-6 py-4 font-semibold" data-i18n="col_state">State</th>
+                  <th class="px-6 py-4 font-semibold text-right" data-i18n="col_amount">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody" class="divide-y divide-slate-100">
+                <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_orders">Loading orders...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Bank Transactions -->
+      <section id="bank-transactions" class="space-y-8 pb-12">
+        <div class="flex justify-between items-end">
+          <div>
+            <h2 class="text-3xl font-extrabold text-slate-900" data-i18n="bank_title">Bank Account</h2>
+            <p class="text-slate-500 mt-1" data-i18n="bank_desc">Incoming and outgoing transactions.</p>
+          </div>
+        </div>
+
+        <!-- Bank Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="withdraw">
+          <div class="bg-indigo-600 rounded-3xl p-6 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden">
+            <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="bank_avail">Available</div>
+            <div class="relative z-10 text-3xl font-bold text-white" id="stat-bank-available">0.00</div>
+            <div class="relative z-10 text-xs text-indigo-200 mt-2" data-i18n="bank_avail_desc">Amount ready to withdraw</div>
+          </div>
+
+          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div>
+              <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="bank_withdraw">Withdraw</div>
+              <div class="text-xs text-slate-400 mb-4" data-i18n="bank_withdraw_desc">Withdraw your balance</div>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <input
+                  id="withdraw-amount"
+                  class="amount-input w-full rounded-xl border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  type="number" min="1" max="99998" placeholder="Amount" data-i18n-placeholder="col_amount"
+                />
+                <button
+                  id="btn-withdraw"
+                  class="action-btn rounded-xl bg-rose-600 px-4 py-2 text-white font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  <span class="btn-text" data-i18n="bank_withdraw">Withdraw</span>
+                  <span class="btn-spinner hidden">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  </span>
+                </button>
+              </div>
+              <p id="withdraw-error" class="error-text hidden mt-2 text-xs text-red-600 font-medium"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <h2 class="text-lg font-bold text-slate-800" data-i18n="tx_title">Latest Transactions</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
+                <tr>
+                  <th class="px-6 py-4 font-semibold" data-i18n="col_subject">Subject</th>
+                  <th class="px-6 py-4 font-semibold" data-i18n="col_time">Timestamp</th>
+                  <th class="px-6 py-4 font-semibold text-right" data-i18n="col_amount">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="bank-tbody" class="divide-y divide-slate-100">
+                <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_tx">Loading bank details...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+        <script>
+      function playNotificationSound() {
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+          oscillator.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.1); // C6
+          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+          oscillator.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          oscillator.start();
+          oscillator.stop(audioCtx.currentTime + 0.3);
+        } catch (e) {}
+      }
+
+      function showToast(title, desc, type = "success") {
+        playNotificationSound();
+        const container = document.getElementById("toast-container");
+        const el = document.createElement("div");
+        const icon = type === "success" 
+          ? `<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+          : `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+        el.className = "toast-enter bg-white border border-slate-100 shadow-xl rounded-2xl p-4 flex items-start gap-4 w-80";
+        el.innerHTML = `
+          <div class="flex-shrink-0 mt-0.5">${icon}</div>
+          <div class="flex-1">
+            <h3 class="text-sm font-bold text-slate-900">${title}</h3>
+            <p class="text-sm text-slate-500 mt-1">${desc}</p>
+          </div>
+          <button class="text-slate-400 hover:text-slate-600 transition" onclick="this.parentElement.remove()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        `;
+        container.appendChild(el);
+        setTimeout(() => {
+          el.classList.replace("toast-enter", "toast-exit");
+          setTimeout(() => el.remove(), 300);
+        }, 5000);
+      }
+
+      // Config
+      const API_URL = "https://merchant.taler.ar";
+      const BANK_URL = "https://bank.taler.ar";
+      let INSTANCE_ID = "";
+      let PASSWORD = "";
+      let ACCESS_TOKEN = "";
+      let BANK_ACCESS_TOKEN = "";
+      let isPolling = false;
+      let pollAbortController = null;
+      let withdrawalPolling = false;
+      let withdrawalController = null;
+      let currentWithdrawalId = null;
+      let currentLang = "en";
+
+      const translations = {
+        en: {
+          login_title: "Merchant Login",
+          username_lbl: "Username",
+          password_lbl: "Password",
+          login_btn: "Login",
+          modal_qr_withdrawing: "Withdrawing $ ",
+          modal_qr_scan: "Scan the qr code with a taler wallet",
+          btn_confirm: "Confirm Transfer",
+          btn_cancel: "Cancel",
+          header_title: "FairPay Merchant",
+          header_user: "Username:",
+          btn_logout: "Logout",
+          dash_title: "Dashboard",
+          dash_desc: "Overview of your sales and balances.",
+          stat_sold: "Sold",
+          stat_sold_desc: "Paid minus Refunded",
+          stat_intransit: "In Transit",
+          stat_intransit_desc: "Pending wire deadline",
+          stat_settled: "Settled",
+          stat_settled_desc: "Present in bank account",
+          stat_withdraw: "Withdraw &rarr;",
+          orders_title: "Latest Orders",
+          col_summary: "Order Summary",
+          col_time: "Timestamp",
+          col_state: "State",
+          col_amount: "Amount",
+          loading_orders: "Loading orders...",
+          no_orders: "No orders found.",
+          bank_title: "Bank Account",
+          bank_desc: "Incoming and outgoing transactions.",
+          bank_avail: "Available",
+          bank_avail_desc: "Amount ready to withdraw",
+          bank_withdraw: "Withdraw",
+          bank_withdraw_desc: "Withdraw your balance",
+          tx_title: "Latest Transactions",
+          col_subject: "Subject",
+          loading_tx: "Loading transactions...",
+          no_tx: "No transactions found.",
+          wallet_connected: "Wallet connected. Please confirm the transfer.",
+          wallet_aborted: "Withdrawal was aborted by the wallet.",
+          transfer_confirmed: "Transfer confirmed!",
+          error_bal: "Balance is not enough",
+          error_qr: "Failed to load QR code",
+          val_sales: "sales",
+          val_withdraw: "withdraw",
+          confirming: "Confirming...",
+          toast_new_order: "New Order",
+          toast_updated_order: "Order Updated",
+          toast_new_tx: "New Transaction"
+        },
+        es: {
+          login_title: "Acceso de Comerciante",
+          username_lbl: "Usuario",
+          password_lbl: "Contraseña",
+          login_btn: "Entrar",
+          modal_qr_withdrawing: "Retirando $ ",
+          modal_qr_scan: "Escanea el código QR con una billetera Taler",
+          btn_confirm: "Confirmar Transferencia",
+          btn_cancel: "Cancelar",
+          header_title: "FairPay Comerciante",
+          header_user: "Usuario:",
+          btn_logout: "Salir",
+          dash_title: "Panel de Control",
+          dash_desc: "Resumen de ventas y saldos.",
+          stat_sold: "Vendido",
+          stat_sold_desc: "Pagado menos reembolsado",
+          stat_intransit: "En Tránsito",
+          stat_intransit_desc: "Pendiente de transferencia",
+          stat_settled: "Liquidado",
+          stat_settled_desc: "Presente en cuenta bancaria",
+          stat_withdraw: "Retirar &rarr;",
+          orders_title: "Últimos Pedidos",
+          col_summary: "Resumen de Pedido",
+          col_time: "Fecha y Hora",
+          col_state: "Estado",
+          col_amount: "Cantidad",
+          loading_orders: "Cargando pedidos...",
+          no_orders: "No se encontraron pedidos.",
+          bank_title: "Cuenta Bancaria",
+          bank_desc: "Transacciones entrantes y salientes.",
+          bank_avail: "Disponible",
+          bank_avail_desc: "Cantidad lista para retirar",
+          bank_withdraw: "Retirar",
+          bank_withdraw_desc: "Retirar tu saldo",
+          tx_title: "Últimas Transacciones",
+          col_subject: "Asunto",
+          loading_tx: "Cargando transacciones...",
+          no_tx: "No se encontraron transacciones.",
+          wallet_connected: "Billetera conectada. Por favor confirma la transferencia.",
+          wallet_aborted: "El retiro fue abortado por la billetera.",
+          transfer_confirmed: "¡Transferencia confirmada!",
+          error_bal: "Saldo insuficiente",
+          error_qr: "Fallo al cargar el código QR",
+          val_sales: "ventas",
+          val_withdraw: "retiro",
+          confirming: "Confirmando...",
+          toast_new_order: "Nuevo Pedido",
+          toast_updated_order: "Pedido Actualizado",
+          toast_new_tx: "Nueva Transacción"
+        }
+      };
+
+      function updateLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+          const key = el.getAttribute("data-i18n");
+          if (translations[lang] && translations[lang][key]) {
+            if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+               el.value = translations[lang][key];
+            } else {
+               el.innerHTML = translations[lang][key];
+            }
+          }
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+          const key = el.getAttribute("data-i18n-placeholder");
+          if (translations[lang] && translations[lang][key]) {
+            el.placeholder = translations[lang][key];
+          }
+        });
+      }
+
+      document.getElementById("lang-selector").addEventListener("change", (e) => {
+        updateLanguage(e.target.value);
+      });
+
+      document.body.classList.add("modal-active");
+
+      // Utility: Parse Taler amount format "CURRENCY:Value"
+      function parseAmountStr(amtStr) {
+        if (!amtStr) return 0;
+        if (typeof amtStr === "string" && amtStr.includes(":")) {
+          return parseFloat(amtStr.split(":")[1]) || 0;
+        }
+        return parseFloat(amtStr) || 0;
+      }
+
+      // Utility: Get currency from Taler amount
+      function getCurrency(amtStr) {
+        if (!amtStr) return "";
+        if (typeof amtStr === "string" && amtStr.includes(":")) {
+          return amtStr.split(":")[0];
+        }
+        return "";
+      }
+
+      // Format currency display (No currency text)
+      function formatMoney(num, currency = "") {
+        return num.toFixed(2);
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const savedUser = localStorage.getItem("taler_username");
+        const savedPass = localStorage.getItem("taler_password");
+
+        if (savedUser) document.getElementById("auth-user").value = savedUser;
+
+        if (savedUser && savedPass) {
+          document.getElementById("auth-pass").value = savedPass;
+          doLogin(API_URL, BANK_URL, savedUser, savedPass);
+        }
+        
+        updateLanguage(currentLang);
+      });
+
+      document.getElementById("btn-login").addEventListener("click", () => {
+        const user = document.getElementById("auth-user").value || "default";
+        const pass = document.getElementById("auth-pass").value;
+
+        localStorage.setItem("taler_username", user);
+        localStorage.setItem("taler_password", pass);
+
+        doLogin(API_URL, BANK_URL, user, pass);
+      });
+
+      document.getElementById("btn-logout").addEventListener("click", () => {
+        localStorage.removeItem("taler_username");
+        localStorage.removeItem("taler_password");
+
+        INSTANCE_ID = "";
+        PASSWORD = "";
+        ACCESS_TOKEN = "";
+        BANK_ACCESS_TOKEN = "";
+        isPolling = false;
+        if (pollAbortController) {
+          pollAbortController.abort();
+        }
+
+        document.getElementById("auth-pass").value = "";
+        document.getElementById("logged-in-user").classList.add("hidden");
+        document.getElementById("auth-modal").classList.remove("hidden");
+        document.body.classList.add("modal-active");
+      });
+
+      async function doLogin(url, bankUrl, user, pass) {
+        INSTANCE_ID = user;
+        PASSWORD = pass;
+
+        document.getElementById("display-instance").textContent = INSTANCE_ID;
+
+        // 1. Get Access Token
+        try {
+          const tokenRes = await fetch(
+            `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/token`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Basic " + btoa(`${INSTANCE_ID}:${PASSWORD}`),
+              },
+              body: JSON.stringify({ scope: "order-full" }),
+            },
+          );
+
+          if (!tokenRes.ok) {
+            throw new Error("Failed to authenticate with Merchant");
+          }
+
+          const tokenData = await tokenRes.json();
+          ACCESS_TOKEN = tokenData.access_token || tokenData.token;
+
+          // 2. Get Bank Access Token
+          const bankTokenRes = await fetch(
+            `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/token`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Basic " + btoa(`${INSTANCE_ID}:${PASSWORD}`),
+              },
+              body: JSON.stringify({ scope: "readwrite" }),
+            },
+          );
+
+          if (!bankTokenRes.ok) {
+            throw new Error("Failed to authenticate with Bank");
+          }
+
+          const bankTokenData = await bankTokenRes.json();
+          BANK_ACCESS_TOKEN = bankTokenData.access_token || bankTokenData.token;
+
+          document.getElementById("logged-in-user").classList.remove("hidden");
+          document.getElementById("auth-modal").classList.add("hidden");
+          document.body.classList.remove("modal-active");
+
+          if (!isPolling) {
+            isPolling = true;
+            startPollingOrders();
+            startPollingBank();
+          }
+        } catch (err) {
+          alert("Login failed: " + err.message);
+          localStorage.removeItem("taler_password");
+        }
+      }
+
+      async function startPollingOrders() {
+        const tbody = document.getElementById("orders-tbody");
+        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_orders">${translations[currentLang]["loading_orders"]}</td></tr>`;
+
+        let previousOrdersState = new Map();
+        let isFirstFetch = true;
+
+        while (isPolling) {
+          try {
+            pollAbortController = new AbortController();
+            const headers = {
+              Accept: "application/json",
+              Authorization: `Bearer ${ACCESS_TOKEN}`,
+            };
+
+            const baseUrl = `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/orders`;
+            const [resOrders, resSold, resInTransit, resAvailable] = await Promise.all([
+              fetch(`${baseUrl}?limit=-10`, { headers, signal: pollAbortController.signal }),
+              fetch(`${baseUrl}?paid=yes`, { headers, signal: pollAbortController.signal }),
+              fetch(`${baseUrl}?paid=yes&wired=no`, { headers, signal: pollAbortController.signal }),
+              fetch(`${baseUrl}?wired=yes`, { headers, signal: pollAbortController.signal }),
+            ]);
+
+            if (!resOrders.ok) {
+              if (resOrders.status === 401 || resOrders.status === 403) {
+                isPolling = false;
+                alert("Session expired or unauthorized");
+                document.getElementById("btn-logout").click();
+                return;
+              }
+              throw new Error(`API error: ${resOrders.status}`);
+            }
+
+            const data = await resOrders.json();
+            const orders = data.orders || (Array.isArray(data) ? data : []);
+
+            const sumOrders = async (res) => {
+              if (!res.ok) return 0;
+              const d = await res.json();
+              const list = d.orders || (Array.isArray(d) ? d : []);
+              return list.reduce((acc, o) => acc + (parseAmountStr(o.amount) - parseAmountStr(o.refund_amount)), 0);
+            };
+
+            const [soldNum, inTransitNum, availableNum] = await Promise.all([
+              sumOrders(resSold),
+              sumOrders(resInTransit),
+              sumOrders(resAvailable),
+            ]);
+
+            let htmlBuffer = "";
+            if (orders.length === 0) {
+              htmlBuffer = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400" data-i18n="no_orders">${translations[currentLang]["no_orders"]}</td></tr>`;
+            }
+
+            let changedOrders = [];
+
+            orders.forEach((o) => {
+              const amountNum = parseAmountStr(o.amount);
+              const refundNum = parseAmountStr(o.refund_amount);
+
+              let state = "claimed";
+              let stateClass = "bg-slate-100 text-slate-600";
+
+              if (o.paid) {
+                if (refundNum > 0) {
+                  state = "refunded";
+                  stateClass = "bg-red-100 text-red-700";
+                } else if (!o.wired) {
+                  state = "in-transit";
+                  stateClass = "bg-yellow-100 text-yellow-700";
+                } else {
+                  state = "settled";
+                  stateClass = "bg-green-100 text-green-700";
+                }
+              } else {
+                state = o.payment_status || o.order_status || "unpaid";
+              }
+
+              const t_val = o.timestamp.t_s * 1000;
+              const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
+              
+              const orderId = o.order_id || o.summary;
+              let changed = false;
+              let isNew = false;
+              
+              if (!isFirstFetch) {
+                 if (!previousOrdersState.has(orderId)) {
+                    isNew = true;
+                    changed = true;
+                 } else if (previousOrdersState.get(orderId) !== state) {
+                    changed = true;
+                 }
+              }
+              previousOrdersState.set(orderId, state);
+
+              if (changed) {
+                 changedOrders.push({ isNew, summary: o.summary || orderId, state });
+              }
+
+              let rowClass = "hover:bg-slate-50 transition";
+              if (changed) {
+                rowClass += " animate-fade-green";
+              }
+
+              htmlBuffer += `
+              <tr class="${rowClass}">
+                <td class="px-6 py-4 font-medium text-slate-800">${o.summary || o.order_id || "Order"}</td>
+                <td class="px-6 py-4">${dateStr}</td>
+                <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${state.toUpperCase()}</span></td>
+                <td class="px-6 py-4 text-right font-semibold text-slate-800">${formatMoney(amountNum)}</td>
+              </tr>
+            `;
+            });
+
+            if (changedOrders.length > 0) {
+               const first = changedOrders[0];
+               const title = first.isNew ? translations[currentLang]["toast_new_order"] : translations[currentLang]["toast_updated_order"];
+               showToast(title, `${first.summary} &rarr; ${first.state.toUpperCase()}`);
+            }
+
+            tbody.innerHTML = htmlBuffer;
+            isFirstFetch = false;
+
+            document.getElementById("stat-sold").textContent = formatMoney(soldNum);
+            document.getElementById("stat-intransit").textContent = formatMoney(inTransitNum);
+            document.getElementById("stat-available").textContent = formatMoney(availableNum);
+
+            let maxRowId = 0;
+            if (orders.length > 0 && orders[0].row_id) {
+              maxRowId = orders[0].row_id;
+            }
+
+            await fetch(
+              `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/orders?limit=2&offset=${maxRowId}&timeout_ms=10000`,
+              { headers, signal: pollAbortController.signal }
+            );
+          } catch (e) {
+            if (e.name !== "AbortError" && isPolling) {
+              await new Promise((r) => setTimeout(r, 3000));
+            }
+          }
+        }
+      }
+
+      async function startPollingBank() {
+        const tbody = document.getElementById("bank-tbody");
+        tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_tx">${translations[currentLang]["loading_tx"]}</td></tr>`;
+
+        let previousBankRows = new Set();
+        let isFirstBankFetch = true;
+
+        while (isPolling) {
+          try {
+            const headers = {
+              Accept: "application/json",
+              Authorization: `Bearer ${BANK_ACCESS_TOKEN}`,
+            };
+
+            const balRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}`, {
+              headers, signal: pollAbortController.signal,
+            });
+
+            if (balRes.ok) {
+              const balData = await balRes.json();
+              const availAmt = parseAmountStr(balData.balance.amount);
+              document.getElementById("stat-bank-available").textContent = formatMoney(availAmt);
+            }
+
+            const txRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions?limit=-10`, {
+              headers, signal: pollAbortController.signal,
+            });
+
+            if (!txRes.ok) throw new Error(`Bank API error: ${txRes.status}`);
+
+            const txData = await txRes.json();
+            const txs = txData.transactions || (Array.isArray(txData) ? txData : []);
+
+            let htmlBuffer = "";
+            if (txs.length === 0) {
+              htmlBuffer = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="no_tx">${translations[currentLang]["no_tx"]}</td></tr>`;
+            }
+
+            let newTxs = [];
+
+            txs.forEach((tx) => {
+              const amountNum = parseAmountStr(tx.amount);
+              const t_val = tx.date?.t_ms || (tx.date?.t_s ? tx.date.t_s * 1000 : tx.date);
+              const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
+
+              let colorClass = "text-slate-800";
+              let subject = tx.subject || "Transfer";
+              let isCredit = false;
+
+              if (tx.direction === "credit") {
+                colorClass = "text-green-600";
+                subject = translations[currentLang]["val_sales"];
+                isCredit = true;
+              } else if (tx.direction === "debit") {
+                colorClass = "text-red-600";
+                subject = translations[currentLang]["val_withdraw"];
+                isCredit = false;
+              }
+
+              let isNew = false;
+              if (!isFirstBankFetch && !previousBankRows.has(tx.row_id)) {
+                 isNew = true;
+                 newTxs.push({ subject, isCredit, amount: amountNum });
+              }
+              previousBankRows.add(tx.row_id);
+
+              let rowClass = "hover:bg-slate-50 transition";
+              if (isNew) {
+                rowClass += isCredit ? " animate-fade-green" : " animate-fade-red";
+              }
+
+              htmlBuffer += `
+              <tr class="${rowClass}">
+                <td class="px-6 py-4 font-medium text-slate-800">${subject}</td>
+                <td class="px-6 py-4">${dateStr}</td>
+                <td class="px-6 py-4 text-right font-semibold ${colorClass}">${formatMoney(amountNum)}</td>
+              </tr>
+            `;
+            });
+
+            if (newTxs.length > 0) {
+               const first = newTxs[0];
+               showToast(translations[currentLang]["toast_new_tx"], `${first.subject} $${formatMoney(first.amount)}`, first.isCredit ? "success" : "info");
+            }
+
+            tbody.innerHTML = htmlBuffer;
+            isFirstBankFetch = false;
+
+            let maxRowId = 0;
+            if (txs.length > 0 && txs[0].row_id) {
+              maxRowId = txs[0].row_id;
+            }
+
+            await fetch(
+              `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions?limit=2&offset=${maxRowId}&timeout_ms=10000`,
+              { headers, signal: pollAbortController.signal }
+            );
+          } catch (e) {
+            if (e.name !== "AbortError" && isPolling) {
+              await new Promise((r) => setTimeout(r, 3000));
+            }
+          }
+        }
+      }
+
+      document.getElementById("btn-close-qr").addEventListener("click", () => {
+        document.getElementById("qr-modal").classList.add("hidden");
+        document.body.classList.remove("modal-active");
+        withdrawalPolling = false;
+        if (withdrawalController) withdrawalController.abort();
+      });
+
+      document.getElementById("btn-qr-cancel").addEventListener("click", async () => {
+        withdrawalPolling = false;
+        if (withdrawalController) withdrawalController.abort();
+        
+        try {
+          await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals/${currentWithdrawalId}/abort`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
+          });
+        } catch (e) {
+          console.error("Failed to abort withdrawal", e);
+        }
+        
+        document.getElementById("qr-modal").classList.add("hidden");
+        document.body.classList.remove("modal-active");
+      });
+
+      document.getElementById("btn-qr-confirm").addEventListener("click", async () => {
+        withdrawalPolling = false;
+        if (withdrawalController) withdrawalController.abort();
+        
+        const btn = document.getElementById("btn-qr-confirm");
+        const originalText = btn.textContent;
+        btn.textContent = translations[currentLang]["confirming"];
+        btn.disabled = true;
+
+        try {
+          const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals/${currentWithdrawalId}/confirm`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
+          });
+
+          if (!res.ok) throw new Error("Failed to confirm transfer");
+          
+          document.getElementById("qr-modal").classList.add("hidden");
+          document.body.classList.remove("modal-active");
+        } catch (e) {
+          document.getElementById("qr-modal-error").textContent = e.message;
+          document.getElementById("qr-modal-error").classList.remove("hidden");
+        } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      });
+
+      async function pollWithdrawalState() {
+        while (withdrawalPolling) {
+          try {
+            withdrawalController = new AbortController();
+            const res = await fetch(`${BANK_URL}/withdrawals/${currentWithdrawalId}?old_state=pending&timeout_ms=10000`, {
+              signal: withdrawalController.signal
+            });
+            if (!res.ok) throw new Error("Poll error");
+            const data = await res.json();
+            
+            if (data.status === "selected") {
+               document.getElementById("qr-content").classList.add("hidden");
+               document.getElementById("qr-modal-desc").innerHTML = translations[currentLang]["wallet_connected"];
+               document.getElementById("qr-confirm-actions").classList.remove("hidden");
+               withdrawalPolling = false;
+            } else if (data.status === "aborted") {
+               document.getElementById("qr-modal-error").innerHTML = translations[currentLang]["wallet_aborted"];
+               document.getElementById("qr-modal-error").classList.remove("hidden");
+               withdrawalPolling = false;
+            } else if (data.status === "confirmed") {
+               document.getElementById("qr-modal-desc").innerHTML = translations[currentLang]["transfer_confirmed"];
+               withdrawalPolling = false;
+            }
+          } catch (e) {
+            if (e.name !== "AbortError" && withdrawalPolling) {
+              await new Promise(r => setTimeout(r, 2000));
+            }
+          }
+        }
+      }
+
+      document
+        .getElementById("btn-withdraw")
+        .addEventListener("click", async () => {
+          const input = document.getElementById("withdraw-amount");
+          const amount = input.value;
+          if (!amount || amount <= 0) return;
+
+          const errorEl = document.getElementById("withdraw-error");
+          const btn = document.getElementById("btn-withdraw");
+          const btnText = btn.querySelector(".btn-text");
+          const btnSpinner = btn.querySelector(".btn-spinner");
+
+          const qrModal = document.getElementById("qr-modal");
+          const qrTitle = document.getElementById("qr-modal-title");
+          const qrImg = document.getElementById("qr-modal-img");
+          const qrSpinnerModal = document.getElementById("qr-spinner-modal");
+          const qrError = document.getElementById("qr-modal-error");
+
+          errorEl.classList.add("hidden");
+          btn.disabled = true;
+          btnText.classList.add("hidden");
+          btnSpinner.classList.remove("hidden");
+
+          try {
+            const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals`, {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
+              },
+              body: JSON.stringify({ amount: `NUMIS:${amount}` }), // hidden format string
+            });
+            
+            if (!res.ok) {
+               if (res.status === 409) throw new Error(translations[currentLang]["error_bal"]);
+               throw new Error("Server error creating withdrawal");
+            }
+
+            const data = await res.json();
+            currentWithdrawalId = data.withdrawal_id;
+            const talerWithdrawUri = data.taler_withdraw_uri;
+
+            document.getElementById("qr-modal-amount").textContent = amount;
+            document.getElementById("qr-modal-desc").innerHTML = translations[currentLang]["modal_qr_scan"];
+            document.getElementById("qr-content").classList.remove("hidden");
+            document.getElementById("qr-confirm-actions").classList.add("hidden");
+            
+            qrImg.classList.add("hidden");
+            qrError.classList.add("hidden");
+            qrSpinnerModal.classList.remove("hidden");
+
+            document.body.classList.add("modal-active");
+            qrModal.classList.remove("hidden");
+
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(talerWithdrawUri)}`;
+            qrImg.onload = () => {
+              qrSpinnerModal.classList.add("hidden");
+              qrImg.classList.remove("hidden");
+            };
+            qrImg.onerror = () => {
+              qrSpinnerModal.classList.add("hidden");
+              qrError.textContent = translations[currentLang]["error_qr"];
+              qrError.classList.remove("hidden");
+            };
+
+            withdrawalPolling = true;
+            pollWithdrawalState();
+          } catch (e) {
+            errorEl.textContent = e.message || "Something went wrong creating withdrawal.";
+            errorEl.classList.remove("hidden");
+          } finally {
+            btn.disabled = false;
+            btnText.classList.remove("hidden");
+            btnSpinner.classList.add("hidden");
+          }
+        });
+    </script>
+      <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-3"></div>
+  </body>
+</html>
