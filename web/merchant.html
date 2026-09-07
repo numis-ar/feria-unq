@@ -597,9 +597,9 @@
             const baseUrl = `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/orders`;
             const [resOrders, resSold, resInTransit, resAvailable] = await Promise.all([
               fetch(`${baseUrl}?limit=-10`, { headers, signal: pollAbortController.signal }),
-              fetch(`${baseUrl}?paid=yes`, { headers, signal: pollAbortController.signal }),
-              fetch(`${baseUrl}?paid=yes&wired=no`, { headers, signal: pollAbortController.signal }),
-              fetch(`${baseUrl}?wired=yes`, { headers, signal: pollAbortController.signal }),
+              fetch(`${baseUrl}?paid=yes&limit=-500`, { headers, signal: pollAbortController.signal }),
+              fetch(`${baseUrl}?paid=yes&wired=no&limit=-500`, { headers, signal: pollAbortController.signal }),
+              fetch(`${baseUrl}?wired=yes&limit=-500`, { headers, signal: pollAbortController.signal }),
             ]);
 
             if (!resOrders.ok) {
