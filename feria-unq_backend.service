@@ -1,0 +1,15 @@
+[Unit]
+Description=Feria UNQ backend service
+Requires=feria-unq_backend.socket
+After=feria-unq_backend.socket
+
+[Service]
+ExecSearchPath=/usr/bin
+ExecSearchPath=/git/feria-unq/scripts
+WorkingDirectory=/git/feria-unq
+
+ExecStart=node server/backend.ts
+
+[Install]
+WantedBy=multi-user.target
+

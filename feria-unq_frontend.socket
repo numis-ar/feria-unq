@@ -1,0 +1,9 @@
+[Unit]
+Description=Feria UNQ frontend service
+
+[Socket]
+ListenStream=/run/feria-unq_frontend.sock
+
+[Install]
+WantedBy=sockets.target
+

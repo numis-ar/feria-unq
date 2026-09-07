@@ -1,15 +1,3 @@
-/**
- * Fair payment demo server
- *
- * Run with one command (requires Node/npm):
- *   npx tsx /var/www/html/ia/server.ts
- *
- * Environment variables:
- *   PORT                - server port (default 3000)
- *   MERCHANT_BASE_URL   - merchant backend base URL (default https://merchant.taler)
- *   MERCHANT_API_KEY    - merchant backend API key, e.g. secret-token:xxx (default empty)
- */
-
 import * as http from 'http';
 import * as https from 'https';
 import { URL } from 'url';
@@ -19,6 +7,8 @@ import { promisify } from 'util';
 const execFileAsync = promisify(execFile);
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
+const LISTEN_PID = process.env.LISTEN_PID;
+const LISTEN_FDS = process.env.LISTEN_FDS;
 const MERCHANT_BASE_URL = process.env.MERCHANT_BASE_URL || 'https://merchant.taler';
 const MERCHANT_API_KEY = process.env.MERCHANT_API_KEY || '';
 const GET_MONEY_SCRIPT = '/home/ia/wallet-get-money.sh';
@@ -202,6 +192,13 @@ const server = http.createServer((req, res) => {
   sendError(res, 404, 'Not found');
 });
 
-server.listen(PORT, () => {
-  log(`Server listening on http://localhost:${PORT}`);
-});
+if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && parseInt(LISTEN_FDS, 10) > 0) {
+  server.listen({ fd: 3 }, () => {
+    console.log('Server executing via systemd socket activation (FD 3)');
+  });
+} else {
+  server.listen(PORT, () => {
+    console.log(`Server executing at http://localhost:${PORT}/`);
+  });
+}
+
