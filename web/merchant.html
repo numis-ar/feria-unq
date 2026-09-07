@@ -280,6 +280,12 @@
     
       <!-- SECTION 3: User Settings -->
       <section id="user" class="main-section space-y-8 hidden">
+        <div id="temp-password-warning" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-xl shadow-sm">
+          <div class="flex items-center gap-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span class="font-medium" data-i18n="temp_pass_warning">You are using a temporary password. It MUST be changed before doing anything else.</span>
+          </div>
+        </div>
         <div class="flex justify-between items-end">
           <div>
             <h2 class="text-3xl font-extrabold text-slate-900" data-i18n="user_title">User Settings</h2>
@@ -296,12 +302,15 @@
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="new_password">New Password</label>
               <input id="new-pass" type="password" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+              <p id="new-pass-error" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="repeat_password">Repeat Password</label>
               <input id="repeat-pass" type="password" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+              <p id="repeat-pass-error" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
             </div>
             <button id="btn-change-pass" class="w-full bg-indigo-600 text-white rounded-xl py-2 font-semibold hover:bg-indigo-700 transition" data-i18n="btn_update_pass">Update Password</button>
+            <p id="form-error" class="hidden text-sm text-red-600 font-medium text-center"></p>
           </div>
           <div class="mt-8 pt-6 border-t border-slate-100">
              <button id="btn-sidebar-logout" class="w-full bg-slate-200 text-slate-800 rounded-xl py-2 font-semibold hover:bg-slate-300 transition" data-i18n="btn_logout">Logout</button>
@@ -430,7 +439,9 @@
           repeat_password: "Repeat Password",
           btn_update_pass: "Update Password",
           pass_changed: "Password changed successfully!",
-          pass_mismatch: "New passwords do not match."
+          pass_mismatch: "New passwords do not match.",
+          temp_pass_warning: "You are using a temporary password. It MUST be changed before doing anything else.",
+          pass_validation: "Password must be at least 8 characters long, contain at least 2 letters, 2 numbers, and only consist of letters, numbers, hyphens, or underscores."
         },
         es: {
           login_title: "Acceso de Comerciante",
@@ -492,7 +503,9 @@
           repeat_password: "Repetir Contraseña",
           btn_update_pass: "Actualizar Contraseña",
           pass_changed: "¡Contraseña cambiada con éxito!",
-          pass_mismatch: "Las nuevas contraseñas no coinciden."
+          pass_mismatch: "Las nuevas contraseñas no coinciden.",
+          temp_pass_warning: "Estás usando una contraseña temporal. DEBE ser cambiada antes de hacer cualquier otra cosa.",
+          pass_validation: "La contraseña debe tener al menos 8 caracteres, contener al menos 2 letras, 2 números, y solo estar formada por letras, números, guiones o guiones bajos."
         }
       };
 
@@ -648,6 +661,11 @@
             isPolling = true;
             startPollingOrders();
             startPollingBank();
+          }
+          
+          if (PASSWORD.startsWith('__')) {
+              document.getElementById('temp-password-warning').classList.remove('hidden');
+              window.location.hash = '#user';
           }
         } catch (err) {
           alert("Login failed: " + err.message);
@@ -1070,6 +1088,17 @@
          document.getElementById('sidebar').classList.toggle('max-md:hidden');
       });
 
+      
+      function validatePassword(pass) {
+         if (pass.length < 8) return false;
+         if (!/^[a-zA-Z0-9_\-]+$/.test(pass)) return false;
+         const letters = pass.match(/[a-zA-Z]/g);
+         if (!letters || letters.length < 2) return false;
+         const numbers = pass.match(/[0-9]/g);
+         if (!numbers || numbers.length < 2) return false;
+         return true;
+      }
+
       // Fragment navigation logic
       function handleHash() {
          const hash = window.location.hash.substring(1);
@@ -1107,11 +1136,37 @@
       });
 
       document.getElementById('btn-change-pass').addEventListener('click', async () => {
-         const oldP = document.getElementById('old-pass').value;
-         const newP = document.getElementById('new-pass').value;
-         const repP = document.getElementById('repeat-pass').value;
+         const oldPassEl = document.getElementById('old-pass');
+         const newPassEl = document.getElementById('new-pass');
+         const repeatPassEl = document.getElementById('repeat-pass');
+         const newPassErr = document.getElementById('new-pass-error');
+         const repeatPassErr = document.getElementById('repeat-pass-error');
+         const formErr = document.getElementById('form-error');
+
+         // Reset previous errors
+         [oldPassEl, newPassEl, repeatPassEl].forEach(el => {
+             el.classList.remove('border-red-500', 'focus:ring-red-500');
+             el.classList.add('border-slate-300', 'focus:ring-indigo-500');
+         });
+         [newPassErr, repeatPassErr, formErr].forEach(el => el.classList.add('hidden'));
+
+         const oldP = oldPassEl.value;
+         const newP = newPassEl.value;
+         const repP = repeatPassEl.value;
+         
          if (newP !== repP) {
-             showToast("Error", translations[currentLang]["pass_mismatch"], "error");
+             repeatPassEl.classList.remove('border-slate-300', 'focus:ring-indigo-500');
+             repeatPassEl.classList.add('border-red-500', 'focus:ring-red-500');
+             repeatPassErr.textContent = translations[currentLang]["pass_mismatch"];
+             repeatPassErr.classList.remove('hidden');
+             return;
+         }
+         
+         if (!validatePassword(newP)) {
+             newPassEl.classList.remove('border-slate-300', 'focus:ring-indigo-500');
+             newPassEl.classList.add('border-red-500', 'focus:ring-red-500');
+             newPassErr.textContent = translations[currentLang]["pass_validation"];
+             newPassErr.classList.remove('hidden');
              return;
          }
          
@@ -1165,13 +1220,15 @@
                  // Re-login to refresh tokens with the new password
                  doLogin(API_URL, BANK_URL, INSTANCE_ID, newP);
 
-                 document.getElementById('old-pass').value = '';
-                 document.getElementById('new-pass').value = '';
-                 document.getElementById('repeat-pass').value = '';
+                 oldPassEl.value = '';
+                 newPassEl.value = '';
+                 repeatPassEl.value = '';
+                 document.getElementById('temp-password-warning').classList.add('hidden');
                  showToast("Success", translations[currentLang]["pass_changed"], "success");
              }
          } catch (e) {
-             showToast("Error", e.message, "error");
+             formErr.textContent = e.message;
+             formErr.classList.remove('hidden');
          } finally {
              btn.textContent = origText;
              btn.disabled = false;
