@@ -11,7 +11,7 @@ const LISTEN_PID = process.env.LISTEN_PID;
 const LISTEN_FDS = process.env.LISTEN_FDS;
 const MERCHANT_BASE_URL = process.env.MERCHANT_BASE_URL || 'https://merchant.taler';
 const MERCHANT_API_KEY = process.env.MERCHANT_API_KEY || '';
-const GET_MONEY_SCRIPT = '/home/ia/wallet-get-money.sh';
+const GET_MONEY_SCRIPT = 'wallet-get-money.sh';
 
 function log(...args: unknown[]) {
   console.log(new Date().toISOString(), ...args);
@@ -48,9 +48,7 @@ function parseAmount(body: unknown): { ok: true; value: number } | { ok: false; 
 }
 
 async function callGetMoneyScript(amount: number): Promise<string> {
-  const { stdout } = await execFileAsync(GET_MONEY_SCRIPT, [String(amount)], {
-    cwd: '/home/ia',
-  });
+  const { stdout } = await execFileAsync(GET_MONEY_SCRIPT, [String(amount)]);
   return stdout.trim();
 }
 
