@@ -606,7 +606,7 @@
                 "Content-Type": "application/json",
                 Authorization: "Basic " + btoa(`${INSTANCE_ID}:${PASSWORD}`),
               },
-              body: JSON.stringify({ scope: "order-full" }),
+              body: JSON.stringify({ scope: "all" }),
             },
           );
 
@@ -1106,7 +1106,7 @@
         });
       });
 
-      document.getElementById('btn-change-pass').addEventListener('click', () => {
+      document.getElementById('btn-change-pass').addEventListener('click', async () => {
          const oldP = document.getElementById('old-pass').value;
          const newP = document.getElementById('new-pass').value;
          const repP = document.getElementById('repeat-pass').value;
@@ -1114,13 +1114,67 @@
              showToast("Error", translations[currentLang]["pass_mismatch"], "error");
              return;
          }
-         if (newP.length > 0) {
-             PASSWORD = newP;
-             localStorage.setItem("taler_password", newP);
-             document.getElementById('old-pass').value = '';
-             document.getElementById('new-pass').value = '';
-             document.getElementById('repeat-pass').value = '';
-             showToast("Success", translations[currentLang]["pass_changed"], "success");
+         
+         const btn = document.getElementById('btn-change-pass');
+         const origText = btn.textContent;
+         btn.textContent = "Updating...";
+         btn.disabled = true;
+
+         try {
+             // 1. Merchant API password change
+             const merchRes = await fetch(`${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/auth`, {
+                 method: 'POST',
+                 headers: {
+                     "Content-Type": "application/json",
+                     "Authorization": `Bearer ${ACCESS_TOKEN}`
+                 },
+                 body: JSON.stringify({
+                     method: "token",
+                     old_password: oldP,
+                     password: newP
+                 })
+             });
+             
+             if (!merchRes.ok) {
+                 const errText = await merchRes.text();
+                 throw new Error(`Merchant API failed: ${merchRes.status} ${errText}`);
+             }
+             
+             // 2. Bank API password change
+             const bankRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/auth`, {
+                 method: 'PATCH',
+                 headers: {
+                     "Content-Type": "application/json",
+                     "Authorization": `Bearer ${BANK_ACCESS_TOKEN}`
+                 },
+                 body: JSON.stringify({
+                     old_password: oldP,
+                     new_password: newP
+                 })
+             });
+             
+             if (!bankRes.ok) {
+                 const errText = await bankRes.text();
+                 throw new Error(`Bank API failed: ${bankRes.status} ${errText}`);
+             }
+
+             if (newP.length > 0) {
+                 PASSWORD = newP;
+                 localStorage.setItem("taler_password", newP);
+                 
+                 // Re-login to refresh tokens with the new password
+                 doLogin(API_URL, BANK_URL, INSTANCE_ID, newP);
+
+                 document.getElementById('old-pass').value = '';
+                 document.getElementById('new-pass').value = '';
+                 document.getElementById('repeat-pass').value = '';
+                 showToast("Success", translations[currentLang]["pass_changed"], "success");
+             }
+         } catch (e) {
+             showToast("Error", e.message, "error");
+         } finally {
+             btn.textContent = origText;
+             btn.disabled = false;
          }
       });
 
