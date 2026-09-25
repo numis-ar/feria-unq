@@ -306,8 +306,10 @@ export const server = http.createServer((req, res) => {
   sendError(res, 404, 'Not found');
 });
 
+import { pathToFileURL } from 'url';
+
 // Avoid listening when required as a module (e.g. in tests)
-if (require.main === module) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && parseInt(LISTEN_FDS, 10) > 0) {
     server.listen({ fd: 3 }, () => {
       console.log('Server executing via systemd socket activation (FD 3)');
