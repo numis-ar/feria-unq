@@ -6,14 +6,14 @@ import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
+export const PORT = parseInt(process.env.PORT || '3000', 10);
 const LISTEN_PID = process.env.LISTEN_PID;
 const LISTEN_FDS = process.env.LISTEN_FDS;
-const MERCHANT_BASE_URL = process.env.MERCHANT_BASE_URL || 'https://merchant.taler';
+export const MERCHANT_BASE_URL = process.env.MERCHANT_BASE_URL || 'https://merchant.taler';
 const MERCHANT_API_KEY = process.env.MERCHANT_API_KEY || '';
 const GET_MONEY_SCRIPT = 'wallet-get-money.sh';
-const BANK_URL = process.env.BANK_URL || 'https://bank.taler.ar';
-const CLOSING_ACCOUNT = 'closing_account';
+export const BANK_URL = process.env.BANK_URL || 'https://bank.taler.ar';
+export const CLOSING_ACCOUNT = 'closing_account';
 
 function log(...args: unknown[]) {
   console.log(new Date().toISOString(), ...args);
@@ -34,7 +34,7 @@ function sendError(res: http.ServerResponse, status: number, message: string) {
   sendJson(res, status, { type: 'error', message });
 }
 
-function parseAmount(body: unknown): { ok: true; value: number } | { ok: false; error: string } {
+export function parseAmount(body: unknown): { ok: true; value: number } | { ok: false; error: string } {
   if (!body || typeof (body as any).amount !== 'string') {
     return { ok: false, error: 'Missing amount' };
   }
@@ -49,12 +49,12 @@ function parseAmount(body: unknown): { ok: true; value: number } | { ok: false; 
   return { ok: true, value };
 }
 
-async function callGetMoneyScript(amount: number): Promise<string> {
+export async function callGetMoneyScript(amount: number): Promise<string> {
   const { stdout } = await execFileAsync(GET_MONEY_SCRIPT, [String(amount)]);
   return stdout.trim();
 }
 
-async function handleCloseAccount(req: http.IncomingMessage, res: http.ServerResponse, instanceId: string) {
+export async function handleCloseAccount(req: http.IncomingMessage, res: http.ServerResponse, instanceId: string) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     sendError(res, 401, 'Unauthorized');
@@ -159,7 +159,7 @@ async function handleCloseAccount(req: http.IncomingMessage, res: http.ServerRes
   }
 }
 
-function handleWithdraw(req: http.IncomingMessage, res: http.ServerResponse, id: string) {
+export function handleWithdraw(req: http.IncomingMessage, res: http.ServerResponse, id: string) {
   let raw = '';
   req.on('data', (chunk) => {
     raw += chunk;
@@ -191,7 +191,7 @@ function handleWithdraw(req: http.IncomingMessage, res: http.ServerResponse, id:
   });
 }
 
-function merchantRequest(instanceId: string): Promise<unknown> {
+export function merchantRequest(instanceId: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const url = new URL(
       `/instances/${encodeURIComponent(instanceId)}/private/orders`,
@@ -232,7 +232,7 @@ function merchantRequest(instanceId: string): Promise<unknown> {
   });
 }
 
-async function handleLatestOrders(res: http.ServerResponse, instanceId: string) {
+export async function handleLatestOrders(res: http.ServerResponse, instanceId: string) {
   try {
     const data = await merchantRequest(instanceId);
     const orders = Array.isArray(data) ? data : (data as any).orders || [];
@@ -259,7 +259,7 @@ async function handleLatestOrders(res: http.ServerResponse, instanceId: string) 
   }
 }
 
-const server = http.createServer((req, res) => {
+export const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
@@ -306,13 +306,15 @@ const server = http.createServer((req, res) => {
   sendError(res, 404, 'Not found');
 });
 
-if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && parseInt(LISTEN_FDS, 10) > 0) {
-  server.listen({ fd: 3 }, () => {
-    console.log('Server executing via systemd socket activation (FD 3)');
-  });
-} else {
-  server.listen(PORT, () => {
-    console.log(`Server executing at http://localhost:${PORT}/`);
-  });
+// Avoid listening when required as a module (e.g. in tests)
+if (require.main === module) {
+  if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && parseInt(LISTEN_FDS, 10) > 0) {
+    server.listen({ fd: 3 }, () => {
+      console.log('Server executing via systemd socket activation (FD 3)');
+    });
+  } else {
+    server.listen(PORT, () => {
+      console.log(`Server executing at http://localhost:${PORT}/`);
+    });
+  }
 }
-

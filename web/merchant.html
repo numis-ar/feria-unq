@@ -386,23 +386,17 @@
 
     </main>
 
-        <script>
-      function playNotificationSound() {
-        try {
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          const oscillator = audioCtx.createOscillator();
-          const gainNode = audioCtx.createGain();
-          oscillator.type = 'sine';
-          oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-          oscillator.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.1); // C6
-          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-          oscillator.connect(gainNode);
-          gainNode.connect(audioCtx.destination);
-          oscillator.start();
-          oscillator.stop(audioCtx.currentTime + 0.3);
-        } catch (e) {}
-      }
+    <script type="module">
+      import { 
+        playNotificationSound, 
+        parseAmountStr, 
+        getCurrency, 
+        formatMoney, 
+        validatePassword,
+        loginToTaler,
+        getAccountName,
+        changePassword
+      } from './merchant.js';
 
       function showToast(title, desc, type = "success") {
         playNotificationSound();
@@ -619,29 +613,6 @@
 
       document.body.classList.add("modal-active");
 
-      // Utility: Parse Taler amount format "CURRENCY:Value"
-      function parseAmountStr(amtStr) {
-        if (!amtStr) return 0;
-        if (typeof amtStr === "string" && amtStr.includes(":")) {
-          return parseFloat(amtStr.split(":")[1]) || 0;
-        }
-        return parseFloat(amtStr) || 0;
-      }
-
-      // Utility: Get currency from Taler amount
-      function getCurrency(amtStr) {
-        if (!amtStr) return "";
-        if (typeof amtStr === "string" && amtStr.includes(":")) {
-          return amtStr.split(":")[0];
-        }
-        return "";
-      }
-
-      // Format currency display (No currency text)
-      function formatMoney(num, currency = "") {
-        return num.toFixed(2);
-      }
-
       window.addEventListener("DOMContentLoaded", () => {
         handleHash();
         const savedUser = localStorage.getItem("taler_username");
@@ -693,46 +664,10 @@
         INSTANCE_ID = user;
         PASSWORD = pass;
 
-        // 1. Get Access Token
         try {
-          const tokenRes = await fetch(
-            `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/token`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Basic " + btoa(`${INSTANCE_ID}:${PASSWORD}`),
-              },
-              body: JSON.stringify({ scope: "all" }),
-            },
-          );
-
-          if (!tokenRes.ok) {
-            throw new Error("Failed to authenticate with Merchant");
-          }
-
-          const tokenData = await tokenRes.json();
-          ACCESS_TOKEN = tokenData.access_token || tokenData.token;
-
-          // 2. Get Bank Access Token
-          const bankTokenRes = await fetch(
-            `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/token`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Basic " + btoa(`${INSTANCE_ID}:${PASSWORD}`),
-              },
-              body: JSON.stringify({ scope: "readwrite" }),
-            },
-          );
-
-          if (!bankTokenRes.ok) {
-            throw new Error("Failed to authenticate with Bank");
-          }
-
-          const bankTokenData = await bankTokenRes.json();
-          BANK_ACCESS_TOKEN = bankTokenData.access_token || bankTokenData.token;
+          const authData = await loginToTaler(API_URL, BANK_URL, INSTANCE_ID, PASSWORD);
+          ACCESS_TOKEN = authData.ACCESS_TOKEN;
+          BANK_ACCESS_TOKEN = authData.BANK_ACCESS_TOKEN;
 
           document.getElementById("sidebar").classList.remove("hidden");
           document.getElementById("sidebar").classList.add("max-md:hidden");
@@ -741,22 +676,8 @@
           document.getElementById("auth-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
 
-          try {
-              const infoRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}`, {
-                  headers: {
-                      Accept: "application/json",
-                      Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
-                  }
-              });
-              if (infoRes.ok) {
-                  const info = await infoRes.json();
-                  document.getElementById("bank-account-name").textContent = info.name || INSTANCE_ID;
-              } else {
-                  document.getElementById("bank-account-name").textContent = INSTANCE_ID;
-              }
-          } catch (e) {
-              document.getElementById("bank-account-name").textContent = INSTANCE_ID;
-          }
+          const accountName = await getAccountName(BANK_URL, INSTANCE_ID, BANK_ACCESS_TOKEN);
+          document.getElementById("bank-account-name").textContent = accountName;
 
           if (!isPolling) {
             isPolling = true;
@@ -1269,15 +1190,7 @@
         btnSpinner.classList.remove("hidden");
 
         try {
-          const res = await fetch(`/get-money/${encodeURIComponent(INSTANCE_ID)}/close-account`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
-          });
-          
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || "Failed to close account");
-          }
+          await import('./merchant.js').then(m => m.closeAccount(INSTANCE_ID, BANK_ACCESS_TOKEN));
           
           document.getElementById("close-account-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
@@ -1304,16 +1217,6 @@
       });
 
       
-      function validatePassword(pass) {
-         if (pass.length < 8) return false;
-         if (!/^[a-zA-Z0-9_\-]+$/.test(pass)) return false;
-         const letters = pass.match(/[a-zA-Z]/g);
-         if (!letters || letters.length < 2) return false;
-         const numbers = pass.match(/[0-9]/g);
-         if (!numbers || numbers.length < 2) return false;
-         return true;
-      }
-
       // Fragment navigation logic
       function handleHash() {
          const hash = window.location.hash.substring(1);
@@ -1391,42 +1294,7 @@
          btn.disabled = true;
 
          try {
-             // 1. Merchant API password change
-             const merchRes = await fetch(`${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/auth`, {
-                 method: 'POST',
-                 headers: {
-                     "Content-Type": "application/json",
-                     "Authorization": `Bearer ${ACCESS_TOKEN}`
-                 },
-                 body: JSON.stringify({
-                     method: "token",
-                     old_password: oldP,
-                     password: newP
-                 })
-             });
-             
-             if (!merchRes.ok) {
-                 const errText = await merchRes.text();
-                 throw new Error(`Merchant API failed: ${merchRes.status} ${errText}`);
-             }
-             
-             // 2. Bank API password change
-             const bankRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/auth`, {
-                 method: 'PATCH',
-                 headers: {
-                     "Content-Type": "application/json",
-                     "Authorization": `Bearer ${BANK_ACCESS_TOKEN}`
-                 },
-                 body: JSON.stringify({
-                     old_password: oldP,
-                     new_password: newP
-                 })
-             });
-             
-             if (!bankRes.ok) {
-                 const errText = await bankRes.text();
-                 throw new Error(`Bank API failed: ${bankRes.status} ${errText}`);
-             }
+             await import('./merchant.js').then(m => m.changePassword(API_URL, BANK_URL, INSTANCE_ID, ACCESS_TOKEN, BANK_ACCESS_TOKEN, oldP, newP));
 
              if (newP.length > 0) {
                  PASSWORD = newP;
