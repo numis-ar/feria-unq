@@ -115,6 +115,31 @@
       </div>
     </div>
 
+    <!-- Close Account Modal Overlay -->
+    <div
+      id="close-account-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
+    >
+      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
+        <h2 class="text-2xl font-bold text-red-600 mb-2" data-i18n="close_account_title">Close Account</h2>
+        <p class="text-slate-500 mb-4 text-sm" data-i18n="close_account_desc">
+          Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.
+        </p>
+        <a href="https://unq.numis.ar/closing.html" target="_blank" class="text-indigo-500 hover:underline text-sm block mb-6" data-i18n="close_account_more_info">More information about closing the account</a>
+        
+        <div class="mt-6 space-y-3">
+          <button id="btn-close-account-confirm" class="w-full flex justify-center items-center gap-2 bg-red-600 text-white rounded-xl py-3 font-semibold hover:bg-red-700 transition disabled:opacity-70">
+            <span class="btn-text" data-i18n="btn_confirm">Confirm</span>
+            <span class="btn-spinner hidden">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </span>
+          </button>
+          <button id="btn-close-account-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
+        </div>
+        <p id="close-account-error" class="hidden mt-4 text-red-600 font-medium"></p>
+      </div>
+    </div>
+
     <!-- Top bar -->
     <header
       class="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-40 flex items-center px-6 justify-between"
@@ -219,6 +244,10 @@
             <h2 class="text-3xl font-extrabold text-slate-900" data-i18n="bank_title">Bank Account</h2>
             <p class="text-slate-500 mt-1" data-i18n="bank_desc">Incoming and outgoing transactions.</p>
           </div>
+          <div class="text-right">
+            <p class="text-sm text-slate-500 font-medium" data-i18n="bank_account_name_lbl">Account Name</p>
+            <p class="text-lg font-bold text-indigo-700" id="bank-account-name">-</p>
+          </div>
         </div>
 
         <!-- Bank Cards -->
@@ -309,8 +338,12 @@
             </table>
           </div>
         </div>
+        
+        <div class="flex justify-end mt-6">
+          <button id="btn-open-close-account" class="text-red-500 font-semibold hover:text-red-700 underline text-sm transition" data-i18n="btn_close_account">Close Account</button>
+        </div>
       </section>
-    
+
       <!-- SECTION 3: User Settings -->
       <section id="user" class="main-section space-y-8 hidden">
         <div id="temp-password-warning" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-xl shadow-sm">
@@ -442,6 +475,7 @@
           no_orders: "No orders found.",
           bank_title: "Bank Account",
           bank_desc: "Incoming and outgoing transactions.",
+          bank_account_name_lbl: "Account Name",
           bank_avail: "Available",
           bank_avail_desc: "Amount ready to withdraw",
           bank_withdraw: "Withdraw",
@@ -478,7 +512,11 @@
           pass_changed: "Password changed successfully!",
           pass_mismatch: "New passwords do not match.",
           temp_pass_warning: "You are using a temporary password. It MUST be changed before doing anything else.",
-          pass_validation: "Password must be at least 8 characters long, contain at least 2 letters, 2 numbers, and only consist of letters, numbers, hyphens, or underscores."
+          pass_validation: "Password must be at least 8 characters long, contain at least 2 letters, 2 numbers, and only consist of letters, numbers, hyphens, or underscores.",
+          btn_close_account: "Close Account",
+          close_account_title: "Close Account",
+          close_account_desc: "Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.",
+          close_account_more_info: "More information about closing the account"
         },
         es: {
           login_title: "Acceso de Comerciante",
@@ -510,6 +548,7 @@
           no_orders: "No se encontraron pedidos.",
           bank_title: "Cuenta Bancaria",
           bank_desc: "Transacciones entrantes y salientes.",
+          bank_account_name_lbl: "Nombre de Cuenta",
           bank_avail: "Disponible",
           bank_avail_desc: "Cantidad lista para retirar",
           bank_withdraw: "Retirar",
@@ -546,7 +585,11 @@
           pass_changed: "¡Contraseña cambiada con éxito!",
           pass_mismatch: "Las nuevas contraseñas no coinciden.",
           temp_pass_warning: "Estás usando una contraseña temporal. DEBE ser cambiada antes de hacer cualquier otra cosa.",
-          pass_validation: "La contraseña debe tener al menos 8 caracteres, contener al menos 2 letras, 2 números, y solo estar formada por letras, números, guiones o guiones bajos."
+          pass_validation: "La contraseña debe tener al menos 8 caracteres, contener al menos 2 letras, 2 números, y solo estar formada por letras, números, guiones o guiones bajos.",
+          btn_close_account: "Cerrar Cuenta",
+          close_account_title: "Cerrar Cuenta",
+          close_account_desc: "Tu saldo restante se transferirá a <strong>closing_account</strong> y esta operación no se puede deshacer.",
+          close_account_more_info: "Más información sobre el cierre de cuenta"
         }
       };
 
@@ -697,6 +740,23 @@
           document.getElementById("main-content").classList.add("md:ml-64");
           document.getElementById("auth-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
+
+          try {
+              const infoRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}`, {
+                  headers: {
+                      Accept: "application/json",
+                      Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
+                  }
+              });
+              if (infoRes.ok) {
+                  const info = await infoRes.json();
+                  document.getElementById("bank-account-name").textContent = info.name || INSTANCE_ID;
+              } else {
+                  document.getElementById("bank-account-name").textContent = INSTANCE_ID;
+              }
+          } catch (e) {
+              document.getElementById("bank-account-name").textContent = INSTANCE_ID;
+          }
 
           if (!isPolling) {
             isPolling = true;
@@ -1182,6 +1242,56 @@
             btnSpinner.classList.add("hidden");
           }
         });
+
+      document.getElementById("btn-open-close-account").addEventListener("click", () => {
+        document.getElementById("close-account-modal").classList.remove("hidden");
+        document.body.classList.add("modal-active");
+      });
+
+      document.getElementById("btn-close-account-cancel").addEventListener("click", () => {
+        document.getElementById("close-account-modal").classList.add("hidden");
+        document.body.classList.remove("modal-active");
+      });
+
+      document.getElementById("btn-close-account-confirm").addEventListener("click", async () => {
+        const errorEl = document.getElementById("close-account-error");
+        const btn = document.getElementById("btn-close-account-confirm");
+        const btnText = btn.querySelector(".btn-text");
+        const btnSpinner = btn.querySelector(".btn-spinner");
+
+        errorEl.classList.add("hidden");
+        btn.disabled = true;
+        btnText.classList.add("hidden");
+        btnSpinner.classList.remove("hidden");
+
+        try {
+          const res = await fetch(`/get-money/${encodeURIComponent(INSTANCE_ID)}/close-account`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
+          });
+          
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Failed to close account");
+          }
+          
+          document.getElementById("close-account-modal").classList.add("hidden");
+          document.body.classList.remove("modal-active");
+          showToast("Success", "Account closed successfully", "success");
+          
+          // Force logout
+          setTimeout(() => {
+             document.getElementById("btn-sidebar-logout").click();
+          }, 2000);
+        } catch (e) {
+          errorEl.textContent = e.message;
+          errorEl.classList.remove("hidden");
+        } finally {
+          btn.disabled = false;
+          btnText.classList.remove("hidden");
+          btnSpinner.classList.add("hidden");
+        }
+      });
     
       
       // Mobile menu toggle

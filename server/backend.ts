@@ -12,6 +12,8 @@ const LISTEN_FDS = process.env.LISTEN_FDS;
 const MERCHANT_BASE_URL = process.env.MERCHANT_BASE_URL || 'https://merchant.taler';
 const MERCHANT_API_KEY = process.env.MERCHANT_API_KEY || '';
 const GET_MONEY_SCRIPT = 'wallet-get-money.sh';
+const BANK_URL = process.env.BANK_URL || 'https://bank.taler.ar';
+const CLOSING_ACCOUNT = 'closing_account';
 
 function log(...args: unknown[]) {
   console.log(new Date().toISOString(), ...args);
@@ -50,6 +52,107 @@ function parseAmount(body: unknown): { ok: true; value: number } | { ok: false; 
 async function callGetMoneyScript(amount: number): Promise<string> {
   const { stdout } = await execFileAsync(GET_MONEY_SCRIPT, [String(amount)]);
   return stdout.trim();
+}
+
+async function handleCloseAccount(req: http.IncomingMessage, res: http.ServerResponse, instanceId: string) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    sendError(res, 401, 'Unauthorized');
+    return;
+  }
+  const token = authHeader.substring(7);
+
+  try {
+    const bankHost = new URL(BANK_URL).host;
+    
+    // 1. Fetch balance
+    const balRes = await new Promise<any>((resolve, reject) => {
+      const url = new URL(`/accounts/${encodeURIComponent(instanceId)}`, BANK_URL);
+      const options: https.RequestOptions = {
+        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+        path: url.pathname + url.search, method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+        rejectUnauthorized: false
+      };
+      const client = url.protocol === 'https:' ? https : http;
+      const request = client.request(options, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => {
+          if (response.statusCode && response.statusCode >= 400) {
+            reject(new Error(`Bank balance error: ${response.statusCode} ${data}`));
+          } else {
+            resolve(JSON.parse(data));
+          }
+        });
+      });
+      request.on('error', reject);
+      request.end();
+    });
+
+    const amountStr = balRes.balance?.amount;
+    if (!amountStr) {
+      sendError(res, 400, 'No balance found');
+      return;
+    }
+
+    // Parse amount to check if > 0
+    let numericAmount = 0;
+    if (typeof amountStr === 'string' && amountStr.includes(':')) {
+      numericAmount = parseFloat(amountStr.split(':')[1]);
+    } else {
+      numericAmount = parseFloat(amountStr);
+    }
+    
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      sendJson(res, 200, { type: 'ok', message: 'Account balance is zero' });
+      return;
+    }
+
+    // 2. Transfer all to closing_account
+    const request_uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const payto_uri = `payto://x-taler-bank/${bankHost}/${CLOSING_ACCOUNT}?message=Account+Closed`;
+    const payload = JSON.stringify({
+      payto_uri,
+      amount: amountStr,
+      request_uid
+    });
+
+    await new Promise<any>((resolve, reject) => {
+      const url = new URL(`/accounts/${encodeURIComponent(instanceId)}/transactions`, BANK_URL);
+      const options: https.RequestOptions = {
+        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+        path: url.pathname + url.search, method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        },
+        rejectUnauthorized: false
+      };
+      const client = url.protocol === 'https:' ? https : http;
+      const request = client.request(options, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => {
+          if (response.statusCode && response.statusCode >= 400) {
+            reject(new Error(`Bank transfer error: ${response.statusCode} ${data}`));
+          } else {
+            resolve(JSON.parse(data));
+          }
+        });
+      });
+      request.on('error', reject);
+      request.write(payload);
+      request.end();
+    });
+
+    sendJson(res, 200, { type: 'ok' });
+  } catch (e: any) {
+    log('Close account error:', e.message || e);
+    sendError(res, 500, e.message || 'Internal error');
+  }
 }
 
 function handleWithdraw(req: http.IncomingMessage, res: http.ServerResponse, id: string) {
@@ -169,6 +272,15 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && path === '/get-money') {
     handleWithdraw(req, res, 'default');
+    return;
+  }
+
+  const closeMatch = path.match(/^\/get-money\/([^/]+)\/close-account$/);
+  if (req.method === 'POST' && closeMatch) {
+    handleCloseAccount(req, res, closeMatch[1]).catch((e) => {
+      log(e);
+      sendError(res, 500, 'Internal server error');
+    });
     return;
   }
 
