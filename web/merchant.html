@@ -254,6 +254,39 @@
               <p id="withdraw-error" class="error-text hidden mt-2 text-xs text-red-600 font-medium"></p>
             </div>
           </div>
+
+          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div>
+              <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="bank_transfer">Transfer</div>
+              <div class="text-xs text-slate-400 mb-4" data-i18n="bank_transfer_desc">Transfer to another merchant</div>
+            </div>
+            <div>
+              <div class="flex flex-col gap-2">
+                <input
+                  id="transfer-target"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  type="text" placeholder="Merchant Account" data-i18n-placeholder="target_account"
+                />
+                <div class="flex items-center gap-2">
+                  <input
+                    id="transfer-amount"
+                    class="amount-input w-full rounded-xl border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    type="number" min="1" max="99998" placeholder="Amount" data-i18n-placeholder="col_amount"
+                  />
+                  <button
+                    id="btn-transfer"
+                    class="action-btn rounded-xl bg-indigo-600 px-4 py-2 text-white font-semibold shadow hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
+                  >
+                    <span class="btn-text" data-i18n="transfer_btn">Send</span>
+                    <span class="btn-spinner hidden">
+                      <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <p id="transfer-error" class="error-text hidden mt-2 text-xs text-red-600 font-medium"></p>
+            </div>
+          </div>
         </div>
 
         <!-- Transactions Table -->
@@ -413,6 +446,10 @@
           bank_avail_desc: "Amount ready to withdraw",
           bank_withdraw: "Withdraw",
           bank_withdraw_desc: "Withdraw your balance",
+          bank_transfer: "Transfer",
+          bank_transfer_desc: "Transfer to another merchant",
+          target_account: "Merchant Account",
+          transfer_btn: "Send",
           tx_title: "Latest Transactions",
           col_subject: "Subject",
           loading_tx: "Loading transactions...",
@@ -477,6 +514,10 @@
           bank_avail_desc: "Cantidad lista para retirar",
           bank_withdraw: "Retirar",
           bank_withdraw_desc: "Retirar tu saldo",
+          bank_transfer: "Transferir",
+          bank_transfer_desc: "Transferir a otro comerciante",
+          target_account: "Cuenta del comerciante",
+          transfer_btn: "Enviar",
           tx_title: "Últimas Transacciones",
           col_subject: "Asunto",
           loading_tx: "Cargando transacciones...",
@@ -1074,6 +1115,66 @@
             pollWithdrawalState();
           } catch (e) {
             errorEl.textContent = e.message || "Something went wrong creating withdrawal.";
+            errorEl.classList.remove("hidden");
+          } finally {
+            btn.disabled = false;
+            btnText.classList.remove("hidden");
+            btnSpinner.classList.add("hidden");
+          }
+        });
+
+      document
+        .getElementById("btn-transfer")
+        .addEventListener("click", async () => {
+          const targetInput = document.getElementById("transfer-target");
+          const amountInput = document.getElementById("transfer-amount");
+          const target = targetInput.value.trim();
+          const amount = amountInput.value;
+          
+          if (!target || !amount || amount <= 0) return;
+
+          const errorEl = document.getElementById("transfer-error");
+          const btn = document.getElementById("btn-transfer");
+          const btnText = btn.querySelector(".btn-text");
+          const btnSpinner = btn.querySelector(".btn-spinner");
+
+          errorEl.classList.add("hidden");
+          btn.disabled = true;
+          btnText.classList.add("hidden");
+          btnSpinner.classList.remove("hidden");
+
+          try {
+            const bankHost = new URL(BANK_URL).host;
+            const payto_uri = `payto://x-taler-bank/${bankHost}/${encodeURIComponent(target)}?message=Transfer`;
+            const request_uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            
+            const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions`, {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
+              },
+              body: JSON.stringify({ 
+                payto_uri,
+                amount: `NUMIS:${amount}`,
+                request_uid
+              }),
+            });
+            
+            if (!res.ok) {
+               if (res.status === 404) throw new Error("Target account not found");
+               if (res.status === 409) {
+                   const errData = await res.json().catch(() => ({}));
+                   throw new Error(errData.hint || translations[currentLang]["error_bal"]);
+               }
+               throw new Error("Server error creating transfer");
+            }
+
+            targetInput.value = "";
+            amountInput.value = "";
+            showToast("Success", translations[currentLang]["transfer_confirmed"], "success");
+          } catch (e) {
+            errorEl.textContent = e.message || "Something went wrong creating transfer.";
             errorEl.classList.remove("hidden");
           } finally {
             btn.disabled = false;
