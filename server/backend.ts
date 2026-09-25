@@ -12,7 +12,9 @@ const LISTEN_FDS = process.env.LISTEN_FDS;
 export const MERCHANT_BASE_URL = process.env.MERCHANT_BASE_URL || 'https://merchant.taler';
 const MERCHANT_API_KEY = process.env.MERCHANT_API_KEY || '';
 const GET_MONEY_SCRIPT = 'wallet-get-money.sh';
-export const BANK_URL = process.env.BANK_URL || 'https://bank.taler.ar';
+export function getBankUrl() {
+  return process.env.BANK_URL || 'https://bank.taler.ar';
+}
 export const CLOSING_ACCOUNT = 'closing_account';
 
 function log(...args: unknown[]) {
@@ -63,11 +65,11 @@ export async function handleCloseAccount(req: http.IncomingMessage, res: http.Se
   const token = authHeader.substring(7);
 
   try {
-    const bankHost = new URL(BANK_URL).host;
+    const bankHost = new URL(getBankUrl()).host;
     
     // 1. Fetch balance
     const balRes = await new Promise<any>((resolve, reject) => {
-      const url = new URL(`/accounts/${encodeURIComponent(instanceId)}`, BANK_URL);
+      const url = new URL(`/accounts/${encodeURIComponent(instanceId)}`, getBankUrl());
       const options: https.RequestOptions = {
         hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
         path: url.pathname + url.search, method: 'GET',
@@ -115,7 +117,8 @@ export async function handleCloseAccount(req: http.IncomingMessage, res: http.Se
     for(let i = 0; i < 52; i++) {
       request_uid += charset[Math.floor(Math.random() * charset.length)];
     }
-    const payto_uri = `payto://x-taler-bank/${bankHost}/${CLOSING_ACCOUNT}?message=Account+Closed`;
+    const randomId = Array.from({length: 6}, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
+    const payto_uri = `payto://x-taler-bank/${bankHost}/${CLOSING_ACCOUNT}?message=Close-${randomId}`;
     const payload = JSON.stringify({
       payto_uri,
       amount: amountStr,
@@ -123,7 +126,7 @@ export async function handleCloseAccount(req: http.IncomingMessage, res: http.Se
     });
 
     await new Promise<any>((resolve, reject) => {
-      const url = new URL(`/accounts/${encodeURIComponent(instanceId)}/transactions`, BANK_URL);
+      const url = new URL(`/accounts/${encodeURIComponent(instanceId)}/transactions`, getBankUrl());
       const options: https.RequestOptions = {
         hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
         path: url.pathname + url.search, method: 'POST',

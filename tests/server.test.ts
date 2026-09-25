@@ -1,14 +1,37 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import request from 'supertest';
-import nock from 'nock';
-import { server, BANK_URL, MERCHANT_BASE_URL, CLOSING_ACCOUNT } from '../server/backend.ts';
+import * as http from 'http';
+import { server, CLOSING_ACCOUNT } from '../server/backend.ts';
 import { parseAmount } from '../server/backend.ts';
 
 describe('Backend tests', () => {
+  let mockBankServer: http.Server;
+  let mockBankPort: number;
+  let mockBankHandler: (req: http.IncomingMessage, res: http.ServerResponse) => void;
 
-  afterEach(() => {
-    nock.cleanAll();
+  beforeEach(async () => {
+    await new Promise<void>((resolve) => {
+      mockBankHandler = (req, res) => {
+        res.writeHead(500);
+        res.end();
+      };
+      mockBankServer = http.createServer((req, res) => {
+        mockBankHandler(req, res);
+      });
+      mockBankServer.listen(0, () => {
+        const addr = mockBankServer.address() as import('net').AddressInfo;
+        mockBankPort = addr.port;
+        process.env.BANK_URL = `http://localhost:${mockBankPort}`;
+        resolve();
+      });
+    });
+  });
+
+  afterEach(async () => {
+    await new Promise<void>((resolve) => {
+      mockBankServer.close(() => resolve());
+    });
   });
 
   describe('parseAmount()', () => {
@@ -42,15 +65,18 @@ describe('Backend tests', () => {
     });
 
     it('should correctly close account when balance is greater than zero', async () => {
-      // Mock get balance
-      nock(BANK_URL)
-        .get('/accounts/test')
-        .reply(200, { balance: { amount: 'NUMIS:10' } });
-
-      // Mock transaction creation
-      nock(BANK_URL)
-        .post('/accounts/test/transactions')
-        .reply(200, { type: 'ok' });
+      mockBankHandler = (req, res) => {
+        if (req.method === 'GET' && req.url === '/accounts/test') {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ balance: { amount: 'NUMIS:10' } }));
+        } else if (req.method === 'POST' && req.url === '/accounts/test/transactions') {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ type: 'ok' }));
+        } else {
+          res.writeHead(404);
+          res.end();
+        }
+      };
 
       const res = await request(server)
         .post('/get-money/test/close-account')
@@ -61,9 +87,15 @@ describe('Backend tests', () => {
     });
 
     it('should handle zero balance correctly', async () => {
-      nock(BANK_URL)
-        .get('/accounts/test')
-        .reply(200, { balance: { amount: 'NUMIS:0' } });
+      mockBankHandler = (req, res) => {
+        if (req.method === 'GET' && req.url === '/accounts/test') {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ balance: { amount: 'NUMIS:0' } }));
+        } else {
+          res.writeHead(404);
+          res.end();
+        }
+      };
 
       const res = await request(server)
         .post('/get-money/test/close-account')
@@ -74,9 +106,10 @@ describe('Backend tests', () => {
     });
 
     it('should propagate bank errors', async () => {
-      nock(BANK_URL)
-        .get('/accounts/test')
-        .reply(500, { error: 'Internal Bank Error' });
+      mockBankHandler = (req, res) => {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal Bank Error' }));
+      };
 
       const res = await request(server)
         .post('/get-money/test/close-account')

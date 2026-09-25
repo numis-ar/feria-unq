@@ -44,6 +44,16 @@
   </head>
 
   <body class="text-slate-800 antialiased bg-slate-50 min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
+      <div class="flex flex-col items-center gap-4">
+        <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-slate-600 font-medium" data-i18n="loading_session">Validating session...</p>
+      </div>
+    </div>
     <!-- Login Modal Overlay -->
     <div
       id="auth-modal"
@@ -154,6 +164,7 @@
       </div>
       <div class="flex items-center gap-4">
         <select id="lang-selector" class="bg-white rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 outline-none cursor-pointer">
+          <option value="system">System</option>
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
@@ -340,7 +351,7 @@
         </div>
         
         <div class="flex justify-end mt-6">
-          <button id="btn-open-close-account" class="text-red-500 font-semibold hover:text-red-700 underline text-sm transition" data-i18n="btn_close_account">Close Account</button>
+          <button id="btn-open-close-account" class="w-full md:w-auto px-6 bg-red-600 text-white rounded-xl py-2 font-semibold hover:bg-red-700 transition" data-i18n="btn_close_account">Close Account</button>
         </div>
       </section>
 
@@ -436,7 +447,10 @@
       let withdrawalPolling = false;
       let withdrawalController = null;
       let currentWithdrawalId = null;
-      let currentLang = "en";
+      let storedLang = localStorage.getItem("taler_lang") || "system";
+      let currentLang = storedLang === "system" 
+        ? ((navigator.language || navigator.userLanguage || "en").startsWith("es") ? "es" : "en")
+        : storedLang;
 
       const translations = {
         en: {
@@ -489,6 +503,7 @@
           error_qr: "Failed to load QR code",
           val_sales: "sales",
           val_withdraw: "withdraw",
+          val_closing: "closing",
           confirming: "Confirming...",
           toast_new_order: "New Order",
           toast_updated_order: "Order Updated",
@@ -507,6 +522,7 @@
           pass_mismatch: "New passwords do not match.",
           temp_pass_warning: "You are using a temporary password. It MUST be changed before doing anything else.",
           pass_validation: "Password must be at least 8 characters long, contain at least 2 letters, 2 numbers, and only consist of letters, numbers, hyphens, or underscores.",
+          loading_session: "Validating session...",,
           btn_close_account: "Close Account",
           close_account_title: "Close Account",
           close_account_desc: "Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.",
@@ -562,6 +578,7 @@
           error_qr: "Fallo al cargar el código QR",
           val_sales: "ventas",
           val_withdraw: "retiro",
+          val_closing: "cierre",
           confirming: "Confirmando...",
           toast_new_order: "Nuevo Pedido",
           toast_updated_order: "Pedido Actualizado",
@@ -580,6 +597,7 @@
           pass_mismatch: "Las nuevas contraseñas no coinciden.",
           temp_pass_warning: "Estás usando una contraseña temporal. DEBE ser cambiada antes de hacer cualquier otra cosa.",
           pass_validation: "La contraseña debe tener al menos 8 caracteres, contener al menos 2 letras, 2 números, y solo estar formada por letras, números, guiones o guiones bajos.",
+          loading_session: "Validando sesión...",,
           btn_close_account: "Cerrar Cuenta",
           close_account_title: "Cerrar Cuenta",
           close_account_desc: "Tu saldo restante se transferirá a <strong>closing_account</strong> y esta operación no se puede deshacer.",
@@ -607,14 +625,23 @@
         });
       }
 
+      document.getElementById("lang-selector").value = storedLang;
       document.getElementById("lang-selector").addEventListener("change", (e) => {
-        updateLanguage(e.target.value);
+        const val = e.target.value;
+        if (val === "system") {
+          localStorage.removeItem("taler_lang");
+        } else {
+          localStorage.setItem("taler_lang", val);
+        }
+        window.location.reload();
       });
 
       document.body.classList.add("modal-active");
 
-      window.addEventListener("DOMContentLoaded", () => {
+      window.addEventListener("DOMContentLoaded", async () => {
         handleHash();
+        updateLanguage(currentLang);
+
         const savedUser = localStorage.getItem("taler_username");
         const savedPass = localStorage.getItem("taler_password");
 
@@ -622,10 +649,10 @@
 
         if (savedUser && savedPass) {
           document.getElementById("auth-pass").value = savedPass;
-          doLogin(API_URL, BANK_URL, savedUser, savedPass);
+          await doLogin(API_URL, BANK_URL, savedUser, savedPass);
+        } else {
+          document.getElementById("loading-overlay").classList.add("hidden");
         }
-        
-        updateLanguage(currentLang);
       });
 
       document.getElementById("btn-login").addEventListener("click", () => {
@@ -692,6 +719,8 @@
         } catch (err) {
           alert("Login failed: " + err.message);
           localStorage.removeItem("taler_password");
+        } finally {
+          document.getElementById("loading-overlay").classList.add("hidden");
         }
       }
 
@@ -839,6 +868,17 @@
         }
       }
 
+      function extractAccountFromPayto(paytoUri) {
+        if (!paytoUri) return "";
+        try {
+          const url = new URL(paytoUri.replace("payto://", "http://"));
+          const parts = url.pathname.split("/").filter(Boolean);
+          return parts[parts.length - 1] || "";
+        } catch(e) {
+          return "";
+        }
+      }
+
       async function startPollingBank() {
         const tbody = document.getElementById("bank-tbody");
         tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_tx">${translations[currentLang]["loading_tx"]}</td></tr>`;
@@ -887,21 +927,44 @@
               let colorClass = "text-slate-800";
               let subject = tx.subject || "Transfer";
               let isCredit = false;
+              let iconSvg = "";
+              let label = subject;
+              let isSpecial = false;
 
               if (tx.direction === "credit") {
                 colorClass = "text-green-600";
-                subject = translations[currentLang]["val_sales"];
                 isCredit = true;
+                const account = extractAccountFromPayto(tx.debtor_payto_uri);
+                if (account === "exchange") {
+                  isSpecial = true;
+                  subject = translations[currentLang]["val_sales"];
+                  iconSvg = `<svg class="w-5 h-5 text-green-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>`;
+                } else {
+                  label = `transfer from ${account || "unknown"}`;
+                  iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
+                }
               } else if (tx.direction === "debit") {
                 colorClass = "text-red-600";
-                subject = translations[currentLang]["val_withdraw"];
                 isCredit = false;
+                const account = extractAccountFromPayto(tx.creditor_payto_uri);
+                if (account === "exchange") {
+                  isSpecial = true;
+                  subject = translations[currentLang]["val_withdraw"];
+                  iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`;
+                } else if (account === "closing_account") {
+                  isSpecial = true;
+                  subject = translations[currentLang]["val_closing"];
+                  iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+                } else {
+                  label = `transfer to ${account || "unknown"}`;
+                  iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
+                }
               }
 
               let isNew = false;
               if (!isFirstBankFetch && !previousBankRows.has(tx.row_id)) {
                  isNew = true;
-                 newTxs.push({ subject, isCredit, amount: amountNum });
+                 newTxs.push({ subject: isSpecial ? subject : label, isCredit, amount: amountNum });
               }
               previousBankRows.add(tx.row_id);
 
@@ -912,7 +975,7 @@
 
               htmlBuffer += `
               <tr class="${rowClass}">
-                <td class="px-6 py-4 font-medium text-slate-800">${subject}</td>
+                <td class="px-6 py-4 font-medium text-slate-800">${iconSvg} ${isSpecial ? subject : label}</td>
                 <td class="px-6 py-4">${dateStr}</td>
                 <td class="px-6 py-4 text-right font-semibold ${colorClass}">${formatMoney(amountNum)}</td>
               </tr>
