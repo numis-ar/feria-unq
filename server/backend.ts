@@ -33,7 +33,7 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
 
   try {
     const accountInfo = await new Promise<any>((resolve, reject) => {
-      const url = new URL(`/accounts/${encodeURIComponent(targetAccount)}`, BANK_URL);
+      const url = new URL(`/accounts/${encodeURIComponent(targetAccount)}`, getBankUrl());
       const options: https.RequestOptions = {
         hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
         path: url.pathname + url.search, method: 'GET',
