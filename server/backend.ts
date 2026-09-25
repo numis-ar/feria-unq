@@ -15,7 +15,55 @@ const GET_MONEY_SCRIPT = 'wallet-get-money.sh';
 export function getBankUrl() {
   return process.env.BANK_URL || 'https://bank.taler.ar';
 }
+export const RESTRICTED_ACCOUNTS = ['exchange', 'admin', 'closing_account'];
 export const CLOSING_ACCOUNT = 'closing_account';
+
+export async function handleVerifyAccount(req: http.IncomingMessage, res: http.ServerResponse, instanceId: string, targetAccount: string) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    sendError(res, 401, 'Unauthorized');
+    return;
+  }
+  const token = authHeader.substring(7);
+
+  if (RESTRICTED_ACCOUNTS.includes(targetAccount)) {
+    sendError(res, 400, 'Transfer to this account is restricted');
+    return;
+  }
+
+  try {
+    const accountInfo = await new Promise<any>((resolve, reject) => {
+      const url = new URL(`/accounts/${encodeURIComponent(targetAccount)}`, BANK_URL);
+      const options: https.RequestOptions = {
+        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+        path: url.pathname + url.search, method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+        rejectUnauthorized: false
+      };
+      const client = url.protocol === 'https:' ? https : http;
+      const request = client.request(options, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => {
+          if (response.statusCode && response.statusCode >= 400) {
+            reject(new Error(`Account not found or error: ${response.statusCode}`));
+          } else {
+            resolve(JSON.parse(data));
+          }
+        });
+      });
+      request.on('error', reject);
+      request.end();
+    });
+
+    sendJson(res, 200, {
+      username: targetAccount,
+      name: accountInfo.name || targetAccount
+    });
+  } catch (e: any) {
+    sendError(res, 404, 'Account not found');
+  }
+}
 
 function log(...args: unknown[]) {
   console.log(new Date().toISOString(), ...args);
@@ -279,6 +327,15 @@ export const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && path === '/get-money') {
     handleWithdraw(req, res, 'default');
+    return;
+  }
+
+  const verifyMatch = path.match(/^\/get-money\/([^/]+)\/verify-account\/([^/]+)$/);
+  if (req.method === 'GET' && verifyMatch) {
+    handleVerifyAccount(req, res, verifyMatch[1], verifyMatch[2]).catch((e) => {
+      log(e);
+      sendError(res, 500, 'Internal server error');
+    });
     return;
   }
 
