@@ -110,7 +110,11 @@ async function handleCloseAccount(req: http.IncomingMessage, res: http.ServerRes
     }
 
     // 2. Transfer all to closing_account
-    const request_uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const charset = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    let request_uid = '';
+    for(let i = 0; i < 52; i++) {
+      request_uid += charset[Math.floor(Math.random() * charset.length)];
+    }
     const payto_uri = `payto://x-taler-bank/${bankHost}/${CLOSING_ACCOUNT}?message=Account+Closed`;
     const payload = JSON.stringify({
       payto_uri,

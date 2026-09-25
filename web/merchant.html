@@ -1206,7 +1206,11 @@
           try {
             const bankHost = new URL(BANK_URL).host;
             const payto_uri = `payto://x-taler-bank/${bankHost}/${encodeURIComponent(target)}?message=Transfer`;
-            const request_uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const charset = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+            let request_uid = '';
+            for(let i = 0; i < 52; i++) {
+              request_uid += charset[Math.floor(Math.random() * charset.length)];
+            }
             
             const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions`, {
               method: "POST",
