@@ -615,6 +615,7 @@
           }
         });
       }
+      window.updateLanguage = updateLanguage;
 
       document.getElementById("lang-selector").value = storedLang;
       document.getElementById("lang-selector").addEventListener("change", (e) => {
@@ -1371,6 +1372,8 @@
              btn.disabled = false;
          }
       });
+
+      window.updateLanguage = updateLanguage;
 
       document.getElementById('btn-open-change-pass').addEventListener('click', () => {
         document.getElementById('change-pass-modal').classList.remove('hidden');
