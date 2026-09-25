@@ -125,6 +125,31 @@
       </div>
     </div>
 
+    <!-- Close Account Modal Overlay -->
+    <div
+      id="close-account-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
+    >
+      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
+        <h2 class="text-2xl font-bold text-red-600 mb-2" data-i18n="close_account_title">Close Account</h2>
+        <p class="text-slate-500 mb-4 text-sm" data-i18n="close_account_desc">
+          Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.
+        </p>
+        <a href="https://unq.numis.ar/closing.html" target="_blank" class="text-indigo-500 hover:underline text-sm block mb-6" data-i18n="close_account_more_info">More information about closing the account</a>
+        
+        <div class="mt-6 space-y-3">
+          <button id="btn-close-account-confirm" class="w-full flex justify-center items-center gap-2 bg-red-600 text-white rounded-xl py-3 font-semibold hover:bg-red-700 transition disabled:opacity-70">
+            <span class="btn-text" data-i18n="btn_confirm">Confirm</span>
+            <span class="btn-spinner hidden">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </span>
+          </button>
+          <button id="btn-close-account-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
+        </div>
+        <p id="close-account-error" class="hidden mt-4 text-red-600 font-medium"></p>
+      </div>
+    </div>
+
     <!-- Transfer Modal Overlay -->
     <div
       id="transfer-modal"
@@ -419,8 +444,8 @@
       }
 
       // Config
-      const API_URL = "https://merchant.taler.ar";
-      const BANK_URL = "https://bank.taler.ar";
+      const API_URL = window.API_URL || "https://merchant.taler.ar";
+      const BANK_URL = window.BANK_URL || "https://bank.taler.ar";
       let INSTANCE_ID = "";
       let PASSWORD = "";
       let ACCESS_TOKEN = "";
@@ -657,10 +682,9 @@
         doLogin(API_URL, BANK_URL, user, pass);
       });
 
-      document.getElementById("btn-sidebar-logout").addEventListener("click", () => {
+      function performLogout() {
         localStorage.removeItem("taler_username");
         localStorage.removeItem("taler_password");
-
         INSTANCE_ID = "";
         PASSWORD = "";
         ACCESS_TOKEN = "";
@@ -672,12 +696,11 @@
 
         document.getElementById("auth-pass").value = "";
         document.getElementById("sidebar").classList.add("hidden");
-        document.getElementById("sidebar").classList.remove("max-md:hidden");
-        document.getElementById("btn-mobile-menu").classList.add("hidden");
-        document.getElementById("main-content").classList.remove("md:ml-64");
-        document.getElementById("auth-modal").classList.remove("hidden");
-        document.body.classList.add("modal-active");
-      });
+        if (document.getElementById("auth-modal")) {
+          document.getElementById("auth-modal").classList.remove("hidden");
+          document.body.classList.add("modal-active");
+        }
+      }
 
       async function doLogin(url, bankUrl, user, pass) {
         INSTANCE_ID = user;
@@ -690,7 +713,6 @@
 
           document.getElementById("sidebar").classList.remove("hidden");
           document.getElementById("sidebar").classList.add("max-md:hidden");
-          document.getElementById("btn-mobile-menu").classList.remove("hidden");
           document.getElementById("main-content").classList.add("md:ml-64");
           document.getElementById("auth-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
@@ -743,7 +765,7 @@
               if (resOrders.status === 401 || resOrders.status === 403) {
                 isPolling = false;
                 alert("Session expired or unauthorized");
-                document.getElementById("btn-sidebar-logout").click();
+                performLogout();
                 return;
               }
               throw new Error(`API error: ${resOrders.status}`);
@@ -1159,69 +1181,7 @@
           }
         });
 
-      document
-        .getElementById("btn-transfer")
-        .addEventListener("click", async () => {
-          const targetInput = document.getElementById("transfer-target");
-          const amountInput = document.getElementById("transfer-amount");
-          const target = targetInput.value.trim();
-          const amount = amountInput.value;
-          
-          if (!target || !amount || amount <= 0) return;
 
-          const errorEl = document.getElementById("transfer-error");
-          const btn = document.getElementById("btn-transfer");
-          const btnText = btn.querySelector(".btn-text");
-          const btnSpinner = btn.querySelector(".btn-spinner");
-
-          errorEl.classList.add("hidden");
-          btn.disabled = true;
-          btnText.classList.add("hidden");
-          btnSpinner.classList.remove("hidden");
-
-          try {
-            const bankHost = new URL(BANK_URL).host;
-            const payto_uri = `payto://x-taler-bank/${bankHost}/${encodeURIComponent(target)}?message=Transfer`;
-            const charset = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-            let request_uid = '';
-            for(let i = 0; i < 52; i++) {
-              request_uid += charset[Math.floor(Math.random() * charset.length)];
-            }
-            
-            const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions`, {
-              method: "POST",
-              headers: { 
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
-              },
-              body: JSON.stringify({ 
-                payto_uri,
-                amount: `NUMIS:${amount}`,
-                request_uid
-              }),
-            });
-            
-            if (!res.ok) {
-               if (res.status === 404) throw new Error("Target account not found");
-               if (res.status === 409) {
-                   const errData = await res.json().catch(() => ({}));
-                   throw new Error(errData.hint || translations[currentLang]["error_bal"]);
-               }
-               throw new Error("Server error creating transfer");
-            }
-
-            targetInput.value = "";
-            amountInput.value = "";
-            showToast("Success", translations[currentLang]["transfer_confirmed"], "success");
-          } catch (e) {
-            errorEl.textContent = e.message || "Something went wrong creating transfer.";
-            errorEl.classList.remove("hidden");
-          } finally {
-            btn.disabled = false;
-            btnText.classList.remove("hidden");
-            btnSpinner.classList.add("hidden");
-          }
-        });
 
       document.getElementById("btn-open-close-account").addEventListener("click", () => {
         document.getElementById("close-account-modal").classList.remove("hidden");
@@ -1253,7 +1213,7 @@
           
           // Force logout
           setTimeout(() => {
-             document.getElementById("btn-sidebar-logout").click();
+             performLogout();
           }, 2000);
         } catch (e) {
           errorEl.textContent = e.message;
@@ -1266,10 +1226,7 @@
       });
     
       
-      // Mobile menu toggle
-      document.getElementById('btn-mobile-menu').addEventListener('click', () => {
-         document.getElementById('sidebar').classList.toggle('max-md:hidden');
-      });
+
 
       
       // Fragment navigation logic
@@ -1386,18 +1343,7 @@
       });
 
       document.getElementById('btn-top-logout').addEventListener('click', () => {
-        localStorage.removeItem("taler_username");
-        localStorage.removeItem("taler_password");
-        INSTANCE_ID = "";
-        PASSWORD = "";
-        ACCESS_TOKEN = "";
-        BANK_ACCESS_TOKEN = "";
-        isPolling = false;
-        if (pollAbortController) pollAbortController.abort();
-        document.getElementById("auth-pass").value = "";
-        document.getElementById("sidebar").classList.add("hidden");
-        document.getElementById("auth-modal").classList.remove("hidden");
-        document.body.classList.add("modal-active");
+        performLogout();
       });
 
       let verifiedAccountData = null;
