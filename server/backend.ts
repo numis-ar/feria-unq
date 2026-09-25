@@ -61,6 +61,7 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
       name: accountInfo.name || targetAccount
     });
   } catch (e: any) {
+    log('Account not found error:', e.message || e);
     sendError(res, 404, 'Account not found');
   }
 }
