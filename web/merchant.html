@@ -242,6 +242,14 @@
         </select>
       </div>
       <div class="flex items-center gap-3">
+        <button id="btn-install" class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Install">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
+          <span class="hidden md:inline" data-i18n="btn_install">Install</span>
+        </button>
+        <button id="btn-fullscreen" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Fullscreen">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"></path></svg>
+          <span class="hidden md:inline" data-i18n="btn_fullscreen">Fullscreen</span>
+        </button>
         <button id="btn-open-change-pass" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Change Password">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
           <span class="hidden md:inline" data-i18n="change_password">Change Password</span>
@@ -252,6 +260,14 @@
         </button>
       </div>
     </header>
+
+    <!-- Offline banner -->
+    <div
+      id="offline-banner"
+      class="hidden fixed top-16 left-0 right-0 z-40 bg-yellow-100 border-b border-yellow-300 text-yellow-800 text-center text-sm font-semibold py-1.5 px-4"
+    >
+      <span data-i18n="offline_banner">You are offline. Data may be out of date.</span>
+    </div>
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed top-16 left-0 w-64 bottom-0 bg-white border-r border-slate-200 z-30 hidden md:flex flex-col">
       <nav class="p-4 space-y-2">
@@ -466,6 +482,14 @@
         }
       }
 
+      function updateOnlineStatus() {
+        const banner = document.getElementById("offline-banner");
+        if (banner) banner.classList.toggle("hidden", navigator.onLine);
+      }
+      window.addEventListener("online", updateOnlineStatus);
+      window.addEventListener("offline", updateOnlineStatus);
+      updateOnlineStatus();
+
       let INSTANCE_ID = "";
       let PASSWORD = "";
       let ACCESS_TOKEN = "";
@@ -553,6 +577,10 @@
           temp_pass_warning: "You are using a temporary password. It MUST be changed before doing anything else.",
           pass_validation: "Password must be at least 8 characters long, contain at least 2 letters, 2 numbers, and only consist of letters, numbers, hyphens, or underscores.",
           loading_session: "Validating session...",
+          offline_banner: "You are offline. Data may be out of date.",
+          btn_install: "Install",
+          btn_fullscreen: "Fullscreen",
+          btn_exit_fullscreen: "Exit Fullscreen",
           btn_close_account: "Close Account",
           close_account_title: "Close Account",
           close_account_desc: "Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.",
@@ -635,6 +663,10 @@
           temp_pass_warning: "Estás usando una contraseña temporal. DEBE ser cambiada antes de hacer cualquier otra cosa.",
           pass_validation: "La contraseña debe tener al menos 8 caracteres, contener al menos 2 letras, 2 números, y solo estar formada por letras, números, guiones o guiones bajos.",
           loading_session: "Validando sesión...",
+          offline_banner: "Estás sin conexión. Los datos pueden estar desactualizados.",
+          btn_install: "Instalar",
+          btn_fullscreen: "Pantalla Completa",
+          btn_exit_fullscreen: "Salir de Pantalla Completa",
           btn_close_account: "Cerrar Cuenta",
           close_account_title: "Cerrar Cuenta",
           close_account_desc: "Tu saldo restante se transferirá a <strong>closing_account</strong> y esta operación no se puede deshacer.",
@@ -678,6 +710,63 @@
           swRegistration = reg;
         }).catch(() => {});
       }
+
+      // PWA install prompt (Chrome/Edge/Android)
+      let deferredInstallPrompt = null;
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        document.getElementById("btn-install").classList.remove("hidden");
+      });
+      document.getElementById("btn-install").addEventListener("click", async () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === "accepted") {
+          document.getElementById("btn-install").classList.add("hidden");
+        }
+        deferredInstallPrompt = null;
+      });
+      window.addEventListener("appinstalled", () => {
+        document.getElementById("btn-install").classList.add("hidden");
+        deferredInstallPrompt = null;
+      });
+
+      // Fullscreen toggle
+      const btnFullscreen = document.getElementById("btn-fullscreen");
+      if (!document.documentElement.requestFullscreen) {
+        btnFullscreen.classList.add("hidden");
+      } else {
+        btnFullscreen.addEventListener("click", async () => {
+          try {
+            if (document.fullscreenElement) {
+              await document.exitFullscreen();
+            } else {
+              await document.documentElement.requestFullscreen();
+            }
+          } catch (e) { /* ignored */ }
+        });
+        document.addEventListener("fullscreenchange", () => {
+          btnFullscreen.querySelector("span").textContent =
+            document.fullscreenElement
+              ? (translations[currentLang]["btn_exit_fullscreen"] || "Exit Fullscreen")
+              : (translations[currentLang]["btn_fullscreen"] || "Fullscreen");
+        });
+      }
+
+      // Screen wake lock: keep the display on while the app is visible (e.g. POS use)
+      let wakeLock = null;
+      async function acquireWakeLock() {
+        if (!("wakeLock" in navigator)) return;
+        try {
+          wakeLock = await navigator.wakeLock.request("screen");
+          wakeLock.addEventListener("release", () => { wakeLock = null; });
+        } catch (e) { /* denied or unsupported — non-fatal */ }
+      }
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && !wakeLock) acquireWakeLock();
+      });
+      acquireWakeLock();
 
       document.body.classList.add("modal-active");
 
@@ -794,11 +883,9 @@
             };
 
             const baseUrl = `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/orders`;
-            const [resOrders, resSold, resInTransit, resAvailable] = await Promise.all([
+            const [resOrders, resPaid] = await Promise.all([
               fetch(`${baseUrl}?limit=-10`, { headers, signal: pollAbortController.signal }),
               fetch(`${baseUrl}?paid=yes&limit=-500`, { headers, signal: pollAbortController.signal }),
-              fetch(`${baseUrl}?paid=yes&wired=no&limit=-500`, { headers, signal: pollAbortController.signal }),
-              fetch(`${baseUrl}?wired=yes&limit=-500`, { headers, signal: pollAbortController.signal }),
             ]);
 
             if (!resOrders.ok) {
@@ -814,18 +901,19 @@
             const data = await resOrders.json();
             const orders = data.orders || (Array.isArray(data) ? data : []);
 
-            const sumOrders = async (res) => {
-              if (!res.ok) return 0;
-              const d = await res.json();
-              const list = d.orders || (Array.isArray(d) ? d : []);
-              return list.reduce((acc, o) => acc + (parseAmountStr(o.amount) - parseAmountStr(o.refund_amount)), 0);
-            };
-
-            const [soldNum, inTransitNum, availableNum] = await Promise.all([
-              sumOrders(resSold),
-              sumOrders(resInTransit),
-              sumOrders(resAvailable),
-            ]);
+            // Compute Sold / In Transit / Settled from a single paid list
+            let soldNum = 0, inTransitNum = 0, availableNum = 0;
+            if (resPaid.ok) {
+              const paidData = await resPaid.json();
+              const paidList = paidData.orders || (Array.isArray(paidData) ? paidData : []);
+              for (const o of paidList) {
+                const net = parseAmountStr(o.amount) - parseAmountStr(o.refund_amount);
+                soldNum += net;
+                const wired = o.wired || o.wire_transfer_status === "wired";
+                if (wired) availableNum += net;
+                else inTransitNum += net;
+              }
+            }
 
             let htmlBuffer = "";
             if (orders.length === 0) {

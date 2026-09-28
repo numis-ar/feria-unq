@@ -1,4 +1,4 @@
-const CACHE_NAME = "fairpay-v1";
+const CACHE_NAME = "fairpay-v3";
 const PRECACHE = [
   "./merchant.html",
   "./merchant.js",
@@ -31,7 +31,24 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/get-money")) return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    (async () => {
+      // Pages: network-first so updates reach installed apps, cache fallback when offline
+      if (event.request.mode === "navigate") {
+        try {
+          const fresh = await fetch(event.request);
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, fresh.clone());
+          return fresh;
+        } catch (e) {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          throw e;
+        }
+      }
+      // Static assets: cache-first
+      const cached = await caches.match(event.request);
+      return cached || fetch(event.request);
+    })()
   );
 });
 
