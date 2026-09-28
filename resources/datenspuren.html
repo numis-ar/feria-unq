@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SPURLOS bezahlen auf den Datenspuren 2026</title>
+  <style>
+    /* ================== Konfiguration ================== */
+    :root{
+      /* Seitenverhältnis des Rahmenbilds (Breite/Höhe) */
+      --frame-w: 300;
+      --frame-h: 630;
+
+      /* sichtbarer Display-Ausschnitt innerhalb des Rahmens (in %) */
+      --vp-top: 2%;
+      --vp-right: 1.7%;
+      --vp-bottom: 2%;
+      --vp-left: 1.7%;
+      --vp-radius: 12px;
+
+      /* globaler Abstand oben, damit nie etwas abgeschnitten wirkt */
+      --page-top-gap: clamp(16px, 6dvh, 72px);
+    }
+
+    /* ================== Basis/Layout ================== */
+    body {
+      background-color: #ff095c;
+      background-image: url(https://datenspuren.de/2026/style/background.svg);
+      background-size: calc(4.19vw);
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: clamp(14px, 1.1vw + 12px, 18px);
+      line-height: 1.45;
+      color: #111;
+
+      /* zentriert auf großen Screens, oben startend auf kleinen */
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      /* Scroll erlauben, falls Inhalt höher ist */
+      overflow-y: auto;
+
+      /* Abstand oben + Safe-Areas */
+      padding-top: calc(var(--page-top-gap) + env(safe-area-inset-top, 0px));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      padding-left: max(16px, env(safe-area-inset-left));
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(280px, 1fr);
+      gap: 24px;
+      width: min(1100px, 100%);
+      align-items: start;
+    }
+
+    /* ================== Phone & Frame ================== */
+    .phone {
+      width: clamp(200px, 34vw, 420px);
+      aspect-ratio: calc(var(--frame-w) / var(--frame-h));
+      position: relative;
+      margin-inline: auto;
+      isolation: isolate; /* Stacking-Kontext */
+    }
+
+    .viewport {
+      position: absolute;
+      top: var(--vp-top);
+      right: var(--vp-right);
+      bottom: var(--vp-bottom);
+      left: var(--vp-left);
+      overflow: hidden;
+      background: #000;
+      border-radius: var(--vp-radius);
+      z-index: 1;
+      touch-action: pan-y; /* Swipe horizontal möglich */
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      transition: transform 0.45s ease;
+      will-change: transform;
+    }
+
+    .slide {
+      min-width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .status-bar {
+      position: absolute;
+      top: 25px; left: 0; right: 0;
+      display: flex; justify-content: center; align-items: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .indicator {
+      background: rgba(0,0,0,.6);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: .2px;
+    }
+
+    .phone-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none; /* blockiert keine Klicks/Gesten */
+      display: block;
+    }
+
+    /* ================== Beschreibung ================== */
+    .desc {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.08);
+    }
+    .desc h2 { margin: 0 0 6px; font-size: 1.1em; }
+    .desc .body { margin: 0; color: #333; }
+
+    .desc .body a { color: #0b57d0; text-decoration: underline; }
+    .desc .body ul, .desc .body ol { padding-left: 1.2em; margin: .5em 0; }
+
+    .thumbs {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+    }
+    .thumbs button {
+      padding: 6px 10px;
+      font-size: .85em;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+    }
+    .thumbs button[aria-current="true"]{
+      border-color: #111;
+      font-weight: 600;
+    }
+
+    /* ================== Controls ================== */
+    .controls {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-top: 4px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .controls button {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid #d0d0d4;
+      background: #fff;
+      cursor: pointer;
+      font-size: .95em;
+    }
+
+    /* ================== Responsiveness ================== */
+    @media (max-width: 880px){
+      .container { grid-template-columns: 1fr; }
+
+      /* auf kleinen Screens: nicht zentrieren, oben starten */
+      body { align-items: flex-start; justify-content: flex-start; }
+
+      .desc { order: 2; }
+      .controls { order: 3; }
+      .phone { order: 1; margin-inline: auto; }
+
+      .controls button { flex: 1 1 140px; }
+    }
+
+    @media (max-width: 360px){
+      .desc { border-radius: 12px; }
+      .controls button { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- PHONE -->
+    <div class="phone" id="phone" aria-live="polite">
+      <div class="viewport" id="viewport">
+        <div class="slider" id="slider">
+          <!-- Slides – Titel als Text, Beschreibung als HTML im data-desc -->
+          <img
+            src="figs/screen-00.png"
+            alt="Screen 1"
+            class="slide"
+            data-title="GNU Taler auf den Datenspuren 2026"
+            data-desc='⚠️ Die SPURLOS aus den letzen zwei Jahren sind nicht mehr gültig. Auch dieses Jahr sind die SPURLOS nur für einen begrenzten Zeitraum gültig. ⚠️
+&lt;p&gt;Neben der Möglichkeit mit Bargeld oder Bitcoin zu bezahlen, bieten wir wieder Taler als Event-Währung an. &lt;/p&gt;
+&lt;h3 id=&quot;spurlos&quot;&gt;SPURLOS&lt;/h3&gt;
+&lt;p&gt;Der SPURLOS ist für diese Datenspuren unsere digitale Währung. Ein SPURLOS entspricht genau einem Euro, diese können 1:1 getauscht werden, Transaktionsgebühren werden nicht erhoben.&lt;/p&gt;
+&lt;h3 id=&quot;wallet-mit-spurlos&quot;&gt;Wallet mit SPURLOS&lt;/h3&gt;
+&lt;p&gt;Die Wallet-App gibt es unter dem &lt;a href=&quot;https://taler.net/de/wallet.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;Link im QR-Code links&lt;/a&gt; oder direkt in eurem App-Store.&lt;/p&gt;
+&lt;p&gt;Ihr bekommt SPURLOS ganz bequem gegen Bargeld während der Datenspuren am &lt;a href=&quot;https://map.datenspuren.de/l/p:102/&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;Taler-Infotisch&lt;/a&gt;. Wenn ihr nicht so lange warten wollt, folgt einfach dem Tutorial auf den nächsten Seiten...&lt;/p&gt;
+'
+          >
+          <img
+            src="figs/screen-00b.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Abheben"
+            data-desc='
+&lt;p&gt;Damit ihr nicht mit einer leeren Wallet auf den Datenspuren ankommt, hier eine Beschreibung, wie man mit der GNU Taler Wallet einen Banküberweisung tätigt und so seine ersten SPURLOS durch eine IBAN-Überweisung bekommt.&lt;/p&gt;
+Trotz Echtzeitüberweisung haben wir bei bestimmten Banken Transaktionszeiten von Sekunden bis zu einer Stunde beobachtet.
+&lt;h3 id=&quot;der-erste-aufladevorgang&quot;&gt;Der erste Aufladevorgang&lt;/h3&gt;
+&lt;p&gt;Wenn sich in eurem Wallet noch keine SPURLOS befinden, müsst ihr die erste Transaktion über den QR-Code oder den folgenden Link starten: &lt;a href=&quot;taler://withdraw-exchange/exchange.spurlos.datenspuren.de/&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;taler://withdraw-exchange/exchange.spurlos.datenspuren.de/&lt;/a&gt; &lt;/p&gt;
+
+'
+          >
+	        <img
+            src="figs/screen-00c.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Spurlos mit Verfallsdatum"
+            data-desc='⚠️ Die SPURLOS aus den letzen zwei Jahren sind nicht mehr gültig. Auch dieses Jahr sind die SPURLOS nur für einen begrenzten Zeitraum gültig. ⚠️
+&lt;p&gt;Wenn sich in eurer Wallet noch SPURLOSe aus dem letzten Jahr befunden haben, werden diese nach dem ersten Öffnen automatisch als verfallen angezeigt.&lt;/p&gt
+'
+          >
+	        <img
+            src="figs/screen-01.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Abheben"
+            data-desc='Ansonsten wurde die Wallet durch den QR-Code im letzten Schritt mit der Datenspuren-Bank und somit auch der Währung SPURLOS bekannt gemacht.'
+          >
+          <img
+            src="figs/screen-02.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Geschäftsbedingungen"
+            data-desc='Zuerst muss mensch die für dieses Jahr aktualisierten Nutzungsbedingungen bestätigen.'
+          >
+          <img
+            src="figs/screen-03.png"
+            alt="Screen 3"
+            class="slide"
+            data-title="Überweisungsbetrag"
+            data-desc='Dann könnt ihr den Betrag einzugeben, den ihr gerne in die Wallet via IBAN-Überweisung übertragen wollt.'
+          >
+	  <img
+            src="figs/screen-04.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Überweisungsdaten"
+            data-desc='Hier bekommt ihr noch einmal die Möglichkeit, den Vorgang und die Höhe der Überweisung zu kontrollieren und im Zweifel abzubrechen. Für die Überweisung könnt ihr entweder den QR-Code mit einer kompatiblen Banking-App scannen, oder euch die Anweisungen für eine manuelle Überweisung anzeigen lassen.'
+            >
+	  <img
+            src="figs/screen-05a.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Manuelle Überweisung"
+            data-desc='Unter "Überweisungsanleitung" bekommt ihr alle relevanten Daten für die IBAN-Überweisung angezeigt. Bitte passt beim manuellen Kopieren auf, alle Daten (Empfänger-IBAN, Verwendungszweck und Betrag) richtig zu übertragen. Andernfalls wird das Geld nicht in eurer Wallet ankommen, sondern nach ein paar Tagen zurückgeschickt.'
+            >
+	  <img
+            src="figs/screen-05b.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Manuelle Überweisung"
+            data-desc='Unter "Überweisungsanleitung" bekommt ihr alle relevanten Daten für die IBAN-Überweisung angezeigt. Bitte passt beim manuellen Kopieren auf, alle Daten (Empfänger-IBAN, Verwendungszweck und Betrag) richtig zu übertragen. Andernfalls wird das Geld nicht in eurer Wallet ankommen, sondern nach ein paar Tagen zurückgeschickt.'
+            >
+	  <img
+            src="figs/screen-06.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Bankingdetails"
+            data-desc='So sieht es dann ungefähr in eurem Online-Banking aus. Wenn möglich, aktiviert die Option "Echtzeitüberweisung" oder "Instant-SEPA" bei der Überweisung!'
+            >
+	  <img
+            src="figs/screen-07.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Abschluss"
+            data-desc='So sieht es aus, wenn die Überweisung auf unserem Konto angekommen und auf euer Wallet übertragen wurde. Dies kann je nach Bank Sekunden bis zu einer Stunde dauern.'
+            >
+	   <img
+            src="figs/screen-08.png"
+            alt="Screen 2"
+            class="slide"
+            data-title="Guthaben"
+            data-desc='Nun steht euch ein entsprechendes Guthaben in der Wallet zur Verfügung.
+&lt;p&gt;Viel Spaß bei den Datenspuren 2026!&lt;/p&gt'
+          >
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="indicator" id="indicator">1 / 3</div>
+      </div>
+
+      <!-- Overlay-Rahmen -->
+      <img src="figs/frame.png" alt="Phone Frame" class="phone-frame" />
+    </div>
+
+    <!-- Beschreibung -->
+    <aside class="desc" id="descPanel" aria-live="polite" aria-atomic="true">
+      <!-- Direktnavigation -->
+      <div class="thumbs" id="thumbs"></div>
+
+      <h2 id="descTitle"></h2>
+      <div id="descBody" class="body"></div>
+    </aside>
+
+    <!-- Buttons -->
+    <div class="controls">
+      <button id="prevBtn" type="button" aria-label="Vorheriger Screen">Zurück</button>
+      <button id="nextBtn" type="button" aria-label="Nächster Screen">Weiter</button>
+    </div>
+  </div>
+
+  <script>
+    let currentIndex = 0;
+
+    const slider    = document.getElementById('slider');
+    const slides    = Array.from(document.querySelectorAll('.slide'));
+    const total     = slides.length;
+
+    const indicator = document.getElementById('indicator');
+    const descTitle = document.getElementById('descTitle');
+    const descBody  = document.getElementById('descBody');
+    const thumbsEl  = document.getElementById('thumbs');
+    const viewport  = document.getElementById('viewport');
+
+    // Direktnavigation aufbauen
+    slides.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = `${i + 1}`;
+      b.addEventListener('click', () => { currentIndex = i; updateUI(); });
+      thumbsEl.appendChild(b);
+    });
+
+    function updateUI(){
+      const offset = -currentIndex * 100;
+      slider.style.transform = `translateX(${offset}%)`;
+
+      const s = slides[currentIndex];
+      indicator.textContent = `${currentIndex + 1} / ${total}`;
+
+      // Titel als Text (keine HTML-Interpretation)
+      descTitle.textContent = s.dataset.title || `Screen ${currentIndex + 1}`;
+
+      // Beschreibung als HTML (VERTRAUENSWÜRDIGE Inhalte)
+      descBody.innerHTML = s.dataset.desc || '';
+
+      // aktiven Button markieren
+      Array.from(thumbsEl.children).forEach((btn, i) => {
+        btn.setAttribute('aria-current', i === currentIndex ? 'true' : 'false');
+      });
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % total; updateUI();
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + total) % total; updateUI();
+    });
+
+    // ===== Touch-Swipe-Unterstützung =====
+    let startX = null;
+    const SWIPE_THRESHOLD = 30; // px
+
+    function onTouchStart(e){ startX = (e.touches && e.touches[0]?.clientX) ?? e.clientX; }
+    function onTouchEnd(e){
+      if (startX === null) return;
+      const endX = (e.changedTouches && e.changedTouches[0]?.clientX) ?? e.clientX;
+      const dx = endX - startX;
+      if (Math.abs(dx) > SWIPE_THRESHOLD){
+        currentIndex = dx < 0 ? (currentIndex + 1) % total : (currentIndex - 1 + total) % total;
+        updateUI();
+      }
+      startX = null;
+    }
+    viewport.addEventListener('touchstart', onTouchStart, {passive: true});
+    viewport.addEventListener('touchend',   onTouchEnd,   {passive: true});
+
+    // Keyboard (Desktop)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { currentIndex = (currentIndex + 1) % total; updateUI(); }
+      if (e.key === 'ArrowLeft')  { currentIndex = (currentIndex - 1 + total) % total; updateUI(); }
+    });
+
+    // Initial
+    updateUI();
+  </script>
+</body>
+</html>

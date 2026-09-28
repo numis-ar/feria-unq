@@ -1,0 +1,3 @@
+[submodule "resources/taler-docs"]
+	path = resources/taler-docs
+	url = git://localhost/taler/taler-docs

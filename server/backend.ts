@@ -66,6 +66,37 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
   }
 }
 
+export function proxyRequest(req: http.IncomingMessage, res: http.ServerResponse, targetBase: string, rest: string) {
+  const target = new URL(rest.replace(/^\/+/, ''), targetBase.endsWith('/') ? targetBase : targetBase + '/');
+  const options: https.RequestOptions = {
+    hostname: target.hostname,
+    port: target.port || (target.protocol === 'https:' ? 443 : 80),
+    path: target.pathname + target.search,
+    method: req.method,
+    headers: {
+      'Accept': req.headers.accept || 'application/json',
+      'Authorization': req.headers.authorization || '',
+    },
+    rejectUnauthorized: false,
+  };
+  if (req.headers['content-type']) options.headers!['Content-Type'] = req.headers['content-type'];
+  if (req.headers['content-length']) options.headers!['Content-Length'] = req.headers['content-length'];
+
+  const client = target.protocol === 'https:' ? https : http;
+  const upstream = client.request(options, (upRes) => {
+    const headers: Record<string, string> = {};
+    if (upRes.headers['content-type']) headers['Content-Type'] = upRes.headers['content-type'];
+    res.writeHead(upRes.statusCode || 502, headers);
+    upRes.pipe(res);
+  });
+  upstream.on('error', (e) => {
+    log('Proxy error:', e.message || e);
+    if (!res.headersSent) sendError(res, 502, 'Upstream request failed');
+    else res.end();
+  });
+  req.pipe(upstream);
+}
+
 function log(...args: unknown[]) {
   console.log(new Date().toISOString(), ...args);
 }
@@ -361,6 +392,23 @@ export const server = http.createServer((req, res) => {
       log(e);
       sendError(res, 500, 'Internal server error');
     });
+    return;
+  }
+
+  if (path === '/api/config' && req.method === 'GET') {
+    sendJson(res, 200, { bankHost: new URL(getBankUrl()).host });
+    return;
+  }
+
+  const apiMerchantMatch = path.match(/^\/api\/merchant\/(.*)$/);
+  if (apiMerchantMatch) {
+    proxyRequest(req, res, MERCHANT_BASE_URL, apiMerchantMatch[1] + parsedUrl.search);
+    return;
+  }
+
+  const apiBankMatch = path.match(/^\/api\/bank\/(.*)$/);
+  if (apiBankMatch) {
+    proxyRequest(req, res, getBankUrl(), apiBankMatch[1] + parsedUrl.search);
     return;
   }
 

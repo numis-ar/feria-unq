@@ -119,4 +119,60 @@ describe('Backend tests', () => {
       assert.strictEqual(res.body.type, 'error');
     });
   });
+
+  describe('Reverse proxy /api/*', () => {
+    it('GET /api/config returns bank host', async () => {
+      const res = await request(server).get('/api/config').expect(200);
+      assert.strictEqual(res.body.bankHost, `localhost:${mockBankPort}`);
+    });
+
+    it('GET /api/bank forwards path, query and Authorization header', async () => {
+      mockBankHandler = (req, res) => {
+        assert.strictEqual(req.url, '/accounts/test?limit=2&timeout_ms=10000');
+        assert.strictEqual(req.headers.authorization, 'Bearer tok123');
+        assert.strictEqual(req.headers.accept, 'application/json');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      };
+
+      const res = await request(server)
+        .get('/api/bank/accounts/test?limit=2&timeout_ms=10000')
+        .set('Authorization', 'Bearer tok123')
+        .set('Accept', 'application/json')
+        .expect(200);
+
+      assert.deepStrictEqual(res.body, { ok: true });
+    });
+
+    it('POST /api/bank passes through request body', async () => {
+      mockBankHandler = (req, res) => {
+        assert.strictEqual(req.method, 'POST');
+        let raw = '';
+        req.on('data', (c) => (raw += c));
+        req.on('end', () => {
+          assert.strictEqual(req.headers['content-type'], 'application/json');
+          res.writeHead(201, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ received: JSON.parse(raw) }));
+        });
+      };
+
+      const res = await request(server)
+        .post('/api/bank/accounts/test/withdrawals')
+        .set('Content-Type', 'application/json')
+        .send({ amount: 'NUMIS:10' })
+        .expect(201);
+
+      assert.deepStrictEqual(res.body.received, { amount: 'NUMIS:10' });
+    });
+
+    it('returns 502 when upstream connection fails', async () => {
+      await new Promise<void>((resolve) => mockBankServer.close(() => resolve()));
+      const res = await request(server).get('/api/bank/accounts/test');
+      assert.strictEqual(res.status, 502);
+      await new Promise<void>((resolve) => {
+        mockBankServer = http.createServer((req, res) => mockBankHandler(req, res));
+        mockBankServer.listen(0, () => resolve());
+      });
+    });
+  });
 });

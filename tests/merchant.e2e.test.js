@@ -93,10 +93,10 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     page.on('dialog', dialog => dialog.accept());
     page.on('console', msg => console.log('PAGE LOG:', msg.text()));
 
-    await page.addInitScript((url) => {
-      window.API_URL = url;
-      window.BANK_URL = url;
-    }, baseUrl);
+    await page.addInitScript(() => {
+      window.API_URL = '/api/merchant';
+      window.BANK_URL = '/api/bank';
+    });
   });
 
   afterEach(async () => {
