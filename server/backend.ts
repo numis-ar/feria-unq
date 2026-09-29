@@ -812,11 +812,17 @@ function deriveVapidKeys(publicKey: string, privateKey: string): VapidKeys {
   const ecdh = crypto.createECDH('prime256v1');
   ecdh.setPrivateKey(Buffer.from(privateKey, 'base64url'));
   const pub = ecdh.getPublicKey(); // 65-byte uncompressed point
+  const x = pub.subarray(1, 33).toString('base64url');
+  const y = pub.subarray(33, 65).toString('base64url');
+  const derived = Buffer.concat([pub.subarray(1, 33), pub.subarray(33, 65)]).toString('base64url');
+  if (derived !== publicKey) {
+    log('WARNING: VAPID_PUBLIC_KEY does not match VAPID_PRIVATE_KEY; using the derived public key');
+  }
   return {
-    publicKey,
+    publicKey: derived,
     privateKey,
-    x: pub.subarray(1, 33).toString('base64url'),
-    y: pub.subarray(33, 65).toString('base64url'),
+    x,
+    y,
     d: privateKey,
   };
 }
@@ -831,8 +837,13 @@ export function getVapidKeys(): VapidKeys {
   }
   try {
     const raw = fs.readFileSync(vapidFile(), 'utf8');
-    vapidCache = JSON.parse(raw) as VapidKeys;
-    return vapidCache;
+    const parsed = JSON.parse(raw) as VapidKeys;
+    // sanity: the public key must be a valid P-256 point (64 bytes)
+    if (Buffer.from(parsed.publicKey, 'base64url').length === 64) {
+      vapidCache = parsed;
+      return vapidCache;
+    }
+    log('WARNING: stored VAPID keys are invalid; regenerating');
   } catch { /* not persisted yet */ }
   vapidCache = generateVapidKeys();
   try {
