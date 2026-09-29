@@ -1,3 +1,13 @@
+# NOTE: this file is the repo copy of the live nginx config at
+# /etc/nginx/sites-enabled/unq.numis.ar on the server. After changing it,
+# deploy it manually (copy to the server and `nginx -t && systemctl reload nginx`).
+
+# Websocket upgrade support (needed by the `location /ws` block below)
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
 server {
   server_name unq.numis.ar;
   listen [::]:443 ssl; # managed by Certbot
@@ -23,6 +33,19 @@ server {
   location /api/ {
     proxy_pass http://unix:/run/feria-unq_backend.sock;
     proxy_read_timeout 120s;          # long-poll holds ~10s, headroom for TLS
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # WebSocket endpoint (backend implements RFC 6455 by hand on /ws)
+  location /ws {
+    proxy_pass http://unix:/run/feria-unq_backend.sock;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_read_timeout 3600s;         # keep idle WS connections open
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

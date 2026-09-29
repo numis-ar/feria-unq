@@ -1,4 +1,4 @@
-const CACHE_NAME = "fairpay-v3";
+const CACHE_NAME = "fairpay-v4";
 const PRECACHE = [
   "./merchant.html",
   "./merchant.js",
@@ -49,6 +49,26 @@ self.addEventListener("fetch", (event) => {
       const cached = await caches.match(event.request);
       return cached || fetch(event.request);
     })()
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let title = "FairPay";
+  let body = "Nueva actividad / New activity";
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      if (payload.title) title = payload.title;
+      if (payload.message) body = payload.message;
+    } catch (e) {
+      // malformed payload: keep the generic bilingual-safe text
+    }
+  }
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "./icons/icon-192.png",
+    })
   );
 });
 

@@ -806,6 +806,9 @@
       });
 
       function performLogout() {
+        const instanceAtLogout = INSTANCE_ID;
+        teardownPushSubscription(instanceAtLogout);
+        stopRealtime();
         localStorage.removeItem("taler_username");
         localStorage.removeItem("taler_password");
         INSTANCE_ID = "";
@@ -847,11 +850,18 @@
           const accountName = await getAccountName(BANK_URL, INSTANCE_ID, BANK_ACCESS_TOKEN);
           document.getElementById("bank-account-name").textContent = accountName;
 
+          ordersPrevState = new Map();
+          ordersFirstFetch = true;
+          bankPrevRows = new Set();
+          bankFirstFetch = true;
+
           if (!isPolling) {
             isPolling = true;
             startPollingOrders();
             startPollingBank();
           }
+          startRealtime();
+          setupPushSubscription();
           
           if (PASSWORD.startsWith('__')) {
               document.getElementById('temp-password-warning').classList.remove('hidden');
@@ -867,12 +877,108 @@
         }
       }
 
+      // Shared render state (used by both polling fallback and WS refresh paths)
+      let ordersPrevState = new Map();
+      let ordersFirstFetch = true;
+      let bankPrevRows = new Set();
+      let bankFirstFetch = true;
+
+      function renderSoldStats(paidList) {
+        let soldNum = 0, inTransitNum = 0, availableNum = 0;
+        for (const o of paidList) {
+          const net = parseAmountStr(o.amount) - parseAmountStr(o.refund_amount);
+          soldNum += net;
+          const wired = o.wired || o.wire_transfer_status === "wired";
+          if (wired) availableNum += net;
+          else inTransitNum += net;
+        }
+        document.getElementById("stat-sold").textContent = formatMoney(soldNum);
+        document.getElementById("stat-intransit").textContent = formatMoney(inTransitNum);
+        document.getElementById("stat-available").textContent = formatMoney(availableNum);
+      }
+
+      function renderOrders(orders) {
+        const tbody = document.getElementById("orders-tbody");
+
+        let htmlBuffer = "";
+        if (orders.length === 0) {
+          htmlBuffer = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400" data-i18n="no_orders">${translations[currentLang]["no_orders"]}</td></tr>`;
+        }
+
+        let changedOrders = [];
+
+        orders.forEach((o) => {
+          const amountNum = parseAmountStr(o.amount);
+          const refundNum = parseAmountStr(o.refund_amount);
+
+          let state = "claimed";
+          let stateClass = "bg-slate-100 text-slate-600";
+
+          if (o.paid) {
+            if (refundNum > 0) {
+              state = "refunded";
+              stateClass = "bg-red-100 text-red-700";
+            } else if (!o.wired) {
+              state = "in-transit";
+              stateClass = "bg-yellow-100 text-yellow-700";
+            } else {
+              state = "settled";
+              stateClass = "bg-green-100 text-green-700";
+            }
+          } else {
+            state = o.payment_status || o.order_status || "unpaid";
+          }
+
+          const t_val = o.timestamp.t_s * 1000;
+          const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
+
+          const orderId = o.order_id || o.summary;
+          let changed = false;
+          let isNew = false;
+
+          if (!ordersFirstFetch) {
+             if (!ordersPrevState.has(orderId)) {
+                isNew = true;
+                changed = true;
+             } else if (ordersPrevState.get(orderId) !== state) {
+                changed = true;
+             }
+          }
+          ordersPrevState.set(orderId, state);
+
+          if (changed) {
+             changedOrders.push({ isNew, summary: o.summary || orderId, state });
+          }
+
+          let rowClass = "hover:bg-slate-50 transition";
+          if (changed) {
+            rowClass += " animate-fade-green";
+          }
+
+          htmlBuffer += `
+          <tr class="${rowClass}">
+            <td class="px-6 py-4 font-medium text-slate-800">${o.summary || o.order_id || "Order"}</td>
+            <td class="px-6 py-4">${dateStr}</td>
+            <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${state.toUpperCase()}</span></td>
+            <td class="px-6 py-4 text-right font-semibold text-slate-800">${formatMoney(amountNum)}</td>
+          </tr>
+        `;
+        });
+
+        if (changedOrders.length > 0) {
+           const first = changedOrders[0];
+           const title = first.isNew ? translations[currentLang]["toast_new_order"] : translations[currentLang]["toast_updated_order"];
+           showToast(title, `${first.summary} &rarr; ${first.state.toUpperCase()}`);
+           showSystemNotification(title, `${first.summary} → ${first.state.toUpperCase()}`, `order-${first.summary}`);
+        }
+
+        tbody.innerHTML = htmlBuffer;
+        ordersFirstFetch = false;
+      }
+
       async function startPollingOrders() {
         const tbody = document.getElementById("orders-tbody");
         tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_orders">${translations[currentLang]["loading_orders"]}</td></tr>`;
-
-        let previousOrdersState = new Map();
-        let isFirstFetch = true;
 
         while (isPolling) {
           try {
@@ -901,98 +1007,13 @@
             const data = await resOrders.json();
             const orders = data.orders || (Array.isArray(data) ? data : []);
 
-            // Compute Sold / In Transit / Settled from a single paid list
-            let soldNum = 0, inTransitNum = 0, availableNum = 0;
             if (resPaid.ok) {
               const paidData = await resPaid.json();
               const paidList = paidData.orders || (Array.isArray(paidData) ? paidData : []);
-              for (const o of paidList) {
-                const net = parseAmountStr(o.amount) - parseAmountStr(o.refund_amount);
-                soldNum += net;
-                const wired = o.wired || o.wire_transfer_status === "wired";
-                if (wired) availableNum += net;
-                else inTransitNum += net;
-              }
+              renderSoldStats(paidList);
             }
 
-            let htmlBuffer = "";
-            if (orders.length === 0) {
-              htmlBuffer = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400" data-i18n="no_orders">${translations[currentLang]["no_orders"]}</td></tr>`;
-            }
-
-            let changedOrders = [];
-
-            orders.forEach((o) => {
-              const amountNum = parseAmountStr(o.amount);
-              const refundNum = parseAmountStr(o.refund_amount);
-
-              let state = "claimed";
-              let stateClass = "bg-slate-100 text-slate-600";
-
-              if (o.paid) {
-                if (refundNum > 0) {
-                  state = "refunded";
-                  stateClass = "bg-red-100 text-red-700";
-                } else if (!o.wired) {
-                  state = "in-transit";
-                  stateClass = "bg-yellow-100 text-yellow-700";
-                } else {
-                  state = "settled";
-                  stateClass = "bg-green-100 text-green-700";
-                }
-              } else {
-                state = o.payment_status || o.order_status || "unpaid";
-              }
-
-              const t_val = o.timestamp.t_s * 1000;
-              const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
-              
-              const orderId = o.order_id || o.summary;
-              let changed = false;
-              let isNew = false;
-              
-              if (!isFirstFetch) {
-                 if (!previousOrdersState.has(orderId)) {
-                    isNew = true;
-                    changed = true;
-                 } else if (previousOrdersState.get(orderId) !== state) {
-                    changed = true;
-                 }
-              }
-              previousOrdersState.set(orderId, state);
-
-              if (changed) {
-                 changedOrders.push({ isNew, summary: o.summary || orderId, state });
-              }
-
-              let rowClass = "hover:bg-slate-50 transition";
-              if (changed) {
-                rowClass += " animate-fade-green";
-              }
-
-              htmlBuffer += `
-              <tr class="${rowClass}">
-                <td class="px-6 py-4 font-medium text-slate-800">${o.summary || o.order_id || "Order"}</td>
-                <td class="px-6 py-4">${dateStr}</td>
-                <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${state.toUpperCase()}</span></td>
-                <td class="px-6 py-4 text-right font-semibold text-slate-800">${formatMoney(amountNum)}</td>
-              </tr>
-            `;
-            });
-
-            if (changedOrders.length > 0) {
-               const first = changedOrders[0];
-               const title = first.isNew ? translations[currentLang]["toast_new_order"] : translations[currentLang]["toast_updated_order"];
-               showToast(title, `${first.summary} &rarr; ${first.state.toUpperCase()}`);
-               showSystemNotification(title, `${first.summary} → ${first.state.toUpperCase()}`, `order-${first.summary}`);
-            }
-
-            tbody.innerHTML = htmlBuffer;
-            isFirstFetch = false;
-
-            document.getElementById("stat-sold").textContent = formatMoney(soldNum);
-            document.getElementById("stat-intransit").textContent = formatMoney(inTransitNum);
-            document.getElementById("stat-available").textContent = formatMoney(availableNum);
+            renderOrders(orders);
 
             let maxRowId = 0;
             if (orders.length > 0 && orders[0].row_id) {
@@ -1022,12 +1043,92 @@
         }
       }
 
+      function renderBank(txs) {
+        const tbody = document.getElementById("bank-tbody");
+
+        let htmlBuffer = "";
+        if (txs.length === 0) {
+          htmlBuffer = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="no_tx">${translations[currentLang]["no_tx"]}</td></tr>`;
+        }
+
+        let newTxs = [];
+
+        txs.forEach((tx) => {
+          const amountNum = parseAmountStr(tx.amount);
+          const t_val = tx.date?.t_ms || (tx.date?.t_s ? tx.date.t_s * 1000 : tx.date);
+          const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
+
+          let colorClass = "text-slate-800";
+          let subject = tx.subject || "Transfer";
+          let isCredit = false;
+          let iconSvg = "";
+          let label = subject;
+          let isSpecial = false;
+
+          if (tx.direction === "credit") {
+            colorClass = "text-green-600";
+            isCredit = true;
+            const account = extractAccountFromPayto(tx.debtor_payto_uri);
+            if (account === "exchange") {
+              isSpecial = true;
+              subject = translations[currentLang]["val_sales"];
+              iconSvg = `<svg class="w-5 h-5 text-green-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>`;
+            } else {
+              label = `transfer from ${account || "unknown"}`;
+              iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
+            }
+          } else if (tx.direction === "debit") {
+            colorClass = "text-red-600";
+            isCredit = false;
+            const account = extractAccountFromPayto(tx.creditor_payto_uri);
+            if (account === "exchange") {
+              isSpecial = true;
+              subject = translations[currentLang]["val_withdraw"];
+              iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`;
+            } else if (account === "closing_account") {
+              isSpecial = true;
+              subject = translations[currentLang]["val_closing"];
+              iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+            } else {
+              label = `transfer to ${account || "unknown"}`;
+              iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
+            }
+          }
+
+          let isNew = false;
+          if (!bankFirstFetch && !bankPrevRows.has(tx.row_id)) {
+             isNew = true;
+             newTxs.push({ subject: isSpecial ? subject : label, isCredit, amount: amountNum });
+          }
+          bankPrevRows.add(tx.row_id);
+
+          let rowClass = "hover:bg-slate-50 transition";
+          if (isNew) {
+            rowClass += isCredit ? " animate-fade-green" : " animate-fade-red";
+          }
+
+          htmlBuffer += `
+          <tr class="${rowClass}">
+            <td class="px-6 py-4 font-medium text-slate-800">${iconSvg} ${isSpecial ? subject : label}</td>
+            <td class="px-6 py-4">${dateStr}</td>
+            <td class="px-6 py-4 text-right font-semibold ${colorClass}">${formatMoney(amountNum)}</td>
+          </tr>
+        `;
+        });
+
+        if (newTxs.length > 0) {
+           const first = newTxs[0];
+           showToast(translations[currentLang]["toast_new_tx"], `${first.subject} $${formatMoney(first.amount)}`, first.isCredit ? "success" : "info");
+           showSystemNotification(translations[currentLang]["toast_new_tx"], `${first.subject} $${formatMoney(first.amount)}`, `tx-${first.subject}`);
+        }
+
+        tbody.innerHTML = htmlBuffer;
+        bankFirstFetch = false;
+      }
+
       async function startPollingBank() {
         const tbody = document.getElementById("bank-tbody");
         tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_tx">${translations[currentLang]["loading_tx"]}</td></tr>`;
-
-        let previousBankRows = new Set();
-        let isFirstBankFetch = true;
 
         while (isPolling) {
           try {
@@ -1055,84 +1156,7 @@
             const txData = await txRes.json();
             const txs = txData.transactions || (Array.isArray(txData) ? txData : []);
 
-            let htmlBuffer = "";
-            if (txs.length === 0) {
-              htmlBuffer = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="no_tx">${translations[currentLang]["no_tx"]}</td></tr>`;
-            }
-
-            let newTxs = [];
-
-            txs.forEach((tx) => {
-              const amountNum = parseAmountStr(tx.amount);
-              const t_val = tx.date?.t_ms || (tx.date?.t_s ? tx.date.t_s * 1000 : tx.date);
-              const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
-
-              let colorClass = "text-slate-800";
-              let subject = tx.subject || "Transfer";
-              let isCredit = false;
-              let iconSvg = "";
-              let label = subject;
-              let isSpecial = false;
-
-              if (tx.direction === "credit") {
-                colorClass = "text-green-600";
-                isCredit = true;
-                const account = extractAccountFromPayto(tx.debtor_payto_uri);
-                if (account === "exchange") {
-                  isSpecial = true;
-                  subject = translations[currentLang]["val_sales"];
-                  iconSvg = `<svg class="w-5 h-5 text-green-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>`;
-                } else {
-                  label = `transfer from ${account || "unknown"}`;
-                  iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
-                }
-              } else if (tx.direction === "debit") {
-                colorClass = "text-red-600";
-                isCredit = false;
-                const account = extractAccountFromPayto(tx.creditor_payto_uri);
-                if (account === "exchange") {
-                  isSpecial = true;
-                  subject = translations[currentLang]["val_withdraw"];
-                  iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`;
-                } else if (account === "closing_account") {
-                  isSpecial = true;
-                  subject = translations[currentLang]["val_closing"];
-                  iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
-                } else {
-                  label = `transfer to ${account || "unknown"}`;
-                  iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
-                }
-              }
-
-              let isNew = false;
-              if (!isFirstBankFetch && !previousBankRows.has(tx.row_id)) {
-                 isNew = true;
-                 newTxs.push({ subject: isSpecial ? subject : label, isCredit, amount: amountNum });
-              }
-              previousBankRows.add(tx.row_id);
-
-              let rowClass = "hover:bg-slate-50 transition";
-              if (isNew) {
-                rowClass += isCredit ? " animate-fade-green" : " animate-fade-red";
-              }
-
-              htmlBuffer += `
-              <tr class="${rowClass}">
-                <td class="px-6 py-4 font-medium text-slate-800">${iconSvg} ${isSpecial ? subject : label}</td>
-                <td class="px-6 py-4">${dateStr}</td>
-                <td class="px-6 py-4 text-right font-semibold ${colorClass}">${formatMoney(amountNum)}</td>
-              </tr>
-            `;
-            });
-
-            if (newTxs.length > 0) {
-               const first = newTxs[0];
-               showToast(translations[currentLang]["toast_new_tx"], `${first.subject} $${formatMoney(first.amount)}`, first.isCredit ? "success" : "info");
-               showSystemNotification(translations[currentLang]["toast_new_tx"], `${first.subject} $${formatMoney(first.amount)}`, `tx-${first.subject}`);
-            }
-
-            tbody.innerHTML = htmlBuffer;
-            isFirstBankFetch = false;
+            renderBank(txs);
 
             let maxRowId = 0;
             if (txs.length > 0 && txs[0].row_id) {
@@ -1149,6 +1173,203 @@
             }
           }
         }
+      }
+
+      // -----------------------------------------------------------------
+      // Realtime updates: /api/state + WebSocket, with polling as fallback
+      // -----------------------------------------------------------------
+      let ws = null;
+      let wsReady = false;
+      let wsConnectAttempts = 0;
+      let wsBackoffTimer = null;
+      let wsReadyTimer = null;
+
+      function wsUrl() {
+        if (window.WS_URL) return window.WS_URL;
+        const proto = location.protocol === "https:" ? "wss:" : "ws:";
+        return `${proto}//${location.host}/ws`;
+      }
+
+      function startPolling() {
+        if (isPolling) return;
+        isPolling = true;
+        startPollingOrders();
+        startPollingBank();
+      }
+
+      function stopPolling() {
+        if (!isPolling) return;
+        isPolling = false;
+        if (pollAbortController) pollAbortController.abort();
+      }
+
+      async function fetchState() {
+        const res = await fetch(`/api/state/${encodeURIComponent(INSTANCE_ID)}`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${ACCESS_TOKEN}`,
+            "X-Bank-Authorization": `Bearer ${BANK_ACCESS_TOKEN}`,
+          },
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            showToast(translations[currentLang]["session_expired"] || "Session expired", "", "error");
+            performLogout();
+          }
+          throw new Error(`/api/state error: ${res.status}`);
+        }
+        return res.json();
+      }
+
+      async function refreshFromState() {
+        try {
+          const state = await fetchState();
+          if (state.accountName) {
+            document.getElementById("bank-account-name").textContent = state.accountName;
+          }
+          if (state.totals) {
+            document.getElementById("stat-sold").textContent = formatMoney(state.totals.sold);
+            document.getElementById("stat-intransit").textContent = formatMoney(state.totals.inTransit);
+            document.getElementById("stat-available").textContent = formatMoney(state.totals.settled);
+            document.getElementById("stat-bank-available").textContent = formatMoney(state.totals.bankAvailable);
+          }
+          if (Array.isArray(state.orders)) renderOrders(state.orders);
+          if (Array.isArray(state.transactions)) renderBank(state.transactions);
+        } catch (e) { /* keep current view; next tick will retry */ }
+      }
+
+      function stopRealtime() {
+        wsReady = false;
+        if (wsBackoffTimer) { clearTimeout(wsBackoffTimer); wsBackoffTimer = null; }
+        if (wsReadyTimer) { clearTimeout(wsReadyTimer); wsReadyTimer = null; }
+        if (ws) {
+          const s = ws;
+          ws = null;
+          s.onopen = s.onmessage = s.onclose = s.onerror = null;
+          try { s.close(); } catch (e) { /* already closed */ }
+        }
+      }
+
+      function scheduleWsReconnect() {
+        if (!INSTANCE_ID || !ACCESS_TOKEN) return;
+        const delay = Math.min(30000, 1000 * Math.pow(2, wsConnectAttempts++));
+        wsBackoffTimer = setTimeout(() => {
+          if (INSTANCE_ID && ACCESS_TOKEN) connectWs();
+        }, delay);
+      }
+
+      function connectWs() {
+        if (!INSTANCE_ID || !ACCESS_TOKEN) return;
+        let socket;
+        try {
+          socket = new WebSocket(wsUrl());
+        } catch (e) {
+          scheduleWsReconnect();
+          return;
+        }
+        ws = socket;
+        let becameReady = false;
+
+        wsReadyTimer = setTimeout(() => {
+          if (!becameReady) {
+            try { socket.close(); } catch (e) { /* ignore */ }
+          }
+        }, 5000);
+
+        socket.onopen = () => {
+          socket.send(JSON.stringify({
+            type: "auth",
+            instance: INSTANCE_ID,
+            merchantToken: ACCESS_TOKEN,
+            bankToken: BANK_ACCESS_TOKEN,
+          }));
+        };
+
+        socket.onmessage = (ev) => {
+          let msg;
+          try { msg = JSON.parse(ev.data); } catch { return; }
+          if (msg.type === "ready") {
+            becameReady = true;
+            wsReady = true;
+            wsConnectAttempts = 0;
+            refreshFromState();
+            stopPolling(); // WS is authoritative now
+          } else if (msg.type === "orders-changed" || msg.type === "tx-changed") {
+            refreshFromState();
+          }
+        };
+
+        socket.onclose = () => {
+          if (ws !== socket) return;
+          ws = null;
+          const wasReady = wsReady;
+          wsReady = false;
+          if (wasReady) startPolling(); // fallback while we reconnect
+          scheduleWsReconnect();
+        };
+
+        socket.onerror = () => {
+          try { socket.close(); } catch (e) { /* ignore */ }
+        };
+      }
+
+      function startRealtime() {
+        stopRealtime();
+        wsConnectAttempts = 0;
+        connectWs();
+      }
+
+      // -----------------------------------------------------------------
+      // Web Push subscription
+      // -----------------------------------------------------------------
+      function urlBase64ToUint8Array(base64String) {
+        const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+        const rawData = atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+        return outputArray;
+      }
+
+      async function setupPushSubscription() {
+        try {
+          if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+          if (!("Notification" in window) || Notification.permission !== "granted") return;
+          const reg = await navigator.serviceWorker.ready;
+          swRegistration = reg;
+          const keyRes = await fetch("/api/push/vapid-key");
+          if (!keyRes.ok) return;
+          const { publicKey } = await keyRes.json();
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(publicKey),
+            });
+          }
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ instance: INSTANCE_ID, subscription: sub.toJSON() }),
+          });
+        } catch (e) {
+          console.warn("Push subscription setup failed:", e);
+        }
+      }
+
+      function teardownPushSubscription(instance) {
+        try {
+          if (!swRegistration || !("PushManager" in window)) return;
+          swRegistration.pushManager.getSubscription().then((sub) => {
+            if (!sub) return;
+            fetch("/api/push/unsubscribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ instance, endpoint: sub.endpoint }),
+            }).catch(() => {});
+            sub.unsubscribe().catch(() => {});
+          }).catch(() => {});
+        } catch (e) { /* ignore */ }
       }
 
       document.getElementById("btn-close-qr").addEventListener("click", () => {
