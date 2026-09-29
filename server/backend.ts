@@ -800,7 +800,7 @@ function generateVapidKeys(): VapidKeys {
   const x = Buffer.from(pubJwk.x, 'base64url');
   const y = Buffer.from(pubJwk.y, 'base64url');
   return {
-    publicKey: Buffer.concat([x, y]).toString('base64url'),
+    publicKey: Buffer.concat([Buffer.from([0x04]), x, y]).toString('base64url'), // 65-byte SEC1 uncompressed — required by PushManager.subscribe
     privateKey: privJwk.d,
     x: pubJwk.x,
     y: pubJwk.y,
@@ -814,7 +814,7 @@ function deriveVapidKeys(publicKey: string, privateKey: string): VapidKeys {
   const pub = ecdh.getPublicKey(); // 65-byte uncompressed point
   const x = pub.subarray(1, 33).toString('base64url');
   const y = pub.subarray(33, 65).toString('base64url');
-  const derived = Buffer.concat([pub.subarray(1, 33), pub.subarray(33, 65)]).toString('base64url');
+  const derived = pub.toString('base64url');
   if (derived !== publicKey) {
     log('WARNING: VAPID_PUBLIC_KEY does not match VAPID_PRIVATE_KEY; using the derived public key');
   }
@@ -838,8 +838,14 @@ export function getVapidKeys(): VapidKeys {
   try {
     const raw = fs.readFileSync(vapidFile(), 'utf8');
     const parsed = JSON.parse(raw) as VapidKeys;
-    // sanity: the public key must be a valid P-256 point (64 bytes)
-    if (Buffer.from(parsed.publicKey, 'base64url').length === 64) {
+    const pubBytes = Buffer.from(parsed.publicKey, 'base64url');
+    if (pubBytes.length === 64) {
+      // old format (x||y): migrate to 65-byte SEC1 uncompressed point
+      parsed.publicKey = Buffer.concat([Buffer.from([0x04]), pubBytes]).toString('base64url');
+      try { fs.writeFileSync(vapidFile(), JSON.stringify(parsed, null, 2)); } catch {}
+    }
+    // sanity: the public key must decode to a valid-looking uncompressed P-256 point (65 bytes)
+    if (Buffer.from(parsed.publicKey, 'base64url').length === 65) {
       vapidCache = parsed;
       return vapidCache;
     }

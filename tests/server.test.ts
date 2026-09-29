@@ -483,10 +483,12 @@ describe('Backend tests', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    it('GET /api/push/vapid-key returns a 64-byte base64url key', async () => {
+    it('GET /api/push/vapid-key returns a 65-byte SEC1 base64url key', async () => {
       const res = await request(server).get('/api/push/vapid-key').expect(200);
       assert.strictEqual(typeof res.body.publicKey, 'string');
-      assert.strictEqual(Buffer.from(res.body.publicKey, 'base64url').length, 64);
+      const pub = Buffer.from(res.body.publicKey, 'base64url');
+      assert.strictEqual(pub.length, 65);
+      assert.strictEqual(pub[0], 0x04);
     });
 
     it('VAPID JWT is valid ES256 and has correct claims', () => {
