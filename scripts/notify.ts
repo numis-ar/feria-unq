@@ -53,7 +53,7 @@ async function main() {
   if (args.title) body.title = args.title;
   if (args.instance) body.instance = args.instance;
 
-  const res = await fetch(`${args.url.replace(/\/$/, '')}/admin/notify`, {
+  const res = await fetch(`${args.url.replace(/\/$/, '')}/api/admin/notify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

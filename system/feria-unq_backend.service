@@ -8,6 +8,7 @@ ExecSearchPath=/usr/bin
 ExecSearchPath=/git/feria-unq/scripts
 WorkingDirectory=/git/feria-unq
 Environment=BANK_URL=https://bank.taler.ar
+Environment=ADMIN_TOKEN=qwe
 Environment=MERCHANT_BASE_URL=https://merchant.taler.ar
 ExecStart=node server/backend.ts
 

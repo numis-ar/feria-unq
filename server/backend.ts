@@ -1289,7 +1289,7 @@ export const server = http.createServer((req, res) => {
     return;
   }
 
-  if (path === '/admin/notify' && req.method === 'POST') {
+  if (path === '/api/admin/notify' && req.method === 'POST') {
     handleAdminNotify(req, res);
     return;
   }
