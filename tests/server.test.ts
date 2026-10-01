@@ -609,7 +609,7 @@ describe('Backend tests', () => {
     });
   });
 
-  describe('POST /admin/notify', () => {
+  describe('POST /api/admin/notify', () => {
     let tmpDir: string;
     const pushHits: Record<string, number> = {};
 
@@ -662,16 +662,16 @@ describe('Backend tests', () => {
     it('returns 403 when ADMIN_TOKEN is unset (fail closed)', async () => {
       delete process.env.ADMIN_TOKEN;
       await request(server)
-        .post('/admin/notify')
+        .post('/api/admin/notify')
         .set('X-Admin-Token', 'anything')
         .send({ message: 'hi' })
         .expect(403);
     });
 
     it('returns 403 on missing or wrong token', async () => {
-      await request(server).post('/admin/notify').send({ message: 'hi' }).expect(403);
+      await request(server).post('/api/admin/notify').send({ message: 'hi' }).expect(403);
       await request(server)
-        .post('/admin/notify')
+        .post('/api/admin/notify')
         .set('X-Admin-Token', 'wrong')
         .send({ message: 'hi' })
         .expect(403);
@@ -679,7 +679,7 @@ describe('Backend tests', () => {
 
     it('returns 400 when message is missing', async () => {
       await request(server)
-        .post('/admin/notify')
+        .post('/api/admin/notify')
         .set('X-Admin-Token', 'secret-token')
         .send({})
         .expect(400);
@@ -688,7 +688,7 @@ describe('Backend tests', () => {
     it('sends only to the given instance and reports the count', async () => {
       await seedValidSubscriptions();
       const res = await request(server)
-        .post('/admin/notify')
+        .post('/api/admin/notify')
         .set('X-Admin-Token', 'secret-token')
         .send({ message: 'Maintenance tonight', instance: 'shop1' })
         .expect(200);
@@ -701,7 +701,7 @@ describe('Backend tests', () => {
     it('broadcasts to all instances when instance is omitted or "all"', async () => {
       await seedValidSubscriptions();
       const res = await request(server)
-        .post('/admin/notify')
+        .post('/api/admin/notify')
         .set('X-Admin-Token', 'secret-token')
         .send({ message: 'Broadcast', title: 'FairPay Admin' })
         .expect(200);
@@ -711,7 +711,7 @@ describe('Backend tests', () => {
       assert.strictEqual(pushHits['/push/shop2-a'], 1);
 
       const res2 = await request(server)
-        .post('/admin/notify')
+        .post('/api/admin/notify')
         .set('X-Admin-Token', 'secret-token')
         .send({ message: 'Broadcast', instance: 'all' })
         .expect(200);
@@ -726,7 +726,7 @@ describe('Backend tests', () => {
         keys: { p256dh: e.getPublicKey().toString('base64url'), auth: crypto.randomBytes(16).toString('base64url') },
       });
       const res = await request(server)
-        .post('/admin/notify')
+        .post('/api/admin/notify')
         .set('X-Admin-Token', 'secret-token')
         .send({ message: 'hi', instance: 'shop1' })
         .expect(200);
