@@ -71,19 +71,34 @@ suite(`Android device integration (${BASE_URL})`, () => {
     if (!androidDevice) return; // nothing to set up when skipping
     device = androidDevice;
 
-    // Preferred path: Playwright's own Android browser launcher.
-    // Some Chrome/device combos make it hang forever, so cap it and fall back
-    // to driving Chrome over CDP via `adb forward` (raw DevTools protocol).
-    let launched = null;
-    step('trying device.launchBrowser() (20s cap)...');
+    // Preferred path: Playwright's own Android browser launcher — but only on
+    // Chrome < 135. Newer Chrome ignores the --remote-debugging-socket-name flag
+    // that Playwright passes via `am start` (Android Chrome only reads flags from
+    // /data/local/tmp/chrome-command-line, which adb can't pre-seed with
+    // Playwright's per-launch random socket name), so launchBrowser() polls a
+    // socket that never appears and hangs. Detect the version and skip the wait.
+    let chromeMajor = 0;
     try {
-      launched = await Promise.race([
-        device.launchBrowser({ timeout: 20000 }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('launchBrowser timed out (20s)')), 21000)),
-      ]);
-      step('device.launchBrowser() OK');
-    } catch (e) {
-      step(`launchBrowser failed (${e.message}); falling back to CDP over adb forward`);
+      const out = execFileSync('adb', ['shell', 'dumpsys', 'package', 'com.android.chrome'], { stdio: ['ignore', 'pipe', 'pipe'] }).toString();
+      const m = out.match(/versionName=(\d+)\./);
+      if (m) chromeMajor = parseInt(m[1], 10);
+    } catch { /* unknown — try launchBrowser anyway */ }
+    step(`device Chrome major version: ${chromeMajor || 'unknown'}`);
+
+    let launched = null;
+    if (chromeMajor >= 135) {
+      step('Chrome >= 135: skipping launchBrowser (flag ignored by Chrome, would hang); using CDP path directly');
+    } else {
+      step('trying device.launchBrowser() (20s cap)...');
+      try {
+        launched = await Promise.race([
+          device.launchBrowser({ timeout: 20000 }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('launchBrowser timed out (20s)')), 21000)),
+        ]);
+        step('device.launchBrowser() OK');
+      } catch (e) {
+        step(`launchBrowser failed (${e.message}); falling back to CDP over adb forward`);
+      }
     }
 
     if (launched) {
