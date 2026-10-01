@@ -1,4 +1,4 @@
-const CACHE_NAME = "fairpay-v4";
+const CACHE_NAME = "fairpay-v5";
 const PRECACHE = [
   "./merchant.html",
   "./merchant.js",

@@ -42,6 +42,12 @@
         from { opacity: 1; }
         to { opacity: 0; }
       }
+      .dock-active {
+        background-color: #eef2ff;
+        border-radius: 0.75rem;
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+      }
     </style>
   </head>
 
@@ -196,6 +202,40 @@
       </div>
     </div>
 
+    <!-- Withdraw Modal Overlay -->
+    <div
+      id="withdraw-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
+    >
+      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
+        <button id="btn-close-withdraw-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <h2 class="text-2xl font-bold text-slate-900 mb-6" data-i18n="withdraw_dialog_title">Withdraw funds</h2>
+        <div class="space-y-4 text-left">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="col_amount">Amount</label>
+            <input
+              id="withdraw-dialog-amount"
+              type="number" min="1" max="99998"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-rose-500"
+              data-i18n-placeholder="col_amount"
+            />
+          </div>
+          <p id="withdraw-dialog-error" class="hidden text-xs text-red-600 font-medium"></p>
+          <div class="flex gap-3 mt-6">
+            <button id="btn-withdraw-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
+            <button id="btn-withdraw-confirm" class="w-full flex justify-center items-center gap-2 bg-rose-600 text-white rounded-xl py-3 font-semibold hover:bg-rose-700 transition disabled:opacity-70">
+              <span class="btn-text" data-i18n="bank_withdraw">Withdraw</span>
+              <span class="btn-spinner hidden">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Change Password Modal Overlay -->
     <div
       id="change-pass-modal"
@@ -232,7 +272,8 @@
 
     <!-- Top bar -->
     <header
-      class="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-40 flex items-center px-4 md:px-6 justify-between w-full"
+      id="top-bar"
+      class="hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-40 flex items-center px-4 md:px-6 justify-between w-full"
     >
       <div class="flex items-center gap-2">
         <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
@@ -241,21 +282,21 @@
           <option value="es">Español</option>
         </select>
       </div>
-      <div class="flex items-center gap-3">
-        <button id="btn-install" class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Install">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
+      <div class="flex items-center gap-4">
+        <button id="btn-install" class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Install">
+          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
           <span class="hidden md:inline" data-i18n="btn_install">Install</span>
         </button>
-        <button id="btn-fullscreen" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Fullscreen">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"></path></svg>
+        <button id="btn-fullscreen" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Fullscreen">
+          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"></path></svg>
           <span class="hidden md:inline" data-i18n="btn_fullscreen">Fullscreen</span>
         </button>
-        <button id="btn-open-change-pass" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Change Password">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+        <button id="btn-open-change-pass" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Change Password">
+          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
           <span class="hidden md:inline" data-i18n="change_password">Change Password</span>
         </button>
-        <button id="btn-top-logout" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 p-2 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Logout">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        <button id="btn-top-logout" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Logout">
+          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           <span class="hidden md:inline" data-i18n="btn_logout">Logout</span>
         </button>
       </div>
@@ -283,7 +324,7 @@
     </aside>
 
 
-    <main id="main-content" class="pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300">
+    <main id="main-content" class="hidden pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300">
       <!-- SECTION 1: Dashboard (Orders & Stats) -->
       <section id="dashboard" class="main-section space-y-8">
         <div class="flex justify-between items-end">
@@ -295,19 +336,19 @@
 
         <!-- 3 Totals Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
             <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_sold">Sold</div>
-            <div class="text-3xl font-bold text-slate-800" id="stat-sold">0.00</div>
+            <div class="text-2xl font-bold text-slate-800" id="stat-sold">0.00</div>
             <div class="text-xs text-slate-400 mt-2" data-i18n="stat_sold_desc">Paid minus Refunded</div>
           </div>
-          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
             <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_intransit">In Transit</div>
-            <div class="text-3xl font-bold text-yellow-600" id="stat-intransit">0.00</div>
+            <div class="text-2xl font-bold text-yellow-600" id="stat-intransit">0.00</div>
             <div class="text-xs text-slate-400 mt-2" data-i18n="stat_intransit_desc">Pending wire deadline</div>
           </div>
-          <a href="#account" onclick="document.getElementById('nav-account-btn').click();" class="group bg-indigo-600 rounded-3xl p-6 shadow-lg border border-indigo-700 flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition relative overflow-hidden">
+          <a href="#account" onclick="document.getElementById('nav-account-btn').click();" class="group bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition relative overflow-hidden">
             <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="stat_settled">Settled</div>
-            <div class="relative z-10 text-3xl font-bold text-white" id="stat-available">0.00</div>
+            <div class="relative z-10 text-2xl font-bold text-white" id="stat-available">0.00</div>
             <div class="relative z-10 text-xs text-indigo-200 mt-2 flex justify-between items-center">
               <span data-i18n="stat_settled_desc">Present in bank account</span>
               <span class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition" data-i18n="stat_withdraw">Withdraw &rarr;</span>
@@ -324,14 +365,13 @@
             <table class="w-full text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
                 <tr>
-                  <th class="px-6 py-4 font-semibold" data-i18n="col_summary">Order Summary</th>
-                  <th class="px-6 py-4 font-semibold" data-i18n="col_time">Timestamp</th>
-                  <th class="px-6 py-4 font-semibold" data-i18n="col_state">State</th>
-                  <th class="px-6 py-4 font-semibold text-right" data-i18n="col_amount">Amount</th>
+                  <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_summary">Summary</th>
+                  <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_state">State</th>
+                  <th class="px-6 py-4 font-semibold text-right whitespace-nowrap" data-i18n="col_amount">Amount</th>
                 </tr>
               </thead>
               <tbody id="orders-tbody" class="divide-y divide-slate-100">
-                <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_orders">Loading orders...</td></tr>
+                <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_orders">Loading orders...</td></tr>
               </tbody>
             </table>
           </div>
@@ -353,43 +393,35 @@
 
         <!-- Bank Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="withdraw">
-          <div class="bg-indigo-600 rounded-3xl p-6 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden">
+          <div class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden">
             <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="bank_avail">Available</div>
-            <div class="relative z-10 text-3xl font-bold text-white" id="stat-bank-available">0.00</div>
+            <div class="relative z-10 text-2xl font-bold text-white" id="stat-bank-available">0.00</div>
             <div class="relative z-10 text-xs text-indigo-200 mt-2" data-i18n="bank_avail_desc">Amount ready to withdraw</div>
           </div>
 
-          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
             <div>
               <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="bank_withdraw">Withdraw</div>
               <div class="text-xs text-slate-400 mb-4" data-i18n="bank_withdraw_desc">Withdraw your balance</div>
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <input
-                  id="withdraw-amount"
-                  class="amount-input w-full rounded-xl border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-rose-500"
-                  type="number" min="1" max="99998" placeholder="Amount" data-i18n-placeholder="col_amount"
-                />
-                <button
-                  id="btn-withdraw"
-                  class="action-btn rounded-xl bg-rose-600 px-4 py-2 text-white font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
-                >
-                  <span class="btn-text" data-i18n="bank_withdraw">Withdraw</span>
-                  <span class="btn-spinner hidden">
-                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  </span>
-                </button>
-              </div>
-              <p id="withdraw-error" class="error-text hidden mt-2 text-xs text-red-600 font-medium"></p>
+              <button
+                id="btn-withdraw"
+                class="action-btn w-full rounded-xl bg-rose-600 px-4 py-2 text-white font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                <span class="btn-text" data-i18n="bank_withdraw">Withdraw</span>
+                <span class="btn-spinner hidden">
+                  <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </span>
+              </button>
             </div>
           </div>
 
-          <div id="card-transfer-trigger" class="bg-indigo-600 rounded-3xl p-6 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden cursor-pointer hover:bg-indigo-700 transition group">
+          <div id="card-transfer-trigger" class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden cursor-pointer hover:bg-indigo-700 transition group">
             <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="bank_transfer">Transfer</div>
             <div class="relative z-10 text-xl font-bold text-white" data-i18n="bank_transfer_desc">Transfer to another merchant</div>
             <div class="relative z-10 mt-4 flex items-center justify-between">
-              <span class="text-xs text-indigo-200">Send funds</span>
+              <span class="text-xs text-indigo-200" data-i18n="transfer_send_funds">Send funds</span>
               <span class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition" data-i18n="transfer_link">Transfer &rarr;</span>
             </div>
           </div>
@@ -404,13 +436,12 @@
             <table class="w-full text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
                 <tr>
-                  <th class="px-6 py-4 font-semibold" data-i18n="col_subject">Subject</th>
-                  <th class="px-6 py-4 font-semibold" data-i18n="col_time">Timestamp</th>
-                  <th class="px-6 py-4 font-semibold text-right" data-i18n="col_amount">Amount</th>
+                  <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_subject">Subject</th>
+                  <th class="px-6 py-4 font-semibold text-right whitespace-nowrap" data-i18n="col_amount">Amount</th>
                 </tr>
               </thead>
               <tbody id="bank-tbody" class="divide-y divide-slate-100">
-                <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_tx">Loading bank details...</td></tr>
+                <tr><td colspan="2" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_tx">Loading bank details...</td></tr>
               </tbody>
             </table>
           </div>
@@ -445,7 +476,7 @@
           ? `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
           : `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-        el.className = "toast-enter bg-white border border-slate-100 shadow-xl rounded-2xl p-4 flex items-start gap-4 w-80";
+        el.className = "toast-enter bg-white border border-slate-100 shadow-xl rounded-2xl p-4 flex items-start gap-4 w-full max-w-sm mx-auto md:mx-0 md:w-80";
         el.innerHTML = `
           <div class="flex-shrink-0 mt-0.5">${icon}</div>
           <div class="flex-1">
@@ -525,12 +556,14 @@
           stat_settled_desc: "Present in bank account",
           stat_withdraw: "Withdraw &rarr;",
           orders_title: "Latest Orders",
-          col_summary: "Order Summary",
+          col_summary: "Summary",
           col_time: "Timestamp",
           col_state: "State",
           col_amount: "Amount",
           loading_orders: "Loading orders...",
           no_orders: "No orders found.",
+          order_fallback: "Order",
+          tx_fallback: "Transfer",
           bank_title: "Bank Account",
           bank_desc: "Incoming and outgoing transactions.",
           bank_account_name_lbl: "Account Name",
@@ -541,6 +574,10 @@
           bank_transfer: "Transfer",
           bank_transfer_desc: "Transfer to another merchant",
           transfer_link: "Transfer &rarr;",
+          transfer_send_funds: "Send funds",
+          transfer_from: "transfer from {account}",
+          transfer_to: "transfer to {account}",
+          unknown_account: "unknown",
           target_account: "Merchant Account",
           transfer_btn: "Send",
           btn_verify: "Verify",
@@ -559,9 +596,24 @@
           val_withdraw: "withdraw",
           val_closing: "closing",
           confirming: "Confirming...",
+          updating: "Updating...",
+          toast_success: "Success",
+          account_closed: "Account closed successfully",
+          withdraw_dialog_title: "Withdraw funds",
+          err_amount_required: "Enter an amount greater than 0",
+          err_account_not_found: "Account not found or restricted",
+          err_withdraw_server: "Server error creating withdrawal",
+          err_withdraw_generic: "Something went wrong creating withdrawal.",
+          err_confirm_transfer: "Failed to confirm transfer",
+          err_transfer_server: "Server error creating transfer",
+          err_transfer_generic: "Something went wrong creating transfer.",
           toast_new_order: "New Order",
           toast_updated_order: "Order Updated",
           toast_new_tx: "New Transaction",
+          toast_state_paid: "{amount} paid",
+          toast_state_unpaid: "Payment initiated",
+          toast_state_settled: "settled",
+          toast_state_refunded: "refunded",
           nav_dashboard: "Dashboard",
           nav_account: "Account",
           nav_user: "User",
@@ -611,12 +663,14 @@
           stat_settled_desc: "Presente en cuenta bancaria",
           stat_withdraw: "Retirar &rarr;",
           orders_title: "Últimos Pedidos",
-          col_summary: "Resumen de Pedido",
+          col_summary: "Resumen",
           col_time: "Fecha y Hora",
           col_state: "Estado",
           col_amount: "Cantidad",
           loading_orders: "Cargando pedidos...",
           no_orders: "No se encontraron pedidos.",
+          order_fallback: "Pedido",
+          tx_fallback: "Transferencia",
           bank_title: "Cuenta Bancaria",
           bank_desc: "Transacciones entrantes y salientes.",
           bank_account_name_lbl: "Nombre de Cuenta",
@@ -627,6 +681,10 @@
           bank_transfer: "Transferir",
           bank_transfer_desc: "Transferir a otro comerciante",
           transfer_link: "Transferir &rarr;",
+          transfer_send_funds: "Enviar fondos",
+          transfer_from: "transfer desde {account}",
+          transfer_to: "transfer a {account}",
+          unknown_account: "desconocido",
           target_account: "Cuenta del comerciante",
           transfer_btn: "Enviar",
           btn_verify: "Verificar",
@@ -645,9 +703,24 @@
           val_withdraw: "retiro",
           val_closing: "cierre",
           confirming: "Confirmando...",
+          updating: "Actualizando...",
+          toast_success: "Éxito",
+          account_closed: "Cuenta cerrada con éxito",
+          withdraw_dialog_title: "Retirar fondos",
+          err_amount_required: "Ingresa un monto mayor a 0",
+          err_account_not_found: "Cuenta no encontrada o restringida",
+          err_withdraw_server: "Error del servidor al crear el retiro",
+          err_withdraw_generic: "Algo salió mal al crear el retiro.",
+          err_confirm_transfer: "Fallo al confirmar la transferencia",
+          err_transfer_server: "Error del servidor al crear la transferencia",
+          err_transfer_generic: "Algo salió mal al crear la transferencia.",
           toast_new_order: "Nuevo Pedido",
           toast_updated_order: "Pedido Actualizado",
           toast_new_tx: "Nueva Transacción",
+          toast_state_paid: "{amount} pagado",
+          toast_state_unpaid: "Pago iniciado",
+          toast_state_settled: "acreditado",
+          toast_state_refunded: "reembolsado",
           nav_dashboard: "Panel de Control",
           nav_account: "Cuenta",
           nav_user: "Usuario",
@@ -676,6 +749,18 @@
           qr_open_wallet: "Abrir en billetera Taler"
         }
       };
+
+      function t(key) {
+        return (translations[currentLang] && translations[currentLang][key]) || translations.en[key] || key;
+      }
+
+      function tf(key, vars) {
+        let str = t(key);
+        for (const [name, value] of Object.entries(vars)) {
+          str = str.replace(`{${name}}`, value);
+        }
+        return str;
+      }
 
       function updateLanguage(lang) {
         currentLang = lang;
@@ -822,6 +907,8 @@
 
         document.getElementById("auth-pass").value = "";
         document.getElementById("sidebar").classList.add("hidden");
+        document.getElementById("main-content").classList.add("hidden");
+        document.getElementById("top-bar").classList.add("hidden");
         if (document.getElementById("auth-modal")) {
           document.getElementById("auth-modal").classList.remove("hidden");
           document.body.classList.add("modal-active");
@@ -839,7 +926,9 @@
 
           document.getElementById("sidebar").classList.remove("hidden");
           document.getElementById("sidebar").classList.add("max-md:hidden");
+          document.getElementById("main-content").classList.remove("hidden");
           document.getElementById("main-content").classList.add("md:ml-64");
+          document.getElementById("top-bar").classList.remove("hidden");
           document.getElementById("auth-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
 
@@ -869,7 +958,7 @@
           }
           return true;
         } catch (err) {
-          showToast(translations[currentLang]["login_failed"] || "Login failed", err.message, "error");
+          showToast(t("login_failed"), err.message, "error");
           localStorage.removeItem("taler_password");
           return false;
         } finally {
@@ -902,10 +991,11 @@
 
         let htmlBuffer = "";
         if (orders.length === 0) {
-          htmlBuffer = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400" data-i18n="no_orders">${translations[currentLang]["no_orders"]}</td></tr>`;
+          htmlBuffer = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="no_orders">${t("no_orders")}</td></tr>`;
         }
 
         let changedOrders = [];
+        let lastDay = null;
 
         orders.forEach((o) => {
           const amountNum = parseAmountStr(o.amount);
@@ -929,8 +1019,14 @@
             state = o.payment_status || o.order_status || "unpaid";
           }
 
-          const t_val = o.timestamp.t_s * 1000;
-          const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
+          const t_val = o.timestamp?.t_s ? o.timestamp.t_s * 1000 : null;
+          const d = t_val ? new Date(t_val) : null;
+          const dayKey = d ? d.toLocaleDateString() : "N/A";
+          if (dayKey !== lastDay) {
+            lastDay = dayKey;
+            htmlBuffer += `<tr><td colspan="3" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
+          }
+          const timeStr = d ? d.toLocaleTimeString() : "";
 
           const orderId = o.order_id || o.summary;
           let changed = false;
@@ -947,7 +1043,17 @@
           ordersPrevState.set(orderId, state);
 
           if (changed) {
-             changedOrders.push({ isNew, summary: o.summary || orderId, state });
+             let statePhrase;
+             if (state === "settled") {
+               statePhrase = t("toast_state_settled");
+             } else if (state === "refunded") {
+               statePhrase = t("toast_state_refunded");
+             } else if (o.paid) {
+               statePhrase = tf("toast_state_paid", { amount: formatMoney(amountNum) });
+             } else {
+               statePhrase = t("toast_state_unpaid");
+             }
+             changedOrders.push({ isNew, summary: o.summary || orderId, state: statePhrase });
           }
 
           let rowClass = "hover:bg-slate-50 transition";
@@ -957,8 +1063,10 @@
 
           htmlBuffer += `
           <tr class="${rowClass}">
-            <td class="px-6 py-4 font-medium text-slate-800">${o.summary || o.order_id || "Order"}</td>
-            <td class="px-6 py-4">${dateStr}</td>
+            <td class="px-6 py-4">
+              <div class="font-medium text-slate-800">${o.summary || o.order_id || t("order_fallback")}</div>
+              <div class="text-xs text-slate-400">${timeStr}</div>
+            </td>
             <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${state.toUpperCase()}</span></td>
             <td class="px-6 py-4 text-right font-semibold text-slate-800">${formatMoney(amountNum)}</td>
           </tr>
@@ -967,9 +1075,9 @@
 
         if (changedOrders.length > 0) {
            const first = changedOrders[0];
-           const title = first.isNew ? translations[currentLang]["toast_new_order"] : translations[currentLang]["toast_updated_order"];
-           showToast(title, `${first.summary} &rarr; ${first.state.toUpperCase()}`);
-           showSystemNotification(title, `${first.summary} → ${first.state.toUpperCase()}`, `order-${first.summary}`);
+           const title = first.isNew ? t("toast_new_order") : t("toast_updated_order");
+           showToast(title, `${first.summary} &rarr; ${first.state}`);
+           showSystemNotification(title, `${first.summary} → ${first.state}`, `order-${first.summary}`);
         }
 
         tbody.innerHTML = htmlBuffer;
@@ -978,7 +1086,7 @@
 
       async function startPollingOrders() {
         const tbody = document.getElementById("orders-tbody");
-        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_orders">${translations[currentLang]["loading_orders"]}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_orders">${translations[currentLang]["loading_orders"]}</td></tr>`;
 
         while (isPolling) {
           try {
@@ -997,7 +1105,7 @@
             if (!resOrders.ok) {
               if (resOrders.status === 401 || resOrders.status === 403) {
                 isPolling = false;
-                showToast(translations[currentLang]["session_expired"] || "Session expired", "", "error");
+                showToast(t("session_expired"), "", "error");
                 performLogout();
                 return;
               }
@@ -1048,18 +1156,25 @@
 
         let htmlBuffer = "";
         if (txs.length === 0) {
-          htmlBuffer = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="no_tx">${translations[currentLang]["no_tx"]}</td></tr>`;
+          htmlBuffer = `<tr><td colspan="2" class="px-6 py-8 text-center text-slate-400" data-i18n="no_tx">${t("no_tx")}</td></tr>`;
         }
 
         let newTxs = [];
+        let lastDay = null;
 
         txs.forEach((tx) => {
           const amountNum = parseAmountStr(tx.amount);
           const t_val = tx.date?.t_ms || (tx.date?.t_s ? tx.date.t_s * 1000 : tx.date);
-          const dateStr = t_val ? new Date(t_val).toLocaleString() : "N/A";
+          const d = t_val ? new Date(t_val) : null;
+          const dayKey = d ? d.toLocaleDateString() : "N/A";
+          if (dayKey !== lastDay) {
+            lastDay = dayKey;
+            htmlBuffer += `<tr><td colspan="2" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
+          }
+          const timeStr = d ? d.toLocaleTimeString() : "";
 
           let colorClass = "text-slate-800";
-          let subject = tx.subject || "Transfer";
+          let subject = tx.subject || t("tx_fallback");
           let isCredit = false;
           let iconSvg = "";
           let label = subject;
@@ -1071,10 +1186,10 @@
             const account = extractAccountFromPayto(tx.debtor_payto_uri);
             if (account === "exchange") {
               isSpecial = true;
-              subject = translations[currentLang]["val_sales"];
+              subject = t("val_sales");
               iconSvg = `<svg class="w-5 h-5 text-green-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>`;
             } else {
-              label = `transfer from ${account || "unknown"}`;
+              label = tf("transfer_from", { account: account || t("unknown_account") });
               iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
             }
           } else if (tx.direction === "debit") {
@@ -1083,14 +1198,14 @@
             const account = extractAccountFromPayto(tx.creditor_payto_uri);
             if (account === "exchange") {
               isSpecial = true;
-              subject = translations[currentLang]["val_withdraw"];
+              subject = t("val_withdraw");
               iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`;
             } else if (account === "closing_account") {
               isSpecial = true;
-              subject = translations[currentLang]["val_closing"];
+              subject = t("val_closing");
               iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
             } else {
-              label = `transfer to ${account || "unknown"}`;
+              label = tf("transfer_to", { account: account || t("unknown_account") });
               iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
             }
           }
@@ -1109,8 +1224,10 @@
 
           htmlBuffer += `
           <tr class="${rowClass}">
-            <td class="px-6 py-4 font-medium text-slate-800">${iconSvg} ${isSpecial ? subject : label}</td>
-            <td class="px-6 py-4">${dateStr}</td>
+            <td class="px-6 py-4">
+              <div class="font-medium text-slate-800">${iconSvg} ${isSpecial ? subject : label}</div>
+              <div class="text-xs text-slate-400">${timeStr}</div>
+            </td>
             <td class="px-6 py-4 text-right font-semibold ${colorClass}">${formatMoney(amountNum)}</td>
           </tr>
         `;
@@ -1118,8 +1235,8 @@
 
         if (newTxs.length > 0) {
            const first = newTxs[0];
-           showToast(translations[currentLang]["toast_new_tx"], `${first.subject} $${formatMoney(first.amount)}`, first.isCredit ? "success" : "info");
-           showSystemNotification(translations[currentLang]["toast_new_tx"], `${first.subject} $${formatMoney(first.amount)}`, `tx-${first.subject}`);
+           showToast(t("toast_new_tx"), `${first.subject} $${formatMoney(first.amount)}`, first.isCredit ? "success" : "info");
+           showSystemNotification(t("toast_new_tx"), `${first.subject} $${formatMoney(first.amount)}`, `tx-${first.subject}`);
         }
 
         tbody.innerHTML = htmlBuffer;
@@ -1128,7 +1245,7 @@
 
       async function startPollingBank() {
         const tbody = document.getElementById("bank-tbody");
-        tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_tx">${translations[currentLang]["loading_tx"]}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="2" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_tx">${translations[currentLang]["loading_tx"]}</td></tr>`;
 
         while (isPolling) {
           try {
@@ -1213,7 +1330,7 @@
         });
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
-            showToast(translations[currentLang]["session_expired"] || "Session expired", "", "error");
+            showToast(t("session_expired"), "", "error");
             performLogout();
           }
           throw new Error(`/api/state error: ${res.status}`);
@@ -1413,7 +1530,7 @@
             headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
           });
 
-          if (!res.ok) throw new Error("Failed to confirm transfer");
+          if (!res.ok) throw new Error(t("err_confirm_transfer"));
           
           document.getElementById("qr-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
@@ -1459,23 +1576,49 @@
 
       document
         .getElementById("btn-withdraw")
-        .addEventListener("click", async () => {
-          const input = document.getElementById("withdraw-amount");
-          const amount = input.value;
-          if (!amount || amount <= 0) return;
+        .addEventListener("click", () => {
+          const input = document.getElementById("withdraw-dialog-amount");
+          const errorEl = document.getElementById("withdraw-dialog-error");
+          input.value = "";
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+          document.getElementById("withdraw-modal").classList.remove("hidden");
+          document.body.classList.add("modal-active");
+          input.focus();
+        });
 
-          const errorEl = document.getElementById("withdraw-error");
-          const btn = document.getElementById("btn-withdraw");
+      document.getElementById("btn-close-withdraw-modal").addEventListener("click", () => {
+        document.getElementById("withdraw-modal").classList.add("hidden");
+        document.body.classList.remove("modal-active");
+      });
+
+      document.getElementById("btn-withdraw-cancel").addEventListener("click", () => {
+        document.getElementById("withdraw-modal").classList.add("hidden");
+        document.body.classList.remove("modal-active");
+      });
+
+      document
+        .getElementById("btn-withdraw-confirm")
+        .addEventListener("click", async () => {
+          const input = document.getElementById("withdraw-dialog-amount");
+          const amount = input.value;
+          const errorEl = document.getElementById("withdraw-dialog-error");
+          const btn = document.getElementById("btn-withdraw-confirm");
           const btnText = btn.querySelector(".btn-text");
           const btnSpinner = btn.querySelector(".btn-spinner");
 
+          errorEl.classList.add("hidden");
+          if (!amount || amount <= 0) {
+            errorEl.textContent = t("err_amount_required");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
           const qrModal = document.getElementById("qr-modal");
-          const qrTitle = document.getElementById("qr-modal-title");
           const qrImg = document.getElementById("qr-modal-img");
           const qrSpinnerModal = document.getElementById("qr-spinner-modal");
           const qrError = document.getElementById("qr-modal-error");
 
-          errorEl.classList.add("hidden");
           btn.disabled = true;
           btnText.classList.add("hidden");
           btnSpinner.classList.remove("hidden");
@@ -1483,16 +1626,16 @@
           try {
             const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals`, {
               method: "POST",
-              headers: { 
+              headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
               },
               body: JSON.stringify({ amount: `NUMIS:${amount}` }), // hidden format string
             });
-            
+
             if (!res.ok) {
-               if (res.status === 409) throw new Error(translations[currentLang]["error_bal"]);
-               throw new Error("Server error creating withdrawal");
+               if (res.status === 409) throw new Error(t("error_bal"));
+               throw new Error(t("err_withdraw_server"));
             }
 
             const data = await res.json();
@@ -1500,14 +1643,16 @@
             const talerWithdrawUri = data.taler_withdraw_uri;
 
             document.getElementById("qr-modal-amount").textContent = amount;
-            document.getElementById("qr-modal-desc").innerHTML = translations[currentLang]["modal_qr_scan"];
+            document.getElementById("qr-modal-desc").innerHTML = t("modal_qr_scan");
             document.getElementById("qr-content").classList.remove("hidden");
             document.getElementById("qr-confirm-actions").classList.add("hidden");
-            
+
             qrImg.classList.add("hidden");
             qrError.classList.add("hidden");
             qrSpinnerModal.classList.remove("hidden");
 
+            // close the withdraw dialog, then open the QR modal
+            document.getElementById("withdraw-modal").classList.add("hidden");
             document.body.classList.add("modal-active");
             qrModal.classList.remove("hidden");
 
@@ -1521,14 +1666,14 @@
             };
             qrImg.onerror = () => {
               qrSpinnerModal.classList.add("hidden");
-              qrError.textContent = translations[currentLang]["error_qr"];
+              qrError.textContent = t("error_qr");
               qrError.classList.remove("hidden");
             };
 
             withdrawalPolling = true;
             pollWithdrawalState();
           } catch (e) {
-            errorEl.textContent = e.message || "Something went wrong creating withdrawal.";
+            errorEl.textContent = e.message || t("err_withdraw_generic");
             errorEl.classList.remove("hidden");
           } finally {
             btn.disabled = false;
@@ -1565,7 +1710,7 @@
           
           document.getElementById("close-account-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
-          showToast("Success", "Account closed successfully", "success");
+          showToast(t("toast_success"), t("account_closed"), "success");
           
           // Force logout
           setTimeout(() => {
@@ -1593,11 +1738,14 @@
         const resolvedId = targetBtn.getAttribute('data-target');
 
         document.querySelectorAll('.sidebar-nav-btn').forEach(b => {
-          b.classList.remove('text-indigo-600', 'bg-indigo-50');
+          b.classList.remove('text-indigo-600', 'bg-indigo-50', 'dock-active');
           b.classList.add('text-slate-600');
         });
         targetBtn.classList.remove('text-slate-600');
         targetBtn.classList.add('text-indigo-600', 'bg-indigo-50');
+        if (targetBtn.closest('#bottom-dock')) {
+          targetBtn.classList.add('dock-active');
+        }
 
         document.querySelectorAll('.main-section').forEach(s => s.classList.add('hidden'));
         document.getElementById(resolvedId).classList.remove('hidden');
@@ -1663,7 +1811,7 @@
          
          const btn = document.getElementById('btn-change-pass');
          const origText = btn.textContent;
-         btn.textContent = "Updating...";
+         btn.textContent = t("updating");
          btn.disabled = true;
 
          try {
@@ -1680,7 +1828,7 @@
                  newPassEl.value = '';
                  repeatPassEl.value = '';
                  document.getElementById('temp-password-warning').classList.add('hidden');
-                 showToast("Success", translations[currentLang]["pass_changed"], "success");
+                 showToast(t("toast_success"), translations[currentLang]["pass_changed"], "success");
              }
          } catch (e) {
              formErr.textContent = e.message;
@@ -1746,7 +1894,7 @@
           });
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || "Account not found or restricted");
+            throw new Error(err.message || t("err_account_not_found"));
           }
           const data = await res.json();
           verifiedAccountData = data;
@@ -1794,22 +1942,22 @@
           
           if (!res.ok) {
              if (res.status === 409) throw new Error(translations[currentLang]["error_bal"]);
-             throw new Error("Server error creating transfer");
+             throw new Error(t("err_transfer_server"));
           }
 
           document.getElementById("transfer-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
-          showToast("Success", translations[currentLang]["transfer_confirmed"], "success");
+          showToast(t("toast_success"), translations[currentLang]["transfer_confirmed"], "success");
         } catch (e) {
-          errEl.textContent = e.message || "Something went wrong creating transfer.";
-          errEl.classList.add("hidden");
+          errEl.textContent = e.message || t("err_transfer_generic");
+          errEl.classList.remove("hidden");
         }
       });
 
     </script>
     <!-- Mobile Bottom Navigation Dock -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 flex justify-around py-3">
-      <button class="sidebar-nav-btn active flex flex-col items-center gap-1 text-indigo-600 font-medium text-xs" data-target="dashboard">
+    <div id="bottom-dock" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 flex justify-around py-3">
+      <button class="sidebar-nav-btn active dock-active flex flex-col items-center gap-1 text-indigo-600 font-medium text-xs" data-target="dashboard">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
         <span data-i18n="nav_dashboard">Dashboard</span>
       </button>
@@ -1819,6 +1967,6 @@
       </button>
     </div>
 
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-3"></div>
+    <div id="toast-container" class="fixed top-20 right-4 left-4 md:top-4 md:left-auto z-50 flex flex-col gap-3"></div>
   </body>
 </html>
