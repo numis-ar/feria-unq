@@ -52,6 +52,11 @@
   </head>
 
   <body class="text-slate-800 antialiased bg-slate-50 min-h-screen">
+    <a
+      href="#main-content"
+      data-i18n="skip_to_content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:font-semibold"
+    >Saltar al contenido</a>
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
       <div class="flex flex-col items-center gap-4">
@@ -65,29 +70,39 @@
     <!-- Login Modal Overlay -->
     <div
       id="auth-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
       <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4">
-        <h2 class="text-2xl font-bold text-slate-900 mb-6" data-i18n="login_title">Merchant Login</h2>
+        <h2 id="auth-modal-title" class="text-2xl font-bold text-slate-900 mb-6" data-i18n="login_title">Merchant Login</h2>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="username_lbl">Username</label>
+            <label for="auth-user" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="username_lbl">Username</label>
             <input
               id="auth-user"
               type="text"
               placeholder="default"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="login-error"
               class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="password_lbl">Password</label>
+            <label for="auth-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="password_lbl">Password</label>
             <input
               id="auth-pass"
               type="password"
               placeholder="..."
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="login-error"
               class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
+          <p id="login-error" role="alert" class="hidden text-sm text-red-600 font-medium text-center"></p>
           <button
             id="btn-login"
             data-i18n="login_btn"
@@ -102,10 +117,13 @@
     <!-- QR Modal Overlay -->
     <div
       id="qr-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="qr-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
       <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
-        <button id="btn-close-qr" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+        <button id="btn-close-qr" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
         <h2 id="qr-modal-title" class="text-2xl font-bold text-slate-900 mb-2">
@@ -122,7 +140,7 @@
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </div>
-          <img id="qr-modal-img" class="w-56 h-56 hidden" alt="QR code" />
+          <img id="qr-modal-img" class="w-56 h-56 hidden" alt="Código QR de retiro" data-i18n-aria-label="aria_qr_code" />
         </div>
         <a id="qr-taler-link" href="#" class="hidden mt-4 inline-block text-indigo-600 hover:underline text-sm font-medium" data-i18n="qr_open_wallet">Open in Taler wallet</a>
         
@@ -130,17 +148,20 @@
           <button id="btn-qr-confirm" class="w-full bg-emerald-600 text-white rounded-xl py-3 font-semibold hover:bg-emerald-700 transition" data-i18n="btn_confirm">Confirm Transfer</button>
           <button id="btn-qr-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
         </div>
-        <p id="qr-modal-error" class="hidden mt-4 text-red-600 font-medium"></p>
+        <p id="qr-modal-error" role="alert" class="hidden mt-4 text-red-600 font-medium"></p>
       </div>
     </div>
 
     <!-- Close Account Modal Overlay -->
     <div
       id="close-account-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="close-account-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
       <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
-        <h2 class="text-2xl font-bold text-red-600 mb-2" data-i18n="close_account_title">Close Account</h2>
+        <h2 id="close-account-modal-title" class="text-2xl font-bold text-red-600 mb-2" data-i18n="close_account_title">Close Account</h2>
         <p class="text-slate-500 mb-4 text-sm" data-i18n="close_account_desc">
           Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.
         </p>
@@ -155,28 +176,31 @@
           </button>
           <button id="btn-close-account-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
         </div>
-        <p id="close-account-error" class="hidden mt-4 text-red-600 font-medium"></p>
+        <p id="close-account-error" role="alert" class="hidden mt-4 text-red-600 font-medium"></p>
       </div>
     </div>
 
     <!-- Transfer Modal Overlay -->
     <div
       id="transfer-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="transfer-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
       <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative">
-        <button id="btn-close-transfer-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+        <button id="btn-close-transfer-modal" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
-        <h3 class="text-xl font-bold text-slate-800 mb-4" data-i18n="bank_transfer">Transfer</h3>
-        
+        <h3 id="transfer-modal-title" class="text-xl font-bold text-slate-800 mb-4" data-i18n="bank_transfer">Transfer</h3>
+
         <!-- Step 1: Enter Account -->
         <div id="transfer-step-1" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="target_account">Merchant Account</label>
-            <input id="transfer-target" type="text" placeholder="Account name" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label for="transfer-target" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="target_account">Merchant Account</label>
+            <input id="transfer-target" type="text" placeholder="Account name" aria-required="true" aria-invalid="false" aria-describedby="transfer-step1-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
           </div>
-          <p id="transfer-step1-error" class="hidden text-xs text-red-600 font-medium"></p>
+          <p id="transfer-step1-error" role="alert" class="hidden text-xs text-red-600 font-medium"></p>
           <div class="flex gap-3 mt-6">
             <button id="btn-transfer-cancel-1" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
             <button id="btn-transfer-verify" class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition" data-i18n="btn_verify">Verify</button>
@@ -190,10 +214,10 @@
             <p class="text-sm text-slate-600"><strong data-i18n="account_full_name">Full Name</strong>: <span id="verify-fullname" class="font-bold text-slate-800"></span></p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="col_amount">Amount</label>
-            <input id="transfer-amount" type="number" min="1" max="99998" placeholder="Amount" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label for="transfer-amount" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="col_amount">Amount</label>
+            <input id="transfer-amount" type="number" min="1" max="99998" placeholder="Amount" aria-required="true" aria-invalid="false" aria-describedby="transfer-step2-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
           </div>
-          <p id="transfer-step2-error" class="hidden text-xs text-red-600 font-medium"></p>
+          <p id="transfer-step2-error" role="alert" class="hidden text-xs text-red-600 font-medium"></p>
           <div class="flex gap-3 mt-6">
             <button id="btn-transfer-back" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_back">Back</button>
             <button id="btn-transfer-confirm" class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition" data-i18n="btn_confirm">Confirm</button>
@@ -205,24 +229,30 @@
     <!-- Withdraw Modal Overlay -->
     <div
       id="withdraw-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="withdraw-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
       <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
-        <button id="btn-close-withdraw-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+        <button id="btn-close-withdraw-modal" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
-        <h2 class="text-2xl font-bold text-slate-900 mb-6" data-i18n="withdraw_dialog_title">Withdraw funds</h2>
+        <h2 id="withdraw-modal-title" class="text-2xl font-bold text-slate-900 mb-6" data-i18n="withdraw_dialog_title">Withdraw funds</h2>
         <div class="space-y-4 text-left">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="col_amount">Amount</label>
+            <label for="withdraw-dialog-amount" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="col_amount">Amount</label>
             <input
               id="withdraw-dialog-amount"
               type="number" min="1" max="99998"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="withdraw-dialog-error"
               class="w-full rounded-xl border border-slate-300 px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-rose-500"
               data-i18n-placeholder="col_amount"
             />
           </div>
-          <p id="withdraw-dialog-error" class="hidden text-xs text-red-600 font-medium"></p>
+          <p id="withdraw-dialog-error" role="alert" class="hidden text-xs text-red-600 font-medium"></p>
           <div class="flex gap-3 mt-6">
             <button id="btn-withdraw-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
             <button id="btn-withdraw-confirm" class="w-full flex justify-center items-center gap-2 bg-rose-600 text-white rounded-xl py-3 font-semibold hover:bg-rose-700 transition disabled:opacity-70">
@@ -239,33 +269,36 @@
     <!-- Change Password Modal Overlay -->
     <div
       id="change-pass-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="change-pass-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
       <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative">
-        <button id="btn-close-change-pass-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+        <button id="btn-close-change-pass-modal" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
-        <h3 class="text-xl font-bold text-slate-800 mb-4" data-i18n="change_password">Change Password</h3>
+        <h3 id="change-pass-modal-title" class="text-xl font-bold text-slate-800 mb-4" data-i18n="change_password">Change Password</h3>
         <div id="temp-password-warning" class="hidden mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded-xl shadow-sm text-xs">
           <span class="font-medium" data-i18n="temp_pass_warning">You are using a temporary password. It MUST be changed before doing anything else.</span>
         </div>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="old_password">Old Password</label>
-            <input id="old-pass" type="password" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label for="old-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="old_password">Old Password</label>
+            <input id="old-pass" type="password" aria-required="true" aria-invalid="false" aria-describedby="form-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="new_password">New Password</label>
-            <input id="new-pass" type="password" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <p id="new-pass-error" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
+            <label for="new-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="new_password">New Password</label>
+            <input id="new-pass" type="password" aria-required="true" aria-invalid="false" aria-describedby="new-pass-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <p id="new-pass-error" role="alert" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="repeat_password">Repeat Password</label>
-            <input id="repeat-pass" type="password" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <p id="repeat-pass-error" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
+            <label for="repeat-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="repeat_password">Repeat Password</label>
+            <input id="repeat-pass" type="password" aria-required="true" aria-invalid="false" aria-describedby="repeat-pass-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <p id="repeat-pass-error" role="alert" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
           </div>
           <button id="btn-change-pass" class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition" data-i18n="btn_update_pass">Update Password</button>
-          <p id="form-error" class="hidden text-sm text-red-600 font-medium text-center"></p>
+          <p id="form-error" role="alert" class="hidden text-sm text-red-600 font-medium text-center"></p>
         </div>
       </div>
     </div>
@@ -273,29 +306,30 @@
     <!-- Top bar -->
     <header
       id="top-bar"
+      role="banner"
       class="hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-40 flex items-center px-4 md:px-6 justify-between w-full"
     >
       <div class="flex items-center gap-2">
         <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
-        <select id="lang-selector" class="bg-white rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 outline-none cursor-pointer">
+        <select id="lang-selector" data-i18n-aria-label="aria_language" aria-label="Idioma" class="bg-white rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 outline-none cursor-pointer">
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
       </div>
       <div class="flex items-center gap-4">
-        <button id="btn-install" class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Install">
+        <button id="btn-install" data-i18n-aria-label="aria_install" aria-label="Instalar" class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Install">
           <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
           <span class="hidden md:inline" data-i18n="btn_install">Install</span>
         </button>
-        <button id="btn-fullscreen" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Fullscreen">
+        <button id="btn-fullscreen" data-i18n-aria-label="aria_fullscreen" aria-label="Pantalla completa" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Fullscreen">
           <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"></path></svg>
           <span class="hidden md:inline" data-i18n="btn_fullscreen">Fullscreen</span>
         </button>
-        <button id="btn-open-change-pass" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Change Password">
+        <button id="btn-open-change-pass" data-i18n-aria-label="aria_change_password" aria-label="Cambiar contraseña" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Change Password">
           <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
           <span class="hidden md:inline" data-i18n="change_password">Change Password</span>
         </button>
-        <button id="btn-top-logout" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Logout">
+        <button id="btn-top-logout" data-i18n-aria-label="aria_logout" aria-label="Cerrar sesión" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Logout">
           <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           <span class="hidden md:inline" data-i18n="btn_logout">Logout</span>
         </button>
@@ -305,12 +339,13 @@
     <!-- Offline banner -->
     <div
       id="offline-banner"
+      role="status"
       class="hidden fixed top-16 left-0 right-0 z-40 bg-yellow-100 border-b border-yellow-300 text-yellow-800 text-center text-sm font-semibold py-1.5 px-4"
     >
       <span data-i18n="offline_banner">You are offline. Data may be out of date.</span>
     </div>
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed top-16 left-0 w-64 bottom-0 bg-white border-r border-slate-200 z-30 hidden md:flex flex-col">
+    <aside id="sidebar" role="navigation" aria-label="Navegación principal" data-i18n-aria-label="nav_main" class="fixed top-16 left-0 w-64 bottom-0 bg-white border-r border-slate-200 z-30 hidden md:flex flex-col">
       <nav class="p-4 space-y-2">
         <button id="nav-dashboard-btn" class="sidebar-nav-btn active w-full flex items-center gap-3 px-4 py-3 text-indigo-600 bg-indigo-50 rounded-xl font-medium transition" data-target="dashboard">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -324,7 +359,7 @@
     </aside>
 
 
-    <main id="main-content" class="hidden pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300">
+    <main id="main-content" tabindex="-1" class="hidden pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300">
       <!-- SECTION 1: Dashboard (Orders & Stats) -->
       <section id="dashboard" class="main-section space-y-8">
         <div class="flex justify-between items-end">
@@ -336,17 +371,17 @@
 
         <!-- 3 Totals Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div role="group" aria-label="Sold" data-i18n-aria-label="stat_sold" class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
             <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_sold">Sold</div>
             <div class="text-2xl font-bold text-slate-800" id="stat-sold">0.00</div>
             <div class="text-xs text-slate-400 mt-2" data-i18n="stat_sold_desc">Paid minus Refunded</div>
           </div>
-          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div role="group" aria-label="In Transit" data-i18n-aria-label="stat_intransit" class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
             <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_intransit">In Transit</div>
             <div class="text-2xl font-bold text-yellow-600" id="stat-intransit">0.00</div>
             <div class="text-xs text-slate-400 mt-2" data-i18n="stat_intransit_desc">Pending wire deadline</div>
           </div>
-          <a href="#account" onclick="document.getElementById('nav-account-btn').click();" class="group bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition relative overflow-hidden">
+          <a href="#account" role="group" aria-label="Settled" data-i18n-aria-label="stat_settled" onclick="document.getElementById('nav-account-btn').click();" class="group bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition relative overflow-hidden">
             <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="stat_settled">Settled</div>
             <div class="relative z-10 text-2xl font-bold text-white" id="stat-available">0.00</div>
             <div class="relative z-10 text-xs text-indigo-200 mt-2 flex justify-between items-center">
@@ -362,7 +397,7 @@
             <h2 class="text-lg font-bold text-slate-800" data-i18n="orders_title">Latest Orders</h2>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-600">
+            <table aria-label="Latest orders" data-i18n-aria-label="orders_table_label" class="w-full text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
                 <tr>
                   <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_summary">Summary</th>
@@ -370,7 +405,7 @@
                   <th class="px-6 py-4 font-semibold text-right whitespace-nowrap" data-i18n="col_amount">Amount</th>
                 </tr>
               </thead>
-              <tbody id="orders-tbody" class="divide-y divide-slate-100">
+              <tbody id="orders-tbody" aria-live="polite" aria-busy="true" class="divide-y divide-slate-100">
                 <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_orders">Loading orders...</td></tr>
               </tbody>
             </table>
@@ -393,13 +428,13 @@
 
         <!-- Bank Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="withdraw">
-          <div class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden">
+          <div role="group" aria-label="Available" data-i18n-aria-label="bank_avail" class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden">
             <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="bank_avail">Available</div>
             <div class="relative z-10 text-2xl font-bold text-white" id="stat-bank-available">0.00</div>
             <div class="relative z-10 text-xs text-indigo-200 mt-2" data-i18n="bank_avail_desc">Amount ready to withdraw</div>
           </div>
 
-          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div role="group" aria-label="Withdraw" data-i18n-aria-label="bank_withdraw" class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
             <div>
               <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="bank_withdraw">Withdraw</div>
               <div class="text-xs text-slate-400 mb-4" data-i18n="bank_withdraw_desc">Withdraw your balance</div>
@@ -417,7 +452,7 @@
             </div>
           </div>
 
-          <div id="card-transfer-trigger" class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden cursor-pointer hover:bg-indigo-700 transition group">
+          <div id="card-transfer-trigger" role="group" aria-label="Transfer" data-i18n-aria-label="bank_transfer" class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden cursor-pointer hover:bg-indigo-700 transition group">
             <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="bank_transfer">Transfer</div>
             <div class="relative z-10 text-xl font-bold text-white" data-i18n="bank_transfer_desc">Transfer to another merchant</div>
             <div class="relative z-10 mt-4 flex items-center justify-between">
@@ -433,14 +468,14 @@
             <h2 class="text-lg font-bold text-slate-800" data-i18n="tx_title">Latest Transactions</h2>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-600">
+            <table aria-label="Latest transactions" data-i18n-aria-label="tx_table_label" class="w-full text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
                 <tr>
                   <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_subject">Subject</th>
                   <th class="px-6 py-4 font-semibold text-right whitespace-nowrap" data-i18n="col_amount">Amount</th>
                 </tr>
               </thead>
-              <tbody id="bank-tbody" class="divide-y divide-slate-100">
+              <tbody id="bank-tbody" aria-live="polite" aria-busy="true" class="divide-y divide-slate-100">
                 <tr><td colspan="2" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_tx">Loading bank details...</td></tr>
               </tbody>
             </table>
@@ -639,7 +674,20 @@
           close_account_more_info: "More information about closing the account",
           login_failed: "Login failed",
           session_expired: "Session expired or unauthorized",
-          qr_open_wallet: "Open in Taler wallet"
+          qr_open_wallet: "Open in Taler wallet",
+          skip_to_content: "Skip to content",
+          nav_main: "Main navigation",
+          nav_sections: "Section navigation",
+          aria_close: "Close",
+          aria_fullscreen: "Fullscreen",
+          aria_exit_fullscreen: "Exit fullscreen",
+          aria_change_password: "Change password",
+          aria_logout: "Logout",
+          aria_install: "Install",
+          aria_language: "Language",
+          aria_qr_code: "Withdrawal QR code",
+          orders_table_label: "Latest orders",
+          tx_table_label: "Latest transactions"
         },
         es: {
           login_title: "Acceso de Comerciante",
@@ -746,7 +794,20 @@
           close_account_more_info: "Más información sobre el cierre de cuenta",
           login_failed: "Error de acceso",
           session_expired: "Sesión expirada o no autorizada",
-          qr_open_wallet: "Abrir en billetera Taler"
+          qr_open_wallet: "Abrir en billetera Taler",
+          skip_to_content: "Saltar al contenido",
+          nav_main: "Navegación principal",
+          nav_sections: "Navegación de secciones",
+          aria_close: "Cerrar",
+          aria_fullscreen: "Pantalla completa",
+          aria_exit_fullscreen: "Salir de pantalla completa",
+          aria_change_password: "Cambiar contraseña",
+          aria_logout: "Cerrar sesión",
+          aria_install: "Instalar",
+          aria_language: "Idioma",
+          aria_qr_code: "Código QR de retiro",
+          orders_table_label: "Últimos pedidos",
+          tx_table_label: "Últimas transacciones"
         }
       };
 
@@ -761,6 +822,90 @@
         }
         return str;
       }
+
+      // --- Dialog focus management -----------------------------------------
+      // Simple open-dialog stack; only one dialog is open at a time, except the
+      // withdraw-modal → qr-modal handoff, where focus moves to the QR dialog and
+      // the withdraw trigger regains focus once the QR dialog fully closes.
+      const dialogStack = [];
+      const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+      function visibleFocusables(dialog) {
+        return Array.from(dialog.querySelectorAll(FOCUSABLE_SELECTOR))
+          .filter((el) => el.getClientRects().length > 0);
+      }
+
+      function openDialog(id, focusEl) {
+        const dialog = document.getElementById(id);
+        if (!dialog) return;
+        dialogStack.push({ id, prevFocus: document.activeElement });
+        let target = focusEl || null;
+        if (!target) {
+          const focusables = visibleFocusables(dialog);
+          target = focusables[0] || dialog;
+        }
+        if (target === dialog && !dialog.hasAttribute("tabindex")) {
+          dialog.setAttribute("tabindex", "-1");
+        }
+        target.focus();
+      }
+
+      function closeDialog(id, { restoreFocus = true } = {}) {
+        const idx = dialogStack.findIndex((d) => d.id === id);
+        if (idx < 0) return;
+        const { prevFocus } = dialogStack.splice(idx, 1)[0];
+        if (!restoreFocus) return;
+        const top = dialogStack[dialogStack.length - 1];
+        if (top) {
+          const dialog = document.getElementById(top.id);
+          if (dialog) {
+            const focusables = visibleFocusables(dialog);
+            (focusables[0] || dialog).focus();
+          }
+        } else if (prevFocus && document.contains(prevFocus) && prevFocus.focus) {
+          prevFocus.focus();
+        }
+      }
+
+      function hideTopDialog() {
+        const top = dialogStack[dialogStack.length - 1];
+        if (!top) return;
+        if (top.id === "qr-modal") {
+          // Escape on an active withdrawal behaves exactly like "Cancelar".
+          document.getElementById("btn-qr-cancel").click();
+          return;
+        }
+        document.getElementById(top.id).classList.add("hidden");
+        if (dialogStack.length === 1) document.body.classList.remove("modal-active");
+        closeDialog(top.id);
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          hideTopDialog();
+          return;
+        }
+        if (e.key !== "Tab") return;
+        const top = dialogStack[dialogStack.length - 1];
+        if (!top) return;
+        const dialog = document.getElementById(top.id);
+        if (!dialog) return;
+        const items = visibleFocusables(dialog);
+        if (items.length === 0) {
+          e.preventDefault();
+          dialog.focus();
+          return;
+        }
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      });
 
       function updateLanguage(lang) {
         currentLang = lang;
@@ -779,6 +924,13 @@
           const key = el.getAttribute("data-i18n-placeholder");
           if (translations[lang] && translations[lang][key]) {
             el.placeholder = translations[lang][key];
+          }
+        });
+        document.querySelectorAll("[data-i18n-aria-label]").forEach(el => {
+          const key = el.getAttribute("data-i18n-aria-label");
+          if (translations[lang] && translations[lang][key]) {
+            el.setAttribute("aria-label", translations[lang][key]);
+            if (el.tagName === "IMG") el.setAttribute("alt", translations[lang][key]);
           }
         });
       }
@@ -832,10 +984,12 @@
           } catch (e) { /* ignored */ }
         });
         document.addEventListener("fullscreenchange", () => {
+          const exiting = Boolean(document.fullscreenElement);
           btnFullscreen.querySelector("span").textContent =
-            document.fullscreenElement
+            exiting
               ? (translations[currentLang]["btn_exit_fullscreen"] || "Exit Fullscreen")
               : (translations[currentLang]["btn_fullscreen"] || "Fullscreen");
+          btnFullscreen.setAttribute("aria-label", t(exiting ? "aria_exit_fullscreen" : "aria_fullscreen"));
         });
       }
 
@@ -869,14 +1023,15 @@
           const loggedIn = await doLogin(API_URL, BANK_URL, savedUser, savedPass);
           if (!loggedIn) {
             document.getElementById("auth-pass").value = "";
-            document.getElementById("auth-pass").focus();
             document.getElementById("auth-modal").classList.remove("hidden");
             document.body.classList.add("modal-active");
+            openDialog("auth-modal", document.getElementById("auth-pass"));
           }
         } else {
           document.getElementById("loading-overlay").classList.add("hidden");
           document.getElementById("auth-modal").classList.remove("hidden");
           document.body.classList.add("modal-active");
+          openDialog("auth-modal", document.getElementById("auth-user"));
         }
       });
 
@@ -887,7 +1042,18 @@
         localStorage.setItem("taler_username", user);
         localStorage.setItem("taler_password", pass);
 
-        doLogin(API_URL, BANK_URL, user, pass);
+        const loginError = document.getElementById("login-error");
+        loginError.classList.add("hidden");
+        document.getElementById("auth-user").setAttribute("aria-invalid", "false");
+        document.getElementById("auth-pass").setAttribute("aria-invalid", "false");
+
+        doLogin(API_URL, BANK_URL, user, pass).then((ok) => {
+          if (!ok) {
+            document.getElementById("auth-pass").setAttribute("aria-invalid", "true");
+            loginError.textContent = t("login_failed");
+            loginError.classList.remove("hidden");
+          }
+        });
       });
 
       function performLogout() {
@@ -912,6 +1078,7 @@
         if (document.getElementById("auth-modal")) {
           document.getElementById("auth-modal").classList.remove("hidden");
           document.body.classList.add("modal-active");
+          openDialog("auth-modal", document.getElementById("auth-user"));
         }
       }
 
@@ -930,7 +1097,9 @@
           document.getElementById("main-content").classList.add("md:ml-64");
           document.getElementById("top-bar").classList.remove("hidden");
           document.getElementById("auth-modal").classList.add("hidden");
+          closeDialog("auth-modal", { restoreFocus: false });
           document.body.classList.remove("modal-active");
+          document.getElementById("main-content").focus();
 
           if ("Notification" in window && Notification.permission === "default") {
             Notification.requestPermission().catch(() => {});
@@ -1024,7 +1193,7 @@
           const dayKey = d ? d.toLocaleDateString() : "N/A";
           if (dayKey !== lastDay) {
             lastDay = dayKey;
-            htmlBuffer += `<tr><td colspan="3" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
+            htmlBuffer += `<tr role="row"><td colspan="3" aria-colspan="3" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
           }
           const timeStr = d ? d.toLocaleTimeString() : "";
 
@@ -1081,15 +1250,18 @@
         }
 
         tbody.innerHTML = htmlBuffer;
+        tbody.setAttribute("aria-busy", "false");
         ordersFirstFetch = false;
       }
 
       async function startPollingOrders() {
         const tbody = document.getElementById("orders-tbody");
+        tbody.setAttribute("aria-busy", "true");
         tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_orders">${translations[currentLang]["loading_orders"]}</td></tr>`;
 
         while (isPolling) {
           try {
+            tbody.setAttribute("aria-busy", "true");
             pollAbortController = new AbortController();
             const headers = {
               Accept: "application/json",
@@ -1169,7 +1341,7 @@
           const dayKey = d ? d.toLocaleDateString() : "N/A";
           if (dayKey !== lastDay) {
             lastDay = dayKey;
-            htmlBuffer += `<tr><td colspan="2" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
+            htmlBuffer += `<tr role="row"><td colspan="2" aria-colspan="2" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
           }
           const timeStr = d ? d.toLocaleTimeString() : "";
 
@@ -1240,15 +1412,18 @@
         }
 
         tbody.innerHTML = htmlBuffer;
+        tbody.setAttribute("aria-busy", "false");
         bankFirstFetch = false;
       }
 
       async function startPollingBank() {
         const tbody = document.getElementById("bank-tbody");
+        tbody.setAttribute("aria-busy", "true");
         tbody.innerHTML = `<tr><td colspan="2" class="px-6 py-8 text-center text-slate-400" data-i18n="loading_tx">${translations[currentLang]["loading_tx"]}</td></tr>`;
 
         while (isPolling) {
           try {
+            tbody.setAttribute("aria-busy", "true");
             const headers = {
               Accept: "application/json",
               Authorization: `Bearer ${BANK_ACCESS_TOKEN}`,
@@ -1493,6 +1668,7 @@
         document.getElementById("qr-modal").classList.add("hidden");
         document.getElementById("qr-taler-link").classList.add("hidden");
         document.body.classList.remove("modal-active");
+        closeDialog("qr-modal");
         withdrawalPolling = false;
         if (withdrawalController) withdrawalController.abort();
       });
@@ -1513,6 +1689,7 @@
         document.getElementById("qr-modal").classList.add("hidden");
         document.getElementById("qr-taler-link").classList.add("hidden");
         document.body.classList.remove("modal-active");
+        closeDialog("qr-modal");
       });
 
       document.getElementById("btn-qr-confirm").addEventListener("click", async () => {
@@ -1531,9 +1708,10 @@
           });
 
           if (!res.ok) throw new Error(t("err_confirm_transfer"));
-          
+
           document.getElementById("qr-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
+          closeDialog("qr-modal");
         } catch (e) {
           document.getElementById("qr-modal-error").textContent = e.message;
           document.getElementById("qr-modal-error").classList.remove("hidden");
@@ -1580,21 +1758,24 @@
           const input = document.getElementById("withdraw-dialog-amount");
           const errorEl = document.getElementById("withdraw-dialog-error");
           input.value = "";
+          input.setAttribute("aria-invalid", "false");
           errorEl.classList.add("hidden");
           errorEl.textContent = "";
           document.getElementById("withdraw-modal").classList.remove("hidden");
           document.body.classList.add("modal-active");
-          input.focus();
+          openDialog("withdraw-modal", input);
         });
 
       document.getElementById("btn-close-withdraw-modal").addEventListener("click", () => {
         document.getElementById("withdraw-modal").classList.add("hidden");
         document.body.classList.remove("modal-active");
+        closeDialog("withdraw-modal");
       });
 
       document.getElementById("btn-withdraw-cancel").addEventListener("click", () => {
         document.getElementById("withdraw-modal").classList.add("hidden");
         document.body.classList.remove("modal-active");
+        closeDialog("withdraw-modal");
       });
 
       document
@@ -1609,6 +1790,7 @@
 
           errorEl.classList.add("hidden");
           if (!amount || amount <= 0) {
+            input.setAttribute("aria-invalid", "true");
             errorEl.textContent = t("err_amount_required");
             errorEl.classList.remove("hidden");
             return;
@@ -1651,10 +1833,15 @@
             qrError.classList.add("hidden");
             qrSpinnerModal.classList.remove("hidden");
 
-            // close the withdraw dialog, then open the QR modal
+            // hand off to the QR dialog: close withdraw (no focus restore yet),
+            // park focus on the withdraw trigger, then open the QR dialog so the
+            // trigger regains focus once the QR dialog fully closes.
             document.getElementById("withdraw-modal").classList.add("hidden");
+            closeDialog("withdraw-modal", { restoreFocus: false });
+            document.getElementById("btn-withdraw").focus();
             document.body.classList.add("modal-active");
             qrModal.classList.remove("hidden");
+            openDialog("qr-modal");
 
             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(talerWithdrawUri)}`;
             const talerLink = document.getElementById("qr-taler-link");
@@ -1673,6 +1860,7 @@
             withdrawalPolling = true;
             pollWithdrawalState();
           } catch (e) {
+            input.setAttribute("aria-invalid", "true");
             errorEl.textContent = e.message || t("err_withdraw_generic");
             errorEl.classList.remove("hidden");
           } finally {
@@ -1687,11 +1875,13 @@
       document.getElementById("btn-open-close-account").addEventListener("click", () => {
         document.getElementById("close-account-modal").classList.remove("hidden");
         document.body.classList.add("modal-active");
+        openDialog("close-account-modal");
       });
 
       document.getElementById("btn-close-account-cancel").addEventListener("click", () => {
         document.getElementById("close-account-modal").classList.add("hidden");
         document.body.classList.remove("modal-active");
+        closeDialog("close-account-modal");
       });
 
       document.getElementById("btn-close-account-confirm").addEventListener("click", async () => {
@@ -1707,9 +1897,10 @@
 
         try {
           await import('./merchant.js').then(m => m.closeAccount(INSTANCE_ID, BANK_ACCESS_TOKEN));
-          
+
           document.getElementById("close-account-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
+          closeDialog("close-account-modal");
           showToast(t("toast_success"), t("account_closed"), "success");
           
           // Force logout
@@ -1742,10 +1933,12 @@
         document.querySelectorAll('.sidebar-nav-btn').forEach(b => {
           b.classList.remove('text-indigo-600', 'bg-indigo-50', 'dock-active');
           b.classList.add('text-slate-600');
+          b.removeAttribute('aria-current');
         });
         targetBtns.forEach(b => {
           b.classList.remove('text-slate-600');
           b.classList.add('text-indigo-600', 'bg-indigo-50');
+          b.setAttribute('aria-current', 'page');
           // Highlight the bottom-dock copy (mobile) with the pill style
           if (b.closest('#bottom-dock')) b.classList.add('dock-active');
         });
@@ -1789,24 +1982,27 @@
          [oldPassEl, newPassEl, repeatPassEl].forEach(el => {
              el.classList.remove('border-red-500', 'focus:ring-red-500');
              el.classList.add('border-slate-300', 'focus:ring-indigo-500');
+             el.setAttribute('aria-invalid', 'false');
          });
          [newPassErr, repeatPassErr, formErr].forEach(el => el.classList.add('hidden'));
 
          const oldP = oldPassEl.value;
          const newP = newPassEl.value;
          const repP = repeatPassEl.value;
-         
+
          if (newP !== repP) {
              repeatPassEl.classList.remove('border-slate-300', 'focus:ring-indigo-500');
              repeatPassEl.classList.add('border-red-500', 'focus:ring-red-500');
+             repeatPassEl.setAttribute('aria-invalid', 'true');
              repeatPassErr.textContent = translations[currentLang]["pass_mismatch"];
              repeatPassErr.classList.remove('hidden');
              return;
          }
-         
+
          if (!validatePassword(newP)) {
              newPassEl.classList.remove('border-slate-300', 'focus:ring-indigo-500');
              newPassEl.classList.add('border-red-500', 'focus:ring-red-500');
+             newPassEl.setAttribute('aria-invalid', 'true');
              newPassErr.textContent = translations[currentLang]["pass_validation"];
              newPassErr.classList.remove('hidden');
              return;
@@ -1836,6 +2032,7 @@
          } catch (e) {
              formErr.textContent = e.message;
              formErr.classList.remove('hidden');
+             oldPassEl.setAttribute('aria-invalid', 'true');
          } finally {
              btn.textContent = origText;
              btn.disabled = false;
@@ -1847,11 +2044,13 @@
       document.getElementById('btn-open-change-pass').addEventListener('click', () => {
         document.getElementById('change-pass-modal').classList.remove('hidden');
         document.body.classList.add('modal-active');
+        openDialog('change-pass-modal');
       });
 
       document.getElementById('btn-close-change-pass-modal').addEventListener('click', () => {
         document.getElementById('change-pass-modal').classList.add('hidden');
         document.body.classList.remove('modal-active');
+        closeDialog('change-pass-modal');
       });
 
       document.getElementById('btn-top-logout').addEventListener('click', () => {
@@ -1862,21 +2061,25 @@
 
       document.getElementById("card-transfer-trigger").addEventListener("click", () => {
         document.getElementById("transfer-target").value = "";
+        document.getElementById("transfer-target").setAttribute("aria-invalid", "false");
         document.getElementById("transfer-step1-error").classList.add("hidden");
         document.getElementById("transfer-step-1").classList.remove("hidden");
         document.getElementById("transfer-step-2").classList.add("hidden");
         document.getElementById("transfer-modal").classList.remove("hidden");
         document.body.classList.add("modal-active");
+        openDialog("transfer-modal", document.getElementById("transfer-target"));
       });
 
       document.getElementById("btn-close-transfer-modal").addEventListener("click", () => {
         document.getElementById("transfer-modal").classList.add("hidden");
         document.body.classList.remove("modal-active");
+        closeDialog("transfer-modal");
       });
 
       document.getElementById("btn-transfer-cancel-1").addEventListener("click", () => {
         document.getElementById("transfer-modal").classList.add("hidden");
         document.body.classList.remove("modal-active");
+        closeDialog("transfer-modal");
       });
 
       document.getElementById("btn-transfer-back").addEventListener("click", () => {
@@ -1885,9 +2088,11 @@
       });
 
       document.getElementById("btn-transfer-verify").addEventListener("click", async () => {
-        const target = document.getElementById("transfer-target").value.trim();
+        const targetInput = document.getElementById("transfer-target");
+        const target = targetInput.value.trim();
         const errEl = document.getElementById("transfer-step1-error");
         errEl.classList.add("hidden");
+        targetInput.setAttribute("aria-invalid", "false");
 
         if (!target) return;
 
@@ -1905,20 +2110,25 @@
           document.getElementById("verify-username").textContent = data.username;
           document.getElementById("verify-fullname").textContent = data.name;
           document.getElementById("transfer-amount").value = "";
+          document.getElementById("transfer-amount").setAttribute("aria-invalid", "false");
           document.getElementById("transfer-step2-error").classList.add("hidden");
 
           document.getElementById("transfer-step-1").classList.add("hidden");
           document.getElementById("transfer-step-2").classList.remove("hidden");
+          document.getElementById("transfer-amount").focus();
         } catch (e) {
+          targetInput.setAttribute("aria-invalid", "true");
           errEl.textContent = e.message;
           errEl.classList.remove("hidden");
         }
       });
 
       document.getElementById("btn-transfer-confirm").addEventListener("click", async () => {
-        const amount = document.getElementById("transfer-amount").value;
+        const amountInput = document.getElementById("transfer-amount");
+        const amount = amountInput.value;
         const errEl = document.getElementById("transfer-step2-error");
         errEl.classList.add("hidden");
+        amountInput.setAttribute("aria-invalid", "false");
 
         if (!amount || amount <= 0 || !verifiedAccountData) return;
 
@@ -1950,8 +2160,10 @@
 
           document.getElementById("transfer-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
+          closeDialog("transfer-modal");
           showToast(t("toast_success"), translations[currentLang]["transfer_confirmed"], "success");
         } catch (e) {
+          amountInput.setAttribute("aria-invalid", "true");
           errEl.textContent = e.message || t("err_transfer_generic");
           errEl.classList.remove("hidden");
         }
@@ -1959,7 +2171,7 @@
 
     </script>
     <!-- Mobile Bottom Navigation Dock -->
-    <div id="bottom-dock" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 flex justify-around py-3">
+    <div id="bottom-dock" role="navigation" aria-label="Navegación de secciones" data-i18n-aria-label="nav_sections" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 flex justify-around py-3">
       <button class="sidebar-nav-btn active dock-active flex flex-col items-center gap-1 text-indigo-600 font-medium text-xs" data-target="dashboard">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
         <span data-i18n="nav_dashboard">Dashboard</span>
@@ -1970,6 +2182,6 @@
       </button>
     </div>
 
-    <div id="toast-container" class="fixed top-20 right-4 left-4 md:top-4 md:left-auto z-50 flex flex-col gap-3"></div>
+    <div id="toast-container" role="status" aria-live="polite" class="fixed top-20 right-4 left-4 md:top-4 md:left-auto z-50 flex flex-col gap-3"></div>
   </body>
 </html>

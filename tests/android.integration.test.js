@@ -3,6 +3,11 @@
  * production site https://unq.numis.ar from a USB-connected Android device,
  * mirroring the manual runs in screenshots/merchant_*.jpg.
  *
+ * The whole flow is driven purely by accessibility locators (getByRole /
+ * getByLabel / getByText) — the names come from the ARIA added in
+ * web/merchant.html (Spanish UI). No id/class selectors are used for
+ * interaction, so the test verifies the accessible surface end to end.
+ *
  * Prerequisites:
  *   - Android device with USB debugging enabled, unlocked, Chrome installed,
  *     connected over USB (authorized on this host).
@@ -18,8 +23,8 @@
  * fails `npm test` on machines without an attached device.
  *
  * SAFETY: this talks to PRODUCTION. The test is read-only except for a single
- * 1-unit withdrawal, which is aborted in-step (#btn-qr-cancel). No payments,
- * transfers, password changes or close-account actions are performed.
+ * 1-unit withdrawal, which is aborted in-step (Cancelar in the QR dialog). No
+ * payments, transfers, password changes or close-account actions are performed.
  */
 import { describe, it, before, after } from 'node:test';
 import * as assert from 'node:assert';
@@ -28,6 +33,7 @@ import { execFileSync } from 'node:child_process';
 
 const BASE_URL = (process.env.TEST_BASE_URL || 'https://unq.numis.ar').replace(/\/$/, '');
 const SHOTS = new URL('../screenshots/', import.meta.url).pathname;
+const TIMEOUT = 5000;
 
 const hasCredentials = Boolean(process.env.TEST_MERCHANT_USER && process.env.TEST_MERCHANT_PASS);
 
@@ -117,7 +123,7 @@ suite(`Android device integration (${BASE_URL})`, () => {
         try { adb(['shell', 'am', 'force-stop', 'com.android.chrome']); } catch {}
       };
     }
-    page.setDefaultTimeout(30000);
+    page.setDefaultTimeout(TIMEOUT);
   });
 
   after(async () => {
@@ -168,11 +174,11 @@ suite(`Android device integration (${BASE_URL})`, () => {
       await evidence(`FAIL_${why}`);
     };
     // JS-dispatched click: immune to Chrome's input-focus auto-zoom shifting hit-test
-    // coordinates. 'attached' (not 'visible') because some buttons (e.g. #btn-qr-cancel)
-    // live inside modals whose containers start hidden — el.click() works regardless.
-    const jsClick = async (sel) => {
-      await page.waitForSelector(sel, { state: 'attached', timeout: 30000 });
-      await page.$eval(sel, (el) => el.click());
+    // coordinates. 'attached' (not 'visible') because some buttons live inside
+    // dialogs whose containers start hidden — el.click() works regardless.
+    const jsClick = async (locator) => {
+      await locator.waitFor({ state: 'attached', timeout: TIMEOUT });
+      await locator.evaluate((el) => el.click());
     };
     page.on('load', () => step('NAV: page load event fired'));
     page.on('framenavigated', (f) => { if (f === page.mainFrame()) step('NAV: navigated → ' + f.url()); });
@@ -181,76 +187,78 @@ suite(`Android device integration (${BASE_URL})`, () => {
     try {
       // a. Open the merchant app
       step(`goto ${BASE_URL}/merchant.html`);
-      await page.goto(`${BASE_URL}/merchant.html`, { timeout: 30000 });
+      await page.goto(`${BASE_URL}/merchant.html`, { timeout: TIMEOUT });
       await page.waitForLoadState('domcontentloaded');
       step('page loaded: ' + page.url());
       await evidence('01_loaded');
 
       // b. Log in (skip if a previous manual run left a valid session)
-      const authModal = page.locator('#auth-modal');
-      await authModal.waitFor({ state: 'visible', timeout: 30000 }).catch(() => null);
-      step('auth modal check done');
-      const loggedInAlready = await page.locator('#dashboard').isVisible().catch(() => false);
+      const authDialog = page.getByRole('dialog', { name: 'Acceso de Comerciante' });
+      await authDialog.waitFor({ state: 'visible', timeout: TIMEOUT }).catch(() => null);
+      step('auth dialog check done');
+      const dashboardHeading = page.getByRole('heading', { name: 'Panel de Control' });
+      const loggedInAlready = await dashboardHeading.isVisible().catch(() => false);
       step('already logged in: ' + loggedInAlready);
       if (!loggedInAlready) {
-        await page.fill('#auth-user', process.env.TEST_MERCHANT_USER);
-        await page.fill('#auth-pass', process.env.TEST_MERCHANT_PASS);
+        await page.getByLabel('Usuario').fill(process.env.TEST_MERCHANT_USER);
+        await page.getByLabel('Contraseña').fill(process.env.TEST_MERCHANT_PASS);
         await evidence('02_filled');
         await dumpState('before_login_click');
-        await jsClick('#btn-login');
+        await jsClick(page.getByRole('button', { name: 'Entrar' }));
         step('login clicked, waiting for dashboard...');
       }
 
       // Dashboard ("Panel de Control" heading)
-      await page.locator('#dashboard h1', { hasText: 'Panel de Control' }).waitFor({ state: 'visible', timeout: 30000 });
+      await dashboardHeading.waitFor({ state: 'visible', timeout: TIMEOUT });
       step('dashboard visible');
       await evidence('03_dashboard');
 
-      // c. The three stat cards render
-      const main = page.locator('#main-content');
-      for (const label of ['VENDIDO', 'EN TRÁNSITO', 'LIQUIDADO']) {
+      // c. The three stat cards render (role=group with their translated titles)
+      for (const name of [/vendido/i, /en tránsito/i, /liquidado/i]) {
         assert.ok(
-          await main.locator('div', { hasText: label }).first().isVisible(),
-          `stat card ${label} should be visible`,
+          await page.getByRole('group', { name }).first().isVisible(),
+          `stat card ${name} should be visible`,
         );
       }
 
       // d. Bottom dock → Cuenta
+      const dock = page.getByRole('navigation', { name: /secciones/i });
+      const cuentaBtn = dock.getByRole('button', { name: 'Cuenta' });
       step('clicking Cuenta in dock...');
-      await jsClick('#bottom-dock .sidebar-nav-btn[data-target="account"]');
-      await page.locator('#account h2', { hasText: 'Cuenta Bancaria' }).waitFor({ state: 'visible', timeout: 30000 });
+      await jsClick(cuentaBtn);
+      await page.getByRole('heading', { name: 'Cuenta Bancaria' }).waitFor({ state: 'visible', timeout: TIMEOUT });
       step('account screen visible');
-      assert.ok(await main.locator('div', { hasText: 'DISPONIBLE' }).first().isVisible(), 'DISPONIBLE card visible');
-      // Dock active state moved to Cuenta
-      const activeDockBtn = page.locator('#bottom-dock .sidebar-nav-btn.dock-active');
-      assert.strictEqual(await activeDockBtn.getAttribute('data-target'), 'account');
+      assert.ok(await page.getByRole('group', { name: /disponible/i }).first().isVisible(), 'DISPONIBLE card visible');
+      // Dock active state (aria-current) moved to Cuenta
+      assert.strictEqual(await cuentaBtn.getAttribute('aria-current'), 'page');
       await evidence('04_account');
 
-      // e. Withdraw flow: dialog → amount 1 → QR modal → abort
+      // e. Withdraw flow: dialog → amount 1 → QR dialog → abort
       step('opening withdraw dialog...');
-      await jsClick('#btn-withdraw');
-      const withdrawModal = page.locator('#withdraw-modal');
-      await withdrawModal.waitFor({ state: 'visible', timeout: 30000 });
+      await jsClick(page.getByRole('button', { name: 'Retirar', exact: true }));
+      const withdrawDialog = page.getByRole('dialog', { name: 'Retirar fondos' });
+      await withdrawDialog.waitFor({ state: 'visible', timeout: TIMEOUT });
       step('withdraw dialog visible');
-      const amountInput = page.locator('#withdraw-dialog-amount');
-      await amountInput.waitFor({ state: 'visible', timeout: 30000 });
+      const amountInput = withdrawDialog.getByLabel('Cantidad');
+      await amountInput.waitFor({ state: 'visible', timeout: TIMEOUT });
       assert.strictEqual(await amountInput.evaluate((el) => document.activeElement === el), true,
         'amount input should be focused when the dialog opens');
       await amountInput.fill('1');
       await evidence('05_withdraw_dialog');
-      await jsClick('#btn-withdraw-confirm');
-      step('withdraw confirm clicked, waiting for QR modal...');
+      await jsClick(withdrawDialog.getByRole('button', { name: 'Retirar', exact: true }));
+      step('withdraw confirm clicked, waiting for QR dialog...');
 
-      const qrModal = page.locator('#qr-modal');
-      await qrModal.waitFor({ state: 'visible', timeout: 30000 });
-      step('QR modal visible');
-      await page.locator('#qr-modal-title', { hasText: 'Retirando $ 1' }).waitFor({ state: 'visible', timeout: 30000 });
+      const qrDialog = page.getByRole('dialog', { name: /Retirando/ });
+      await qrDialog.waitFor({ state: 'visible', timeout: TIMEOUT });
+      step('QR dialog visible (title: Retirando $ 1)');
       await evidence('06_withdraw_qr');
 
-      // Abort so no pending withdrawal is left on production
-      await jsClick('#btn-qr-cancel');
-      await qrModal.waitFor({ state: 'hidden', timeout: 30000 });
-      step('QR modal closed (withdrawal aborted), flow complete');
+      // Abort so no pending withdrawal is left on production.
+      // The Cancelar button lives in #qr-confirm-actions, which stays display:none
+      // until a wallet connects — includeHidden reaches it in the a11y locator.
+      await jsClick(qrDialog.getByRole('button', { name: 'Cancelar', includeHidden: true }));
+      await qrDialog.waitFor({ state: 'hidden', timeout: TIMEOUT });
+      step('QR dialog closed (withdrawal aborted), flow complete');
       await evidence('07_done');
     } catch (e) {
       step('TEST FAILED: ' + e.message.split('\n')[0]);
