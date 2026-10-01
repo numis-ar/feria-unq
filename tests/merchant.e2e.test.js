@@ -111,6 +111,8 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
 
     const modal = page.locator('#auth-modal');
     await modal.waitFor({ state: 'hidden' });
+    // stat is rendered asynchronously by the first poll/WS refresh — wait for it
+    await page.locator('#stat-sold', { hasText: '10.00' }).waitFor({ state: 'visible' });
     const statSold = await page.locator('#stat-sold').textContent();
     assert.strictEqual(statSold, '10.00');
   });
@@ -142,8 +144,12 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await page.locator('#auth-modal').waitFor({ state: 'hidden' });
 
     await page.click('#nav-account-btn');
-    await page.fill('#withdraw-amount', '20');
     await page.click('#btn-withdraw');
+
+    const withdrawModal = page.locator('#withdraw-modal');
+    await withdrawModal.waitFor({ state: 'visible' });
+    await page.fill('#withdraw-dialog-amount', '20');
+    await page.click('#btn-withdraw-confirm');
 
     const qrModal = page.locator('#qr-modal');
     await qrModal.waitFor({ state: 'visible' });
@@ -198,7 +204,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await page.click('#btn-login');
     await page.locator('#auth-modal').waitFor({ state: 'hidden' });
 
-    const orderRow = page.locator('#orders-tbody tr');
+    const orderRow = page.locator('#orders-tbody tr', { hasText: 'Coffee' });
     await orderRow.waitFor({ state: 'visible' });
     const text = await orderRow.textContent();
     assert.ok(text.includes('Coffee'));
