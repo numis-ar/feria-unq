@@ -1732,20 +1732,23 @@
       
       // Fragment navigation logic
       function navigateTo(targetId, { push = true } = {}) {
-        const targetBtn = document.querySelector(`.sidebar-nav-btn[data-target="${targetId}"]`) ||
-                          document.querySelector(`.sidebar-nav-btn[data-target="dashboard"]`);
-        if (!targetBtn) return;
-        const resolvedId = targetBtn.getAttribute('data-target');
+        let targetBtns = document.querySelectorAll(`.sidebar-nav-btn[data-target="${targetId}"]`);
+        if (targetBtns.length === 0) {
+          targetBtns = document.querySelectorAll('.sidebar-nav-btn[data-target="dashboard"]');
+        }
+        if (targetBtns.length === 0) return;
+        const resolvedId = targetBtns[0].getAttribute('data-target');
 
         document.querySelectorAll('.sidebar-nav-btn').forEach(b => {
           b.classList.remove('text-indigo-600', 'bg-indigo-50', 'dock-active');
           b.classList.add('text-slate-600');
         });
-        targetBtn.classList.remove('text-slate-600');
-        targetBtn.classList.add('text-indigo-600', 'bg-indigo-50');
-        if (targetBtn.closest('#bottom-dock')) {
-          targetBtn.classList.add('dock-active');
-        }
+        targetBtns.forEach(b => {
+          b.classList.remove('text-slate-600');
+          b.classList.add('text-indigo-600', 'bg-indigo-50');
+          // Highlight the bottom-dock copy (mobile) with the pill style
+          if (b.closest('#bottom-dock')) b.classList.add('dock-active');
+        });
 
         document.querySelectorAll('.main-section').forEach(s => s.classList.add('hidden'));
         document.getElementById(resolvedId).classList.remove('hidden');
