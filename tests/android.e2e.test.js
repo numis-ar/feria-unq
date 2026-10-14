@@ -120,15 +120,22 @@ const S = {
 };
 
 function adb(args) {
-  return execFileSync('adb', ['-s', S.serial, ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+  return execFileSync('adb', ['-s', S.serial, ...args], { stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 32 * 1024 * 1024 });
 }
 
-async function walletDump(reason) {
+async function walletDump(reason, { save = true } = {}) {
   const xml = adb(['exec-out', 'uiautomator', 'dump', '/dev/tty']).toString();
   const clean = xml.slice(xml.indexOf('<?xml'));
-  S.shotIdx += 1;
-  fs.writeFileSync(`${SHOTS}evidence_wallet_${String(S.shotIdx).padStart(2, '0')}_${reason}.xml`, clean);
+  if (save) {
+    S.shotIdx += 1;
+    fs.writeFileSync(`${SHOTS}evidence_wallet_${String(S.shotIdx).padStart(2, '0')}_${reason}.xml`, clean);
+  }
   return parseDump(clean);
+}
+
+async function walletA11yTexts() {
+  const nodes = await walletDump('poll', { save: false });
+  return nodes.map((n) => `${n.text || ''} ${n['content-desc'] || ''}`).join(' ');
 }
 
 async function walletScreenshot(name) {
@@ -253,6 +260,8 @@ async function typeIntoFocusedA11yEditText(value, { timeout = DEFAULT_TIMEOUT } 
 }
 
 function launchWallet() {
+  if (!walletPkg) walletPkg = installedWalletPkg();
+  if (!walletPkg) throw new Error('wallet package not found to launch');
   adb(['shell', 'monkey', '-p', walletPkg, '-c', 'android.intent.category.LAUNCHER', '1']);
   S.startedWallet = true;
   step(`wallet launched (${walletPkg})`);
@@ -260,6 +269,9 @@ function launchWallet() {
 }
 
 function intentView(uri) {
+  // Resolve lazily: when tests run in isolation (name pattern) A1 never sets walletPkg.
+  if (!walletPkg) walletPkg = installedWalletPkg();
+  if (!walletPkg) throw new Error('wallet package not found for intent');
   adb(['shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', `"${uri}"`, walletPkg]);
   step(`intent: ${uri.slice(0, 60)}… → ${walletPkg}`);
   // the activity switch takes a moment; a11y dumps must see the wallet, not Chrome
@@ -290,13 +302,15 @@ async function installViaPlayStore() {
   step('Play Store path: opening store page for net.taler.wallet');
   adb(['shell', 'am', 'start', '-a', 'android.intent.action.VIEW',
     '-d', 'https://play.google.com/store/apps/details?id=net.taler.wallet']);
-  await sleep(6000);
+  //await sleep(6000);
   const deadline = Date.now() + 180000;
   for (;;) {
+    step('getting dump');
     const nodes = await walletDump('play_store');
     const texts = nodes.map((n) => `${n.text} ${n['content-desc'] || ''}`).join(' | ');
     if (/uninstall/i.test(texts)) { step('app already installed per Store'); return; }
-    const install = nodes.find((n) => nodeMatches(n, /^install( app)?$/));
+    const install = nodes.find((n) => nodeMatches(n, /^install( app)?$/i));
+    step(`installed ${install}`);
     if (install) {
       adb(['shell', 'input', 'tap', String(install.center[0]), String(install.center[1])]);
       step('tapped Store "Install"');
@@ -314,7 +328,7 @@ async function installViaPlayStore() {
       await walletScreenshot('PLAY_STORE_FAIL');
       throw new Error('Play Store install could not be completed via the a11y tree (see evidence)');
     }
-    await sleep(3000);
+    await sleep(1000);
   }
 }
 
@@ -363,7 +377,18 @@ async function passWalletToSGate({ maxRounds = 3 } = {}) {
 }
 
 async function assertWalletSuccess({ timeout = CONFIRM_TIMEOUT } = {}) {
-  await waitA11y(/completed successfully/i, { timeout, label: 'wallet success' });
+  // A withdraw-into-wallet can sit on "This transaction is pending" for a while
+  // (bank → exchange → wallet coin pickup). Poll: pending = keep waiting.
+  const deadline = Date.now() + timeout;
+  for (;;) {
+    const texts = await walletA11yTexts();
+    if (/completed successfully/i.test(texts)) break;
+    if (Date.now() > deadline) {
+      await walletScreenshot('wallet_success_TIMEOUT');
+      throw new Error(`wallet a11y: timed out (${timeout}ms) waiting for wallet success; last UI: ${texts.slice(0, 200)}`);
+    }
+    await sleep(1000);
+  }
   await walletScreenshot('wallet_success');
   step('wallet: transaction completed successfully');
 }
@@ -572,9 +597,9 @@ describe(`Android e2e (${BASE_URL})`, () => {
     // Chrome >= 135: skip launchBrowser, drive Chrome over CDP.
     let launched = null;
     step('trying device.launchBrowser() (20s cap)...');
-    try {
+    if (false) try {
       launched = await Promise.race([
-        S.device.launchBrowser({ timeout: 20000 }),
+        S.device.launchBrowser({ timeout: 3000 }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('launchBrowser timed out (20s)')), 21000)),
       ]);
       step('device.launchBrowser() OK');
@@ -592,7 +617,7 @@ describe(`Android e2e (${BASE_URL})`, () => {
       const CDP_PORT = 9223;
       adb(['shell', 'am', 'force-stop', 'com.android.chrome']);
       adb(['shell', 'am', 'start', '-n', 'com.android.chrome/com.google.android.apps.chrome.Main', '-d', 'about:blank']);
-      await sleep(5000);
+      await sleep(1000);
       adb(['forward', `tcp:${CDP_PORT}`, 'localabstract:chrome_devtools_remote']);
       step(`adb forward tcp:${CDP_PORT} done; connecting over CDP...`);
       let lastErr = null;
@@ -602,7 +627,7 @@ describe(`Android e2e (${BASE_URL})`, () => {
         } catch (e) {
           lastErr = e;
           step(`connectOverCDP attempt ${attempt} failed (${e.message.split('\n')[0]}); retrying...`);
-          await sleep(4000);
+          await sleep(1000);
         }
       }
       if (!S.browser) throw lastErr;
@@ -629,7 +654,25 @@ describe(`Android e2e (${BASE_URL})`, () => {
     } catch { /* device may be gone */ }
     try { adb(['forward', '--remove', 'tcp:9223']); } catch {}
     try { adb(['reverse', '--remove', 'tcp:3999']); } catch {}
-    if (S.startedWallet) { try { adb(['shell', 'am', 'force-stop', walletPkg || 'net.taler.wallet.fdroid']); } catch {} }
+    let keepWalletAlive = false;
+    if (S.startedWallet && S.currentWithdrawalOpen) {
+      const deadline = Date.now() + 240000;
+      while (Date.now() < deadline) {
+        try {
+          if (/completed successfully/i.test(await walletA11yTexts())) break;
+        } catch { break; }
+        await new Promise((r) => setTimeout(r, 5000));
+      }
+      try {
+        if (!/completed successfully/i.test(await walletA11yTexts())) {
+          // Still pending: do NOT kill the wallet — an interrupted pending
+          // withdrawal loses the coins. Leave it to finish in the background.
+          step('cleanup: withdrawal still pending — leaving the wallet alive to finish it');
+          keepWalletAlive = true;
+        }
+      } catch { /* device gone */ }
+    }
+    if (S.startedWallet && !keepWalletAlive) { try { adb(['shell', 'am', 'force-stop', walletPkg || 'net.taler.wallet.fdroid']); } catch {} }
     if (S.startedChrome) { try { adb(['shell', 'am', 'force-stop', 'com.android.chrome']); } catch {} }
     if (S.usedCDP) {
       // The CDP websocket can keep the event loop alive after tests finish.
@@ -756,7 +799,7 @@ describe(`Android e2e (${BASE_URL})`, () => {
       await S.page.getByRole('heading', { name: /panel de control|dashboard/i }).waitFor({ state: 'visible', timeout: 10000 });
       // Let that stray re-login fully settle, then reload so no in-flight
       // promise can un-hide the auth modal after we log out below.
-      await sleep(3000);
+      await sleep(1000);
       await S.page.reload({ timeout: DEFAULT_TIMEOUT });
       await S.page.getByRole('heading', { name: /panel de control|dashboard/i }).waitFor({ state: 'visible', timeout: 10000 });
       step('B1: password changed, app re-logged-in');
@@ -775,7 +818,8 @@ describe(`Android e2e (${BASE_URL})`, () => {
         await dlg.getByLabel(/repetir contraseña|repeat password/i).fill(original);
         await jsClick(dlg.getByRole('button', { name: /actualizar contraseña|update password/i }));
         await S.page.getByRole('heading', { name: /panel de control|dashboard/i }).waitFor({ state: 'visible', timeout: 10000 });
-        await sleep(3000);
+        await sleep(1000);
+
         await S.page.reload({ timeout: DEFAULT_TIMEOUT });
         await S.page.getByRole('heading', { name: /panel de control|dashboard/i }).waitFor({ state: 'visible', timeout: 10000 });
         step('B1: password changed back');
@@ -853,7 +897,7 @@ describe(`Android e2e (${BASE_URL})`, () => {
     }
   });
 
-  it('B3: withdraw 5 NUMIS into the same-device wallet', { timeout: 180000 }, async (t) => {
+  it('B3: withdraw 5 NUMIS into the same-device wallet', { timeout: 480000 }, async (t) => {
     if (!androidDevice) { t.skip(`skipping: ${skipReason}`); return; }
     try {
       const user = process.env.TEST_MERCHANT_USER;
@@ -864,7 +908,9 @@ describe(`Android e2e (${BASE_URL})`, () => {
       await S.page.getByRole('heading', { name: /cuenta bancaria|bank account/i }).waitFor({ state: 'visible', timeout: DEFAULT_TIMEOUT });
       const availableBefore = await readStatValue(/disponible|available/i);
       const walletBefore = await readWalletBalance();
-      step(`B3: DISponible=${availableBefore}, wallet=${walletBefore}`);
+      const retiroRows = S.page.getByRole('row', { name: /retiro|withdraw/i }).filter({ hasText: /5\.00/ });
+      const retiroRowsBefore = await retiroRows.count();
+      step(`B3: DISponible=${availableBefore}, wallet=${walletBefore}, retiro-5-rows=${retiroRowsBefore}`);
 
       await jsClick(S.page.getByRole('button', { name: 'Retirar' }));
       const dialog = S.page.getByRole('dialog', { name: /retirar fondos|withdraw funds/i });
@@ -892,7 +938,7 @@ describe(`Android e2e (${BASE_URL})`, () => {
 
       await jsClick(qrDialog.getByRole('button', { name: /confirmar transferencia|confirm transfer/i }));
       await launchWallet(); // bring the wallet to front: its success screen shows there
-      await assertWalletSuccess();
+      await assertWalletSuccess({ timeout: 300000 });
       S.currentWithdrawalOpen = false;
 
       // Merchant side: a "retiro" debit row for 5.00 appears in the live transactions
@@ -901,10 +947,17 @@ describe(`Android e2e (${BASE_URL})`, () => {
       // moving target around the same time (observed 24 → 29 while withdrawing).
       const statusRegion = S.page.getByRole('status');
       await statusRegion.filter({ hasText: /retiro|withdraw/i }).waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false);
-      await S.page.getByRole('row', { name: /retiro|withdraw/i })
-        .filter({ hasText: /5\.00/ })
-        .waitFor({ state: 'visible', timeout: CONFIRM_TIMEOUT });
-      step('B3: retiro transaction row for 5.00 visible');
+      // Wait until a NEW retiro row appears (count grows) — .first() alone would
+      // pass on historical rows from earlier runs.
+      {
+        const deadline = Date.now() + CONFIRM_TIMEOUT;
+        for (;;) {
+          if ((await retiroRows.count()) > retiroRowsBefore) break;
+          if (Date.now() > deadline) throw new Error('no new retiro 5.00 row appeared in transactions table');
+          await S.page.waitForTimeout(500);
+        }
+      }
+      step('B3: new retiro transaction row for 5.00 visible');
       await webEvidence('B3_tx_row');
       const availableAfter = await readStatValue(/disponible|available/i);
       step(`B3: DISponible ${availableBefore} → ${availableAfter} (informational only)`);
