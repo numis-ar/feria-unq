@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
 
   const filePath = path.join(PUBLIC_DIR, safeSuffix);
   const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  const contentType = MIME_TYPES[ext] || 'text/html';
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
