@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap">
+<script src="./qr-code.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+body{margin:0;background:#d9d8d0}
+a{color:#fbfbf8;text-decoration:none}
+a:hover{color:#dc5a1e}
+@media print{body{background:none}}
+</style>
+</helmet>
+<div data-screen-label="Banner visitantes" style="position:relative;width:1000px;height:2112px;overflow:hidden;box-sizing:border-box;padding:72px 80px;display:flex;flex-direction:column;background:#064d2d;color:#fbfbf8;font-family:'Archivo',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact">
+
+<div data-deco="" style="position:absolute;top:-250px;right:-250px;width:560px;height:560px;box-sizing:border-box;border:100px solid #0d5e39;border-radius:50%"></div>
+<div data-deco="" style="position:absolute;left:-260px;bottom:-340px;width:540px;height:540px;border-radius:50%;background:#f1ecdf"></div>
+<div data-deco="" style="position:absolute;right:-250px;bottom:-310px;width:580px;height:580px;border-radius:50%;background:#dc5a1e"></div>
+
+<header style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:24px">
+<div style="display:flex;align-items:center;gap:14px">
+<div style="position:relative;flex:none;width:50px;height:46px">
+<div style="position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;background:#dc5a1e"></div>
+<div style="position:absolute;right:0;bottom:0;width:46px;height:26px;box-sizing:border-box;border:11px solid #dc5a1e;border-bottom:0;border-radius:46px 46px 0 0"></div>
+</div>
+<span style="font-size:52px;font-weight:700;letter-spacing:-.03em;line-height:1">numis</span>
+</div>
+<a href="https://numis.ar" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-right:110px">
+<span style="font-size:22px;color:#cfe3d8">Saber más</span>
+<span style="font-size:30px;font-weight:700">numis.ar</span>
+</a>
+</header>
+
+<section style="position:relative;margin-top:84px;display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:44px;align-items:end">
+<h1 style="margin:0;font-size:120px;font-weight:900;line-height:.92;letter-spacing:-.045em;text-wrap:balance">Cómo <span style="color:#dc5a1e">pagar</span> en la feria</h1>
+<div style="display:flex;flex-direction:column;gap:12px">
+<span style="font-size:22px;line-height:1.2;color:#cfe3d8">Guía completa en su teléfono</span>
+<div style="width:230px;height:230px;box-sizing:border-box;padding:6px;background:#fbfbf8;border-radius:4px">
+<qr-code url="https://unq.numis.ar/description.html" style="display:block;width:100%;height:100%"></qr-code>
+</div>
+</div>
+</section>
+
+<div data-pasos="" style="position:relative;margin-top:70px;display:flex;flex-direction:column;border-bottom:2px solid rgba(207,227,216,.35)">
+<dc-import name="Banner Paso" numero="1" titulo="Instale la billetera" texto="Descargue GNU Taler Wallet gratis desde Google Play, F-Droid o App Store." qr="https://wallet.taler.net/" hint-size="100%,290px"></dc-import>
+<dc-import name="Banner Paso" numero="2" titulo="Cargue saldo" texto="En el puesto de recarga le muestran un código: escanéelo y el dinero ingresa a su billetera." qr="https://unq.numis.ar/description.html#step-2" hint-size="100%,290px"></dc-import>
+<dc-import name="Banner Paso" numero="3" titulo="Pague en los puestos" texto="Escanee el QR del puesto, revise el monto y confirme. El pago se acredita al instante." qr="https://unq.numis.ar/description.html#step-3" hint-size="100%,290px"></dc-import>
+<dc-import name="Banner Paso" numero="4" titulo="Envíe o reciba dinero" texto="Transfiera saldo a otra persona con GNU Taler. Si no se reclama, el importe vuelve a usted." qr="" imagen-id="banner-v4" hint-size="100%,290px"></dc-import>
+</div>
+
+<footer style="position:relative;margin-top:30px;font-size:22px;line-height:1.35;color:#cfe3d8;max-width:none">Feria de Economía Popular, Social y Solidaria · UNQ · 19 y 20 de mayo de 2026</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1000,&quot;height&quot;:2112}}"></script>
+</body>
+</html>

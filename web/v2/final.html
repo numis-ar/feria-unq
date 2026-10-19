@@ -1,0 +1,3582 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="_ds/nocturne-97dd157d-fef8-4996-b68b-936d0e431fde/styles.css"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap"
+        />
+        <script src="_ds/nocturne-97dd157d-fef8-4996-b68b-936d0e431fde/_ds_bundle.js"></script>
+        <script src="./image-slot.js"></script>
+        <script src="./qr-code.js"></script>
+        <script>
+          (function () {
+            var q = new URLSearchParams(location.search),
+              t = q.get("tema"),
+              p = q.get("a4");
+            if (!t && !p) return;
+            function ap() {
+              var g = document.querySelector("[data-guide]");
+              if (!g) return;
+              if (t && g.getAttribute("data-theme") !== t)
+                g.setAttribute("data-theme", t);
+              if (p && g.getAttribute("data-paper") !== String(p === "1"))
+                g.setAttribute("data-paper", String(p === "1"));
+            }
+            new MutationObserver(ap).observe(document.documentElement, {
+              subtree: true,
+              childList: true,
+              attributes: true,
+              attributeFilter: ["data-theme", "data-paper"],
+            });
+            ap();
+          })();
+        </script>
+        <style>
+          html {
+            scroll-behavior: smooth;
+          }
+          body {
+            margin: 0;
+          }
+          a {
+            color: var(--color-accent);
+          }
+          a:hover {
+            color: var(--color-accent-400);
+          }
+          [data-guide] {
+            --g-muted: color-mix(in srgb, var(--color-text) 72%, transparent);
+            --g-accent-text: var(--color-accent-300);
+            --g-sheet: #f3f5fe;
+          }
+          [data-guide][data-theme="papel"] {
+            --color-bg: #f6f4ef;
+            --color-surface: #ebe7dd;
+            --color-text: #1d2236;
+            --color-accent: #4f4790;
+            --color-accent-400: #3b356e;
+            --color-divider: color-mix(in srgb, #1d2236 16%, transparent);
+            --g-accent-text: #4f4790;
+            --g-sheet: #fbfaf6;
+          }
+          [data-guide][data-theme="popular"] {
+            --color-bg: #f5eee1;
+            --color-surface: #ebdfc8;
+            --color-text: #2a2018;
+            --color-accent: #a8432a;
+            --color-accent-400: #86321d;
+            --color-divider: color-mix(in srgb, #2a2018 18%, transparent);
+            --g-accent-text: #86321d;
+            --g-sheet: #faf5ea;
+          }
+          [data-guide][data-theme="unq"] {
+            --color-bg: #f4f6f9;
+            --color-surface: #e5eaf2;
+            --color-text: #14233c;
+            --color-accent: #0d5aa7;
+            --color-accent-400: #08457f;
+            --color-divider: color-mix(in srgb, #14233c 16%, transparent);
+            --g-accent-text: #0d5aa7;
+            --g-sheet: #fbfcfe;
+          }
+          [data-guide][data-theme="numis"] {
+            --verde: #064d2d;
+            --verde-hondo: #03321d;
+            --naranja: #dc5a1e;
+            --menta: #cfe3d8;
+            --color-bg: #fbfbf8;
+            --color-surface: #fff;
+            --color-text: #343434;
+            --color-accent: #dc5a1e;
+            --color-accent-400: #b8461a;
+            --color-divider: #cfcec6;
+            --g-muted: #55544f;
+            --g-accent-text: #064d2d;
+            --g-sheet: #fbfbf8;
+            --font-body: "Archivo", Arial, sans-serif;
+            --font-heading: "Archivo", Arial, sans-serif;
+            --radius-md: 2px;
+            font-size: 16px !important;
+          }
+          [data-theme="numis"] h1,
+          [data-theme="numis"] h2,
+          [data-theme="numis"] h3 {
+            font-weight: 900 !important;
+            letter-spacing: -0.035em;
+            line-height: 0.98 !important;
+            color: var(--verde);
+          }
+          [data-theme="numis"] a {
+            color: var(--verde);
+            font-weight: 700;
+          }
+          [data-theme="numis"] a:hover {
+            color: var(--verde-hondo);
+          }
+          [data-theme="numis"] nav {
+            background: var(--verde) !important;
+            backdrop-filter: none !important;
+          }
+          [data-theme="numis"] nav a {
+            color: #fff !important;
+          }
+          [data-theme="numis"] #inicio {
+            --color-text: #fff;
+            --g-muted: var(--menta);
+            --color-accent: var(--menta);
+            background: var(--verde) !important;
+            box-shadow: 0 0 0 100vmax var(--verde);
+            clip-path: inset(0 -100vmax);
+            color: #fff;
+          }
+          [data-theme="numis"] #inicio h1 {
+            color: #fff;
+            font-size: clamp(38px, 5.2vw, 64px) !important;
+          }
+          [data-theme="numis"] #inicio a {
+            background: transparent !important;
+            color: #fff !important;
+            font-weight: 400;
+            box-shadow:
+              inset 0 0 0 2.5px var(--color-bg),
+              5px 5px 0 var(--verde-hondo);
+          }
+          [data-theme="numis"] #inicio a > span:nth-child(2) {
+            font-weight: 900 !important;
+            letter-spacing: -0.02em;
+            font-size: 24px !important;
+          }
+          [data-theme="numis"] .btn {
+            font-family: inherit;
+            font-weight: 700;
+            border: 2.5px solid var(--verde);
+            border-radius: 2px;
+            background: var(--verde);
+            color: #fff !important;
+            box-shadow: 4px 4px 0 var(--naranja);
+            transition:
+              transform 0.12s,
+              box-shadow 0.12s;
+          }
+          [data-theme="numis"] .btn:hover {
+            background: var(--verde);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--naranja);
+          }
+          [data-theme="numis"] .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 var(--naranja);
+          }
+          [data-theme="numis"] nav .btn {
+            background: var(--color-bg);
+            color: var(--verde) !important;
+            border-color: #343434;
+            box-shadow: 4px 4px 0 #343434;
+          }
+          [data-theme="numis"] nav .btn:hover {
+            box-shadow: 6px 6px 0 #343434;
+          }
+          [data-theme="numis"] :focus-visible {
+            outline: 3px solid var(--naranja);
+            outline-offset: 3px;
+          }
+          [data-theme="numis"] article[data-step] {
+            background: none !important;
+            border-top: 2px dashed var(--color-divider);
+          }
+          [data-theme="numis"] aside {
+            background: #fff !important;
+            box-shadow:
+              inset 0 0 0 2.5px #343434,
+              5px 5px 0 var(--verde);
+          }
+          [data-theme="numis"] qr-code {
+            background: #fff !important;
+            border-radius: 0 !important;
+          }
+          [data-theme="numis"] li > span:first-child {
+            box-shadow: inset 0 0 0 2px var(--naranja) !important;
+            font-weight: 700 !important;
+          }
+          [data-theme="numis"] footer[data-noprint] {
+            --g-muted: var(--menta);
+            background: var(--verde) !important;
+            box-shadow: 0 0 0 100vmax var(--verde);
+            clip-path: inset(0 -100vmax);
+            color: var(--menta);
+            padding-bottom: 32px;
+            border-top: none;
+          }
+          [data-theme="numis"] footer[data-noprint] a {
+            color: #fff;
+          }
+          [data-paper="true"][data-theme="numis"] #inicio {
+            box-shadow: none;
+            clip-path: none;
+          }
+          @media print {
+            [data-theme="numis"] #inicio {
+              box-shadow: none;
+              clip-path: none;
+              padding: 10mm !important;
+            }
+          }
+          [data-printonly] {
+            display: none !important;
+          }
+          [data-guide][data-paper="true"][data-theme="nocturno"] {
+            --color-bg: #f3f5fe;
+            --color-surface: #e4e7f5;
+            --color-text: #161826;
+            --color-accent: #5d5294;
+            --color-accent-400: #423a6a;
+            --color-divider: color-mix(in srgb, #161826 18%, transparent);
+            --g-accent-text: #423a6a;
+          }
+          [data-guide][data-paper="true"] {
+            background: color-mix(
+              in srgb,
+              var(--color-text) 14%,
+              var(--color-bg)
+            ) !important;
+          }
+          [data-paper="true"] [data-noprint] {
+            display: none !important;
+          }
+          [data-paper="true"] [data-step] > div:nth-of-type(1) {
+            margin-block: auto !important;
+          }
+          [data-paper="true"] [data-step] > footer {
+            margin-top: 20px !important;
+          }
+
+          [data-paper="true"] [data-printonly] {
+            display: flex !important;
+          }
+          [data-paper="true"] main {
+            max-width: none !important;
+            padding: 24px 0 !important;
+          }
+          [data-paper="true"] [data-sheet] {
+            box-sizing: border-box;
+            width: 210mm;
+            height: 297mm;
+            padding: 14mm !important;
+            margin: 0 auto 24px !important;
+            overflow: hidden;
+            background: var(--g-sheet) !important;
+            box-shadow:
+              0 1px 3px rgba(0, 0, 0, 0.18),
+              0 8px 24px rgba(0, 0, 0, 0.12);
+            gap: 18px !important;
+          }
+          [data-paper="true"] [data-shot-strip] {
+            overflow: visible !important;
+            flex-wrap: wrap;
+          }
+          @media print {
+            @page {
+              size: A4;
+              margin: 14mm;
+            }
+            body {
+              background: #fbfaf6;
+            }
+            [data-guide] {
+              background: var(--g-sheet) !important;
+            }
+            [data-guide][data-theme="nocturno"] {
+              --color-bg: #f3f5fe;
+              --color-surface: #e4e7f5;
+              --color-text: #161826;
+              --color-accent: #5d5294;
+              --color-divider: color-mix(in srgb, #161826 18%, transparent);
+              --g-accent-text: #423a6a;
+            }
+            [data-noprint] {
+              display: none !important;
+            }
+            [data-printonly] {
+              display: flex !important;
+            }
+            main {
+              max-width: none !important;
+              padding: 0 !important;
+            }
+            [data-sheet] {
+              box-sizing: border-box;
+              height: 269mm;
+              padding: 0 !important;
+              margin: 0 !important;
+              overflow: hidden;
+              background: none !important;
+              box-shadow: none !important;
+              gap: 18px !important;
+              break-inside: avoid;
+            }
+            [data-step] {
+              break-before: page;
+            }
+            [data-step] > div:nth-of-type(1) {
+              margin-block: auto !important;
+            }
+            [data-step] > footer {
+              margin-top: 20px !important;
+            }
+
+            [data-shot-strip] {
+              overflow: visible !important;
+              flex-wrap: wrap;
+            }
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          }
+        </style>
+      </helmet>
+      <div
+        data-guide=""
+        data-paper="{{ paper }}"
+        data-theme="{{ theme }}"
+        style="
+          min-height: 100vh;
+          background: var(--color-bg);
+          color: var(--color-text);
+          font-family: var(--font-body);
+          font-size: 15px;
+          line-height: 1.6;
+        "
+      >
+        <nav
+          data-noprint=""
+          style="
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 20px;
+            padding: 12px max(20px, calc((100% - 1040px) / 2));
+            background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+            backdrop-filter: blur(10px);
+          "
+        >
+          <a
+            href="#inicio"
+            style="
+              font-weight: 500;
+              font-size: 16px;
+              color: var(--color-text);
+              text-decoration: none;
+              margin-right: auto;
+            "
+            >Feria UNQ · Pagos digitales</a
+          >
+          <a
+            href="#visitantes"
+            style="
+              color: var(--color-text);
+              text-decoration: none;
+              font-size: 14px;
+            "
+            >Visitantes</a
+          >
+          <a
+            href="#comerciantes"
+            style="
+              color: var(--color-text);
+              text-decoration: none;
+              font-size: 14px;
+            "
+            >Comerciantes</a
+          >
+          <!-- button class="btn btn-primary" onClick="{{ print }}">Imprimir guía</button -->
+        </nav>
+
+        <main style="max-width: 1040px; margin: 0 auto; padding: 0 20px 64px">
+          <header
+            id="inicio"
+            data-sheet=""
+            data-screen-label="Portada"
+            style="
+              padding: 56px 0 48px;
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+              background: radial-gradient(
+                ellipse 60% 70% at 0% 0%,
+                color-mix(in srgb, var(--color-accent) 14%, transparent),
+                transparent 70%
+              );
+            "
+          >
+            <div
+              style="
+                font-size: 12px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--color-accent);
+              "
+            >
+              Guía de uso
+            </div>
+            <h1
+              style="
+                margin: 0;
+                font-size: clamp(32px, 5vw, 46px);
+                line-height: 1.08;
+                max-width: 18ch;
+                text-wrap: balance;
+              "
+            >
+              Cómo usar dinero digital en la Feria
+            </h1>
+            <p
+              style="
+                margin: 0;
+                max-width: 62ch;
+                color: var(--g-muted);
+                text-wrap: pretty;
+              "
+            >
+              Durante la feria, las compras en los puestos se pueden abonar con
+              dinero digital mediante una billetera virtual que no requiere
+              cuenta bancaria ni datos personales. Esta guía describe, paso a
+              paso, los procedimientos para visitantes y para comerciantes.
+            </p>
+            <div
+              style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px 28px;
+                font-size: 14px;
+              "
+            ></div>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 16px;
+                margin-top: 8px;
+              "
+            >
+              <a
+                href="#visitantes"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 10px;
+                  padding: 20px;
+                  border-radius: var(--radius-md);
+                  background: var(--color-surface);
+                  color: var(--color-text);
+                  text-decoration: none;
+                "
+              >
+                <span
+                  style="
+                    font-size: 11px;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: var(--color-accent);
+                  "
+                  >Parte A</span
+                >
+                <span style="font-size: 20px; font-weight: 500"
+                  >Visitantes</span
+                >
+                <ol
+                  style="
+                    margin: 0;
+                    padding-left: 18px;
+                    font-size: 14px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <li>Instalar la billetera</li>
+                  <li>Extraer saldo por transferencia</li>
+                  <li>Pagar a un comerciante</li>
+                  <li>Enviar o recibir dinero entre personas</li>
+                </ol>
+              </a>
+              <a
+                href="#comerciantes"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 10px;
+                  padding: 20px;
+                  border-radius: var(--radius-md);
+                  background: var(--color-surface);
+                  color: var(--color-text);
+                  text-decoration: none;
+                "
+              >
+                <span
+                  style="
+                    font-size: 11px;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: var(--color-accent);
+                  "
+                  >Parte B</span
+                >
+                <span style="font-size: 20px; font-weight: 500"
+                  >Comerciantes</span
+                >
+                <ol
+                  style="
+                    margin: 0;
+                    padding-left: 18px;
+                    font-size: 14px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <li>Ingresar al panel del comercio</li>
+                  <li>Retirar fondos a la billetera propia</li>
+                  <li>Cerrar la cuenta al finalizar la feria</li>
+                </ol>
+              </a>
+            </div>
+            <p
+              style="
+                margin: 0;
+                max-width: 62ch;
+                font-size: 13px;
+                color: var(--g-muted);
+              "
+            >
+              Cada paso indica los puntos a seguir y un código QR para realizar
+              el paso desde el teléfono. Ante cualquier inconveniente, diríjase
+              al puesto de atención de la organización.
+            </p>
+
+            <div
+              data-printonly=""
+              data-dc-tpl="4"
+              data-banner-paso=""
+              style="
+                display: grid;
+                grid-template-columns: minmax(0px, 1fr) 230px;
+                gap: 44px;
+                padding: 30px 0px;
+                border-top: 2px solid rgba(207, 227, 216, 0.35);
+                font-family: Archivo, Arial, sans-serif;
+                color: rgb(251, 251, 248);
+              "
+            >
+              <div
+                data-dc-tpl="5"
+                style="
+                  display: flex;
+                  gap: 28px;
+                  align-items: center;
+                  min-width: 0px;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  data-dc-tpl="7"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                    min-width: 0px;
+                  "
+                >
+                  <p
+                    data-dc-tpl="9"
+                    style="
+                      margin: 0px;
+                      font-size: 16px;
+                      line-height: 1.3;
+                      color: rgb(207, 227, 216);
+                      text-wrap: pretty;
+                    "
+                  >
+                    <span class="sc-interp"
+                      >También puede leer este documento desde su computadora en
+                      la web <b>unq.numis.ar/descripcion</b> o desde su teléfono
+                      escaneando el QR. La web incluye mas ejemplos y videos
+                      explicativos.</span
+                    >
+                  </p>
+                </div>
+              </div>
+
+              <div
+                data-dc-tpl="11"
+                style="
+                  width: 230px;
+                  box-sizing: border-box;
+                  padding: 6px;
+                  background: rgb(251, 251, 248);
+                  border-radius: 4px;
+                "
+              >
+                <qr-code
+                  data-dc-tpl="12"
+                  url="https://unq.numis.ar/descripcion"
+                  style="display: block; width: 100%; height: 100%"
+                ></qr-code>
+              </div>
+            </div>
+          </header>
+
+          <sc-if value="{{ showVisitantes }}" hint-placeholder-val="{{ true }}">
+            <section id="visitantes" data-screen-label="Visitantes">
+              <div
+                data-noprint=""
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                  padding: 40px 0 16px;
+                "
+              >
+                <div
+                  style="
+                    width: 32px;
+                    height: 2px;
+                    background: var(--color-accent);
+                  "
+                ></div>
+                <div
+                  style="
+                    font-size: 12px;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: var(--color-accent);
+                  "
+                >
+                  Parte A
+                </div>
+                <h2 style="margin: 0; font-size: 32px">Visitantes</h2>
+                <p style="margin: 0; max-width: 62ch; color: var(--g-muted)">
+                  Procedimientos para cargar saldo en el teléfono y abonar
+                  compras en los puestos de la feria.
+                </p>
+              </div>
+
+              <article
+                id="v1"
+                data-step=""
+                data-sheet=""
+                data-copy-note="PASO: copiar el article completo para crear un paso nuevo"
+                data-screen-label="Visitantes · Paso 1"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 24px;
+                  padding: 40px 0;
+                  background: linear-gradient(
+                      to right,
+                      transparent,
+                      var(--color-divider) 48px,
+                      var(--color-divider) calc(100% - 48px),
+                      transparent
+                    )
+                    no-repeat top/100% 1px;
+                "
+              >
+                <header style="display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      letter-spacing: 0.1em;
+                      text-transform: uppercase;
+                      color: var(--color-accent);
+                    "
+                  >
+                    Visitantes · Paso 1
+                  </div>
+                  <h3 style="margin: 0; font-size: 28px">
+                    Instalar la billetera virtual
+                  </h3>
+                  <p
+                    style="
+                      margin: 0;
+                      max-width: 62ch;
+                      color: var(--g-muted);
+                      text-wrap: pretty;
+                    "
+                  >
+                    La billetera virtual es la aplicación que almacena el dinero
+                    digital en su teléfono. Es gratuita y no solicita registro
+                    ni datos personales.
+                  </p>
+                </header>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 24px;
+                    align-items: flex-start;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1 1 360px;
+                      min-width: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span
+                          >Escanee el código QR o abra la página de descarga y
+                          elija el sistema de su teléfono.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span>Instale la aplicación <b>Taler Wallet</b>.</span>
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span
+                          >Abra la aplicación. La billetera queda lista para
+                          recibir saldo.</span
+                        >
+                      </li>
+                    </ol>
+                  </div>
+                  <aside
+                    style="
+                      flex: 0 1 260px;
+                      display: flex;
+                      gap: 14px;
+                      align-items: center;
+                      padding: 14px;
+                      border-radius: var(--radius-md);
+                      background: var(--color-surface);
+                    "
+                  >
+                    <qr-code
+                      url="https://wallet.numis.ar/"
+                      style="
+                        flex: none;
+                        display: block;
+                        width: 96px;
+                        height: 96px;
+                        border-radius: 6px;
+                        overflow: hidden;
+                        background: #f3f5fe;
+                      "
+                    ></qr-code>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                      "
+                    >
+                      <span
+                        style="
+                          font-size: 11px;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: var(--color-accent);
+                        "
+                        >Realizar este paso</span
+                      >
+                      <span
+                        style="
+                          font-size: 12px;
+                          line-height: 1.35;
+                          overflow-wrap: anywhere;
+                        "
+                        >billetera.numis.ar</span
+                      >
+                      <a
+                        data-noprint=""
+                        class="btn btn-primary"
+                        href="https://billetera.numis.ar/"
+                        target="_blank"
+                        >Página de descarga</a
+                      >
+                    </div>
+                  </aside>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <div style="font-size: 12px; color: var(--g-muted)">
+                    Capturas de pantalla
+                  </div>
+                  <div
+                    data-shot-strip=""
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      overflow-x: auto;
+                      scroll-snap-type: x mandatory;
+                      padding-bottom: 6px;
+                    "
+                  >
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v1-1"
+                        placeholder="Página de descarga"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span>Elegir el sistema</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v1-2"
+                        placeholder="Tienda de aplicaciones"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span>Instalar Taler Wallet</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v1-3"
+                        placeholder="Billetera vacía"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Billetera lista</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+                <footer
+                  data-printonly=""
+                  style="
+                    margin-top: auto;
+                    justify-content: space-between;
+                    gap: 16px;
+                    font-size: 10px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <span
+                    >Guía de pagos · Feria de Economía Popular, Social y
+                    Solidaria · UNQ 2026</span
+                  ><span>Visitantes · Paso 1</span>
+                </footer>
+              </article>
+
+              <article
+                id="v2"
+                data-step=""
+                data-sheet=""
+                data-screen-label="Visitantes · Paso 2"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 24px;
+                  padding: 40px 0;
+                  background: linear-gradient(
+                      to right,
+                      transparent,
+                      var(--color-divider) 48px,
+                      var(--color-divider) calc(100% - 48px),
+                      transparent
+                    )
+                    no-repeat top/100% 1px;
+                "
+              >
+                <header style="display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      letter-spacing: 0.1em;
+                      text-transform: uppercase;
+                      color: var(--color-accent);
+                    "
+                  >
+                    Visitantes · Paso 2
+                  </div>
+                  <h3 style="margin: 0; font-size: 28px">
+                    Extraer saldo mediante transferencia
+                  </h3>
+                  <p
+                    style="
+                      margin: 0;
+                      max-width: 62ch;
+                      color: var(--g-muted);
+                      text-wrap: pretty;
+                    "
+                  >
+                    El saldo se acredita a través de una transferencia con las
+                    personas de la organización. Se genera un código por el
+                    monto indicado que al escanearlo el dinero ingresa en su
+                    billetera. Durante la feria, el puesto de la organización
+                    realizará este procedimiento.
+                  </p>
+                </header>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 24px;
+                    align-items: flex-start;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1 1 360px;
+                      min-width: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span
+                          >Informe a la organización el monto a extraer.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span
+                          >En la billetera, toque <b>Escanear código QR</b> y
+                          apunte la cámara al código generado.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span
+                          >Verifique el monto y toque <b>Aceptar</b>. El saldo
+                          queda disponible en pocos segundos.</span
+                        >
+                      </li>
+                    </ol>
+                  </div>
+                  <aside
+                    style="
+                      flex: 0 1 260px;
+                      display: flex;
+                      gap: 14px;
+                      align-items: center;
+                      padding: 14px;
+                      border-radius: var(--radius-md);
+                      background: var(--color-surface);
+                    "
+                  >
+                    <qr-code
+                      url="https://unq.numis.ar/description.html#step-2"
+                      style="
+                        flex: none;
+                        display: block;
+                        width: 96px;
+                        height: 96px;
+                        border-radius: 6px;
+                        overflow: hidden;
+                        background: #f3f5fe;
+                      "
+                    ></qr-code>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                      "
+                    >
+                      <span
+                        style="
+                          font-size: 11px;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: var(--color-accent);
+                        "
+                        >Realizar este paso</span
+                      >
+                      <span
+                        style="
+                          font-size: 12px;
+                          line-height: 1.35;
+                          overflow-wrap: anywhere;
+                        "
+                        >unq.numis.ar/description.html</span
+                      >
+                      <a
+                        data-noprint=""
+                        class="btn btn-primary"
+                        href="https://unq.numis.ar/description.html#step-2"
+                        target="_blank"
+                        >Ir a la recarga</a
+                      >
+                    </div>
+                  </aside>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <div style="font-size: 12px; color: var(--g-muted)">
+                    Capturas de pantalla
+                  </div>
+                  <div
+                    data-shot-strip=""
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      overflow-x: auto;
+                      scroll-snap-type: x mandatory;
+                      padding-bottom: 6px;
+                    "
+                  >
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v2-1"
+                        placeholder="Página de recarga"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span>Ingresar el monto</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v2-2"
+                        placeholder="Escáner de la billetera"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span>Escanear el código</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v2-3"
+                        placeholder="Aceptar transferencia"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Aceptar la recarga</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+                <footer
+                  data-printonly=""
+                  style="
+                    margin-top: auto;
+                    justify-content: space-between;
+                    gap: 16px;
+                    font-size: 10px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <span
+                    >Guía de pagos · Feria de Economía Popular, Social y
+                    Solidaria · UNQ 2026</span
+                  ><span>Visitantes · Paso 2</span>
+                </footer>
+              </article>
+
+              <article
+                id="v3"
+                data-step=""
+                data-sheet=""
+                data-screen-label="Visitantes · Paso 3"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 24px;
+                  padding: 40px 0;
+                  background: linear-gradient(
+                      to right,
+                      transparent,
+                      var(--color-divider) 48px,
+                      var(--color-divider) calc(100% - 48px),
+                      transparent
+                    )
+                    no-repeat top/100% 1px;
+                "
+              >
+                <header style="display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      letter-spacing: 0.1em;
+                      text-transform: uppercase;
+                      color: var(--color-accent);
+                    "
+                  >
+                    Visitantes · Paso 3
+                  </div>
+                  <h3 style="margin: 0; font-size: 28px">
+                    Pagar a un comerciante
+                  </h3>
+                  <p
+                    style="
+                      margin: 0;
+                      max-width: 62ch;
+                      color: var(--g-muted);
+                      text-wrap: pretty;
+                    "
+                  >
+                    Cada puesto exhibe un código QR propio asociado al comercio.
+                    El pago se realiza desde la billetera y se confirma de
+                    inmediato a ambas partes.
+                  </p>
+                </header>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 24px;
+                    align-items: flex-start;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1 1 360px;
+                      min-width: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span
+                          >En la billetera, toque <b>Escanear código QR</b> y
+                          escanee el código del puesto.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span
+                          >Ingrese el importe informado por el comerciante y, si
+                          corresponde, el concepto de la compra.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span
+                          >Verifique el nombre del comercio y el importe, y
+                          toque <b>Pagar</b>.</span
+                        >
+                      </li>
+                    </ol>
+                  </div>
+                  <aside
+                    style="
+                      flex: 0 1 260px;
+                      display: flex;
+                      gap: 14px;
+                      align-items: center;
+                      padding: 14px;
+                      border-radius: var(--radius-md);
+                      background: var(--color-surface);
+                    "
+                  >
+                    <qr-code
+                      url="https://unq.numis.ar/description.html#step-3"
+                      style="
+                        flex: none;
+                        display: block;
+                        width: 96px;
+                        height: 96px;
+                        border-radius: 6px;
+                        overflow: hidden;
+                        background: #f3f5fe;
+                      "
+                    ></qr-code>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                      "
+                    >
+                      <span
+                        style="
+                          font-size: 11px;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: var(--color-accent);
+                        "
+                        >Realizar este paso</span
+                      >
+                      <span
+                        style="
+                          font-size: 12px;
+                          line-height: 1.35;
+                          overflow-wrap: anywhere;
+                        "
+                        >Comercio de demostración</span
+                      >
+                      <a
+                        data-noprint=""
+                        class="btn btn-primary"
+                        href="https://unq.numis.ar/description.html#step-3"
+                        target="_blank"
+                        >Probar el pago</a
+                      >
+                    </div>
+                  </aside>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <div style="font-size: 12px; color: var(--g-muted)">
+                    Capturas de pantalla
+                  </div>
+                  <div
+                    data-shot-strip=""
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      overflow-x: auto;
+                      scroll-snap-type: x mandatory;
+                      padding-bottom: 6px;
+                    "
+                  >
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v3-1"
+                        placeholder="Escanear el QR del puesto"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span>Escanear el código</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v3-2"
+                        placeholder="Ingresar importe"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span>Ingresar el importe</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v3-3"
+                        placeholder="Revisar y pagar"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Revisar y pagar</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+                <footer
+                  data-printonly=""
+                  style="
+                    margin-top: auto;
+                    justify-content: space-between;
+                    gap: 16px;
+                    font-size: 10px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <span
+                    >Guía de pagos · Feria de Economía Popular, Social y
+                    Solidaria · UNQ 2026</span
+                  ><span>Visitantes · Paso 3</span>
+                </footer>
+              </article>
+
+              <article
+                id="v4"
+                data-step=""
+                data-sheet=""
+                data-screen-label="Visitantes · Paso 4"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 24px;
+                  padding: 40px 0;
+                  background: linear-gradient(
+                      to right,
+                      transparent,
+                      var(--color-divider) 48px,
+                      var(--color-divider) calc(100% - 48px),
+                      transparent
+                    )
+                    no-repeat top/100% 1px;
+                "
+              >
+                <header style="display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      letter-spacing: 0.1em;
+                      text-transform: uppercase;
+                      color: var(--color-accent);
+                    "
+                  >
+                    Visitantes · Paso 4
+                  </div>
+                  <h3 style="margin: 0; font-size: 28px">
+                    Enviar o recibir dinero entre personas
+                  </h3>
+                  <p
+                    style="
+                      margin: 0;
+                      max-width: 62ch;
+                      color: var(--g-muted);
+                      text-wrap: pretty;
+                    "
+                  >
+                    La billetera permite transferir saldo directamente a otra
+                    persona que también utilice la billetera virtual.
+                  </p>
+                </header>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 24px;
+                    align-items: flex-start;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1 1 360px;
+                      min-width: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <h4 style="margin: 0; font-size: 16px">Enviar</h4>
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span>Toque <b>Enviar</b> e indique el importe.</span>
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span
+                          >Indique un asunto si es necesario y confirme.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span
+                          >Muestre el código QR generado para que la otra
+                          persona lo escanee y reciba el dinero.</span
+                        >
+                      </li>
+                    </ol>
+                    <h4 style="margin: 6px 0 0; font-size: 16px">Solicitar</h4>
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >4</span
+                        ><span
+                          >Toque <b>Solicitar</b> e indique el importe.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >5</span
+                        ><span
+                          >Indique un asunto si es necesario y confirme.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >6</span
+                        ><span
+                          >Muestre el código QR generado para que la otra
+                          persona lo escanee y complete la operación.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >7</span
+                        ><span
+                          >Una vez aceptada la solicitud, el importe se acredita
+                          en su billetera.</span
+                        >
+                      </li>
+                    </ol>
+                  </div>
+                  <aside
+                    style="
+                      flex: 0 1 260px;
+                      display: flex;
+                      gap: 14px;
+                      align-items: center;
+                      padding: 14px;
+                      border-radius: var(--radius-md);
+                      background: var(--color-surface);
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                      "
+                    >
+                      <span
+                        style="
+                          font-size: 11px;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: var(--color-accent);
+                        "
+                        >Realizar este paso</span
+                      >
+                      <span style="font-size: 13px; line-height: 1.45"
+                        >Este paso se realiza íntegramente dentro de la
+                        billetera GNU Taler; no requiere ingresar a ninguna
+                        página.</span
+                      >
+                    </div>
+                  </aside>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <div style="font-size: 12px; color: var(--g-muted)">
+                    Capturas de pantalla
+                  </div>
+                  <div
+                    data-shot-strip=""
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      overflow-x: auto;
+                      scroll-snap-type: x mandatory;
+                      padding-bottom: 6px;
+                    "
+                  >
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v4-1"
+                        placeholder="Menú Enviar"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span>Enviar a otra billetera</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v4-3"
+                        placeholder="QR de envío"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Código de envío</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v4-4"
+                        placeholder="Menú Recibir"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >4</span
+                        ><span>Solicitar un importe</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="v4-5"
+                        placeholder="QR de solicitud"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >5</span
+                        ><span>Código de solicitud</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+                <footer
+                  data-printonly=""
+                  style="
+                    margin-top: auto;
+                    justify-content: space-between;
+                    gap: 16px;
+                    font-size: 10px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <span
+                    >Guía de pagos · Feria de Economía Popular, Social y
+                    Solidaria · UNQ 2026</span
+                  ><span>Visitantes · Paso 4</span>
+                </footer>
+              </article>
+            </section>
+          </sc-if>
+
+          <sc-if
+            value="{{ showComerciantes }}"
+            hint-placeholder-val="{{ true }}"
+          >
+            <section id="comerciantes" data-screen-label="Comerciantes">
+              <div
+                data-noprint=""
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                  padding: 48px 0 16px;
+                "
+              >
+                <div
+                  style="
+                    width: 32px;
+                    height: 2px;
+                    background: var(--color-accent);
+                  "
+                ></div>
+                <div
+                  style="
+                    font-size: 12px;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: var(--color-accent);
+                  "
+                >
+                  Parte B
+                </div>
+                <h2 style="margin: 0; font-size: 32px">Comerciantes</h2>
+                <p style="margin: 0; max-width: 62ch; color: var(--g-muted)">
+                  Procedimientos para consultar las ventas del puesto, disponer
+                  de los fondos y cerrar la cuenta al término de la feria. Las
+                  credenciales de acceso son provistas por la organización.
+                </p>
+              </div>
+
+              <article
+                id="c1"
+                data-step=""
+                data-sheet=""
+                data-screen-label="Comerciantes · Paso 1"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 24px;
+                  padding: 40px 0;
+                  background: linear-gradient(
+                      to right,
+                      transparent,
+                      var(--color-divider) 48px,
+                      var(--color-divider) calc(100% - 48px),
+                      transparent
+                    )
+                    no-repeat top/100% 1px;
+                "
+              >
+                <header style="display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      letter-spacing: 0.1em;
+                      text-transform: uppercase;
+                      color: var(--color-accent);
+                    "
+                  >
+                    Comerciantes · Paso 1
+                  </div>
+                  <h3 style="margin: 0; font-size: 28px">
+                    Ingresar al panel del comercio
+                  </h3>
+                  <p
+                    style="
+                      margin: 0;
+                      max-width: 62ch;
+                      color: var(--g-muted);
+                      text-wrap: pretty;
+                    "
+                  >
+                    El panel es una aplicación web que muestra las ventas, el
+                    saldo en tránsito, el saldo liquidado y el detalle de las
+                    últimas órdenes del puesto.
+                  </p>
+                </header>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 24px;
+                    align-items: flex-start;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1 1 360px;
+                      min-width: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span
+                          >Escanee el código QR o ingrese a la dirección del
+                          panel desde el navegador del teléfono.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span
+                          >Ingrese el usuario y la contraseña asignados a su
+                          puesto.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span
+                          >En el primer ingreso, reemplace la contraseña
+                          temporal. Este cambio es obligatorio antes de
+                          operar.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >4</span
+                        ><span
+                          >Consulte las ventas de manera instantanea o retire
+                          saldo para usar durante la feria.</span
+                        >
+                      </li>
+                    </ol>
+                  </div>
+                  <aside
+                    style="
+                      flex: 0 1 260px;
+                      display: flex;
+                      gap: 14px;
+                      align-items: center;
+                      padding: 14px;
+                      border-radius: var(--radius-md);
+                      background: var(--color-surface);
+                    "
+                  >
+                    <qr-code
+                      url="https://unq.numis.ar/comercio"
+                      style="
+                        flex: none;
+                        display: block;
+                        width: 96px;
+                        height: 96px;
+                        border-radius: 6px;
+                        overflow: hidden;
+                        background: #f3f5fe;
+                      "
+                    ></qr-code>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                      "
+                    >
+                      <span
+                        style="
+                          font-size: 11px;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: var(--color-accent);
+                        "
+                        >Realizar este paso</span
+                      >
+                      <span
+                        style="
+                          font-size: 12px;
+                          line-height: 1.35;
+                          overflow-wrap: none;
+                        "
+                        >unq.numis.ar/comercio</span
+                      >
+                      <a
+                        data-noprint=""
+                        class="btn btn-primary"
+                        href="https://unq.numis.ar/comercio"
+                        target="_blank"
+                        >Abrir el panel</a
+                      >
+                    </div>
+                  </aside>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <div style="font-size: 12px; color: var(--g-muted)">
+                    Capturas de pantalla
+                  </div>
+                  <div
+                    data-shot-strip=""
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      overflow-x: auto;
+                      scroll-snap-type: x mandatory;
+                      padding-bottom: 6px;
+                    "
+                  >
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c1-2"
+                        placeholder="Inicio de sesión"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span>Inicio de sesión</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c1-3"
+                        placeholder="Cambio de contraseña"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Cambio de contraseña</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c1-4"
+                        placeholder="Resumen de ventas"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >4</span
+                        ><span>Resumen de ventas</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+                <footer
+                  data-printonly=""
+                  style="
+                    margin-top: auto;
+                    justify-content: space-between;
+                    gap: 16px;
+                    font-size: 10px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <span
+                    >Guía de pagos · Feria de Economía Popular, Social y
+                    Solidaria · UNQ 2026</span
+                  ><span>Comerciantes · Paso 1</span>
+                </footer>
+              </article>
+
+              <article
+                id="c2"
+                data-step=""
+                data-sheet=""
+                data-screen-label="Comerciantes · Paso 2"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 24px;
+                  padding: 40px 0;
+                  background: linear-gradient(
+                      to right,
+                      transparent,
+                      var(--color-divider) 48px,
+                      var(--color-divider) calc(100% - 48px),
+                      transparent
+                    )
+                    no-repeat top/100% 1px;
+                "
+              >
+                <header style="display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      letter-spacing: 0.1em;
+                      text-transform: uppercase;
+                      color: var(--color-accent);
+                    "
+                  >
+                    Comerciantes · Paso 2
+                  </div>
+                  <h3 style="margin: 0; font-size: 28px">
+                    Extraer fondos a una billetera propia
+                  </h3>
+                  <p
+                    style="
+                      margin: 0;
+                      max-width: 62ch;
+                      color: var(--g-muted);
+                      text-wrap: pretty;
+                    "
+                  >
+                    El saldo liquidado de la cuenta del comercio puede extraerse
+                    en cualquier momento a una billetera virtual.
+                  </p>
+                </header>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 24px;
+                    align-items: flex-start;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1 1 360px;
+                      min-width: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span
+                          >En el panel, abra la sección <b>Cuenta</b> y toque
+                          <b>Retirar</b>.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span
+                          >Ingrese el importe. No puede superar el saldo
+                          <b>Disponible</b>.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span
+                          >Escanee el código QR de retiro con su billetera o, si
+                          opera desde el mismo teléfono, toque
+                          <b>Abrir en billetera Taler</b>.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >4</span
+                        ><span
+                          >Acepte el retiro en la billetera y toque
+                          <b>Confirmar transferencia</b> en el panel.</span
+                        >
+                      </li>
+                    </ol>
+                  </div>
+                  <aside
+                    style="
+                      flex: 0 1 260px;
+                      display: flex;
+                      gap: 14px;
+                      align-items: center;
+                      padding: 14px;
+                      border-radius: var(--radius-md);
+                      background: var(--color-surface);
+                    "
+                  >
+                    <qr-code
+                      url="https://unq.numis.ar/comercio#cuenta"
+                      style="
+                        flex: none;
+                        display: block;
+                        width: 96px;
+                        height: 96px;
+                        border-radius: 6px;
+                        overflow: hidden;
+                        background: #f3f5fe;
+                      "
+                    ></qr-code>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                      "
+                    >
+                      <span
+                        style="
+                          font-size: 11px;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: var(--color-accent);
+                        "
+                        >Realizar este paso</span
+                      >
+                      <span
+                        style="
+                          font-size: 12px;
+                          line-height: 1.35;
+                          overflow-wrap: none;
+                        "
+                        >unq.numis.ar/comercio</span
+                      >
+                      <a
+                        data-noprint=""
+                        class="btn btn-primary"
+                        href="https://unq.numis.ar/comecio#cuenta"
+                        target="_blank"
+                        >Ir a Cuenta</a
+                      >
+                    </div>
+                  </aside>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <div style="font-size: 12px; color: var(--g-muted)">
+                    Capturas de pantalla
+                  </div>
+                  <div
+                    data-shot-strip=""
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      overflow-x: auto;
+                      scroll-snap-type: x mandatory;
+                      padding-bottom: 6px;
+                    "
+                  >
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c2-1"
+                        placeholder="Sección Cuenta"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span>Sección Cuenta</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c2-2"
+                        placeholder="Importe a retirar"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span>Importe a retirar</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c2-3"
+                        placeholder="QR de retiro"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Código de retiro</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c2-4"
+                        placeholder="Retiro aceptado"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >4</span
+                        ><span>Confirmar transferencia</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+                <footer
+                  data-printonly=""
+                  style="
+                    margin-top: auto;
+                    justify-content: space-between;
+                    gap: 16px;
+                    font-size: 10px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <span
+                    >Guía de pagos · Feria de Economía Popular, Social y
+                    Solidaria · UNQ 2026</span
+                  ><span>Comerciantes · Paso 2</span>
+                </footer>
+              </article>
+
+              <article
+                id="c3"
+                data-step=""
+                data-sheet=""
+                data-screen-label="Comerciantes · Paso 3"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 24px;
+                  padding: 40px 0;
+                  background: linear-gradient(
+                      to right,
+                      transparent,
+                      var(--color-divider) 48px,
+                      var(--color-divider) calc(100% - 48px),
+                      transparent
+                    )
+                    no-repeat top/100% 1px;
+                "
+              >
+                <header style="display: flex; flex-direction: column; gap: 8px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      letter-spacing: 0.1em;
+                      text-transform: uppercase;
+                      color: var(--color-accent);
+                    "
+                  >
+                    Comerciantes · Paso 3
+                  </div>
+                  <h3 style="margin: 0; font-size: 28px">
+                    Cerrar la cuenta al finalizar la feria
+                  </h3>
+                  <p
+                    style="
+                      margin: 0;
+                      max-width: 62ch;
+                      color: var(--g-muted);
+                      text-wrap: pretty;
+                    "
+                  >
+                    Al término del evento, la cuenta del comercio debe cerrarse.
+                    El saldo remanente se transfiere a la cuenta de cierre de la
+                    organización y la operación no puede revertirse.
+                  </p>
+                </header>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 24px;
+                    align-items: flex-start;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1 1 360px;
+                      min-width: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <ol
+                      style="
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                      "
+                    >
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >1</span
+                        ><span
+                          >Verifique los terminos de cierre de operacion de
+                          cuenta en
+                          <a href="https://unq.numis.ar/cierre" target="_blank"
+                            ><b>unq.numis.ar/cierre</b></a
+                          >.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span
+                          >En la sección <b>Cuenta</b>, toque
+                          <b>Cerrar cuenta</b>.</span
+                        >
+                      </li>
+                      <li
+                        style="
+                          display: grid;
+                          grid-template-columns: 24px 1fr;
+                          gap: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 12px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Lea el aviso y toque <b>Confirmar</b>.</span>
+                      </li>
+                    </ol>
+                  </div>
+                  <aside
+                    style="
+                      flex: 0 1 260px;
+                      display: flex;
+                      gap: 14px;
+                      align-items: center;
+                      padding: 14px;
+                      border-radius: var(--radius-md);
+                      background: var(--color-surface);
+                    "
+                  >
+                    <qr-code
+                      url="https://unq.numis.ar/cierre"
+                      style="
+                        flex: none;
+                        display: block;
+                        width: 96px;
+                        height: 96px;
+                        border-radius: 6px;
+                        overflow: hidden;
+                        background: #f3f5fe;
+                      "
+                    ></qr-code>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                      "
+                    >
+                      <span
+                        style="
+                          font-size: 11px;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: var(--color-accent);
+                        "
+                        >Más información</span
+                      >
+                      <span
+                        style="
+                          font-size: 12px;
+                          line-height: 1.35;
+                          overflow-wrap: anywhere;
+                        "
+                        >unq.numis.ar/cierre</span
+                      >
+                      <a
+                        data-noprint=""
+                        class="btn btn-primary"
+                        href="https://unq.numis.ar/cierre"
+                        target="_blank"
+                        >Sobre el cierre</a
+                      >
+                    </div>
+                  </aside>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px">
+                  <div style="font-size: 12px; color: var(--g-muted)">
+                    Capturas de pantalla
+                  </div>
+                  <div
+                    data-shot-strip=""
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      overflow-x: auto;
+                      scroll-snap-type: x mandatory;
+                      padding-bottom: 6px;
+                    "
+                  >
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c3-2"
+                        placeholder="Cerrar cuenta"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >2</span
+                        ><span>Cerrar cuenta</span>
+                      </figcaption>
+                    </figure>
+                    <figure
+                      style="
+                        flex: none;
+                        width: 150px;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        scroll-snap-align: start;
+                      "
+                    >
+                      <image-slot
+                        id="c3-3"
+                        placeholder="Aviso de cierre"
+                        shape="rounded"
+                        radius="16"
+                        style="width: 150px; height: 312px"
+                      ></image-slot>
+                      <figcaption
+                        style="
+                          margin: 0;
+                          display: flex;
+                          gap: 8px;
+                          align-items: flex-start;
+                          font-size: 12px;
+                          line-height: 1.35;
+                          color: var(--g-muted);
+                        "
+                      >
+                        <span
+                          style="
+                            flex: none;
+                            width: 20px;
+                            height: 20px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 50%;
+                            box-shadow: inset 0 0 0 1px var(--color-accent);
+                            color: var(--g-accent-text);
+                            font-size: 11px;
+                            font-weight: 500;
+                          "
+                          >3</span
+                        ><span>Confirmar el cierre</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+                <footer
+                  data-printonly=""
+                  style="
+                    margin-top: auto;
+                    justify-content: space-between;
+                    gap: 16px;
+                    font-size: 10px;
+                    color: var(--g-muted);
+                  "
+                >
+                  <span
+                    >Guía de pagos · Feria de Economía Popular, Social y
+                    Solidaria · UNQ 2026</span
+                  ><span>Comerciantes · Paso 3</span>
+                </footer>
+              </article>
+            </section>
+          </sc-if>
+        </main>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{"tema":{"editor":"enum","options":["Numis","Nocturno","Papel institucional","Economía popular","UNQ institucional"],"default":"Numis","tsType":"string"},"audiencia":{"editor":"enum","options":["Todos","Visitantes","Comerciantes"],"default":"Todos","tsType":"string"},"vistaA4":{"editor":"boolean","default":false,"tsType":"boolean"}}'
+    >
+      class Component extends DCLogic {
+        renderVals() {
+          const a = this.props.audiencia ?? 'Todos';
+          let src = '';
+          try { src = (window.frameElement && window.frameElement.getAttribute('src')) || ''; } catch (e) {}
+          const q = [src, document.URL, window.location.href].map(u => (u.split('?')[1] || '').split('#')[0]).find(s => /(^|&)(tema|a4)=/.test(s)) || '';
+          const qs = new URLSearchParams(q);
+          return {
+            theme: 'numis',
+            paper: String(qs.has('a4') ? qs.get('a4') === '1' : !!this.props.vistaA4),
+            showVisitantes: a !== 'Comerciantes',
+            showComerciantes: a !== 'Visitantes',
+            print: () => window.print()
+          };
+        }
+      }
+    </script>
+  </body>
+</html>
