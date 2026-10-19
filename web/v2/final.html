@@ -386,22 +386,22 @@
             >Feria UNQ · Pagos digitales</a
           >
           <a
-            href="#visitantes"
+            href="#consumidorxs"
             style="
               color: var(--color-text);
               text-decoration: none;
               font-size: 14px;
             "
-            >Visitantes</a
+            >Consumidorxs</a
           >
           <a
-            href="#comerciantes"
+            href="#productorxs"
             style="
               color: var(--color-text);
               text-decoration: none;
               font-size: 14px;
             "
-            >Comerciantes</a
+            >Productorxs</a
           >
           <!-- button class="btn btn-primary" onClick="{{ print }}">Imprimir guía</button -->
         </nav>
@@ -455,7 +455,7 @@
               Durante la feria, las compras en los puestos se pueden abonar con
               dinero digital mediante una billetera virtual que no requiere
               cuenta bancaria ni datos personales. Esta guía describe, paso a
-              paso, los procedimientos para visitantes y para comerciantes.
+              paso, los procedimientos para consumidorxs y para productorxs.
             </p>
             <div
               style="
@@ -474,7 +474,7 @@
               "
             >
               <a
-                href="#visitantes"
+                href="#consumidorxs"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -496,7 +496,7 @@
                   >Parte A</span
                 >
                 <span style="font-size: 20px; font-weight: 500"
-                  >Visitantes</span
+                  >Consumidorxs</span
                 >
                 <ol
                   style="
@@ -507,13 +507,13 @@
                   "
                 >
                   <li>Instalar la billetera</li>
-                  <li>Extraer saldo por transferencia</li>
+                  <li>Solicitar crédito</li>
                   <li>Pagar a un comerciante</li>
                   <li>Enviar o recibir dinero entre personas</li>
                 </ol>
               </a>
               <a
-                href="#comerciantes"
+                href="#productorxs"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -535,7 +535,7 @@
                   >Parte B</span
                 >
                 <span style="font-size: 20px; font-weight: 500"
-                  >Comerciantes</span
+                  >Productorxs</span
                 >
                 <ol
                   style="
@@ -636,8 +636,8 @@
             </div>
           </header>
 
-          <sc-if value="{{ showVisitantes }}" hint-placeholder-val="{{ true }}">
-            <section id="visitantes" data-screen-label="Visitantes">
+          <sc-if value="{{ showConsumidorxs }}" hint-placeholder-val="{{ true }}">
+            <section id="consumidorxs" data-screen-label="Consumidorxs">
               <div
                 data-noprint=""
                 style="
@@ -664,9 +664,9 @@
                 >
                   Parte A
                 </div>
-                <h2 style="margin: 0; font-size: 32px">Visitantes</h2>
+                <h2 style="margin: 0; font-size: 32px">Consumidorxs</h2>
                 <p style="margin: 0; max-width: 62ch; color: var(--g-muted)">
-                  Procedimientos para cargar saldo en el teléfono y abonar
+                  Procedimientos para tener saldo en el teléfono y abonar
                   compras en los puestos de la feria.
                 </p>
               </div>
@@ -676,7 +676,7 @@
                 data-step=""
                 data-sheet=""
                 data-copy-note="PASO: copiar el article completo para crear un paso nuevo"
-                data-screen-label="Visitantes · Paso 1"
+                data-screen-label="Consumidorxs · Paso 1"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -701,7 +701,7 @@
                       color: var(--color-accent);
                     "
                   >
-                    Visitantes · Paso 1
+                    Consumidorxs · Paso 1
                   </div>
                   <h3 style="margin: 0; font-size: 28px">
                     Instalar la billetera virtual
@@ -1045,7 +1045,7 @@
                   <span
                     >Guía de pagos · Feria de Economía Popular, Social y
                     Solidaria · UNQ 2026</span
-                  ><span>Visitantes · Paso 1</span>
+                  ><span>Consumidorxs · Paso 1</span>
                 </footer>
               </article>
 
@@ -1053,7 +1053,7 @@
                 id="v2"
                 data-step=""
                 data-sheet=""
-                data-screen-label="Visitantes · Paso 2"
+                data-screen-label="Consumidorxs · Paso 2"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -1078,10 +1078,10 @@
                       color: var(--color-accent);
                     "
                   >
-                    Visitantes · Paso 2
+                    Consumidorxs · Paso 2
                   </div>
                   <h3 style="margin: 0; font-size: 28px">
-                    Extraer saldo mediante transferencia
+                    Solicitar crédito
                   </h3>
                   <p
                     style="
@@ -1091,10 +1091,10 @@
                       text-wrap: pretty;
                     "
                   >
-                    El saldo se acredita a través de una transferencia con las
-                    personas de la organización. Se genera un código por el
-                    monto indicado que al escanearlo el dinero ingresa en su
-                    billetera. Durante la feria, el puesto de la organización
+                    El crédito se acredita usando un dispositivo móvil. 
+                    La organizacion genera un código QR por el monto indicado
+                    que al escanearlo extrae el dinero digital a su
+                    billetera. Durante la feria, el existirá un puesto donde
                     realizará este procedimiento.
                   </p>
                 </header>
@@ -1146,7 +1146,7 @@
                           "
                           >1</span
                         ><span
-                          >Informe a la organización el monto a extraer.</span
+                          >Informe a la organización el monto a solicitar.</span
                         >
                       </li>
                       <li
@@ -1196,7 +1196,7 @@
                           >3</span
                         ><span
                           >Verifique el monto y toque <b>Aceptar</b>. El saldo
-                          queda disponible en pocos segundos.</span
+                          queda disponible al instante.</span
                         >
                       </li>
                     </ol>
@@ -1247,7 +1247,7 @@
                           line-height: 1.35;
                           overflow-wrap: anywhere;
                         "
-                        >unq.numis.ar/description.html</span
+                        >unq.numis.ar/</span
                       >
                       <a
                         data-noprint=""
@@ -1426,7 +1426,7 @@
                   <span
                     >Guía de pagos · Feria de Economía Popular, Social y
                     Solidaria · UNQ 2026</span
-                  ><span>Visitantes · Paso 2</span>
+                  ><span>Consumidorxs · Paso 2</span>
                 </footer>
               </article>
 
@@ -1434,7 +1434,7 @@
                 id="v3"
                 data-step=""
                 data-sheet=""
-                data-screen-label="Visitantes · Paso 3"
+                data-screen-label="Consumidorxs · Paso 3"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -1459,7 +1459,7 @@
                       color: var(--color-accent);
                     "
                   >
-                    Visitantes · Paso 3
+                    Consumidorxs · Paso 3
                   </div>
                   <h3 style="margin: 0; font-size: 28px">
                     Pagar a un comerciante
@@ -1806,7 +1806,7 @@
                   <span
                     >Guía de pagos · Feria de Economía Popular, Social y
                     Solidaria · UNQ 2026</span
-                  ><span>Visitantes · Paso 3</span>
+                  ><span>Consumidorxs · Paso 3</span>
                 </footer>
               </article>
 
@@ -1814,7 +1814,7 @@
                 id="v4"
                 data-step=""
                 data-sheet=""
-                data-screen-label="Visitantes · Paso 4"
+                data-screen-label="Consumidorxs · Paso 4"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -1839,7 +1839,7 @@
                       color: var(--color-accent);
                     "
                   >
-                    Visitantes · Paso 4
+                    Consumidorxs · Paso 4
                   </div>
                   <h3 style="margin: 0; font-size: 28px">
                     Enviar o recibir dinero entre personas
@@ -2316,17 +2316,17 @@
                   <span
                     >Guía de pagos · Feria de Economía Popular, Social y
                     Solidaria · UNQ 2026</span
-                  ><span>Visitantes · Paso 4</span>
+                  ><span>Consumidorxs · Paso 4</span>
                 </footer>
               </article>
             </section>
           </sc-if>
 
           <sc-if
-            value="{{ showComerciantes }}"
+            value="{{ showProductorxs }}"
             hint-placeholder-val="{{ true }}"
           >
-            <section id="comerciantes" data-screen-label="Comerciantes">
+            <section id="productorxs" data-screen-label="Productorxs">
               <div
                 data-noprint=""
                 style="
@@ -2353,7 +2353,7 @@
                 >
                   Parte B
                 </div>
-                <h2 style="margin: 0; font-size: 32px">Comerciantes</h2>
+                <h2 style="margin: 0; font-size: 32px">Productorxs</h2>
                 <p style="margin: 0; max-width: 62ch; color: var(--g-muted)">
                   Procedimientos para consultar las ventas del puesto, disponer
                   de los fondos y cerrar la cuenta al término de la feria. Las
@@ -2365,7 +2365,7 @@
                 id="c1"
                 data-step=""
                 data-sheet=""
-                data-screen-label="Comerciantes · Paso 1"
+                data-screen-label="Productorxs · Paso 1"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -2390,7 +2390,7 @@
                       color: var(--color-accent);
                     "
                   >
-                    Comerciantes · Paso 1
+                    Productorxs · Paso 1
                   </div>
                   <h3 style="margin: 0; font-size: 28px">
                     Ingresar al panel del comercio
@@ -2763,7 +2763,7 @@
                   <span
                     >Guía de pagos · Feria de Economía Popular, Social y
                     Solidaria · UNQ 2026</span
-                  ><span>Comerciantes · Paso 1</span>
+                  ><span>Productorxs · Paso 1</span>
                 </footer>
               </article>
 
@@ -2771,7 +2771,7 @@
                 id="c2"
                 data-step=""
                 data-sheet=""
-                data-screen-label="Comerciantes · Paso 2"
+                data-screen-label="Productorxs · Paso 2"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -2796,7 +2796,7 @@
                       color: var(--color-accent);
                     "
                   >
-                    Comerciantes · Paso 2
+                    Productorxs · Paso 2
                   </div>
                   <h3 style="margin: 0; font-size: 28px">
                     Extraer fondos a una billetera propia
@@ -3214,7 +3214,7 @@
                   <span
                     >Guía de pagos · Feria de Economía Popular, Social y
                     Solidaria · UNQ 2026</span
-                  ><span>Comerciantes · Paso 2</span>
+                  ><span>Productorxs · Paso 2</span>
                 </footer>
               </article>
 
@@ -3222,7 +3222,7 @@
                 id="c3"
                 data-step=""
                 data-sheet=""
-                data-screen-label="Comerciantes · Paso 3"
+                data-screen-label="Productorxs · Paso 3"
                 style="
                   display: flex;
                   flex-direction: column;
@@ -3247,7 +3247,7 @@
                       color: var(--color-accent);
                     "
                   >
-                    Comerciantes · Paso 3
+                    Productorxs · Paso 3
                   </div>
                   <h3 style="margin: 0; font-size: 28px">
                     Cerrar la cuenta al finalizar la feria
@@ -3548,7 +3548,7 @@
                   <span
                     >Guía de pagos · Feria de Economía Popular, Social y
                     Solidaria · UNQ 2026</span
-                  ><span>Comerciantes · Paso 3</span>
+                  ><span>Productorxs · Paso 3</span>
                 </footer>
               </article>
             </section>
@@ -3559,7 +3559,7 @@
     <script
       type="text/x-dc"
       data-dc-script
-      data-props='{"tema":{"editor":"enum","options":["Numis","Nocturno","Papel institucional","Economía popular","UNQ institucional"],"default":"Numis","tsType":"string"},"audiencia":{"editor":"enum","options":["Todos","Visitantes","Comerciantes"],"default":"Todos","tsType":"string"},"vistaA4":{"editor":"boolean","default":false,"tsType":"boolean"}}'
+      data-props='{"tema":{"editor":"enum","options":["Numis","Nocturno","Papel institucional","Economía popular","UNQ institucional"],"default":"Numis","tsType":"string"},"audiencia":{"editor":"enum","options":["Todos","Consumidorxs","Productorxs"],"default":"Todos","tsType":"string"},"vistaA4":{"editor":"boolean","default":false,"tsType":"boolean"}}'
     >
       class Component extends DCLogic {
         renderVals() {
@@ -3571,8 +3571,8 @@
           return {
             theme: 'numis',
             paper: String(qs.has('a4') ? qs.get('a4') === '1' : !!this.props.vistaA4),
-            showVisitantes: a !== 'Comerciantes',
-            showComerciantes: a !== 'Visitantes',
+            showConsumidorxs: a !== 'Productorxs',
+            showProductorxs: a !== 'Consumidorxs',
             print: () => window.print()
           };
         }
