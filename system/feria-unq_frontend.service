@@ -5,9 +5,7 @@ After=feria-unq_frontend.socket
 
 [Service]
 ExecSearchPath=/usr/bin
-ExecSearchPath=/git/feria-unq/scripts
-WorkingDirectory=/git/feria-unq
-
+ExecSearchPath=${APP_DIR}/scripts
 ExecStart=node server/frontend.js
 
 [Install]

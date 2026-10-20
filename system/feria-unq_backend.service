@@ -5,8 +5,7 @@ After=feria-unq_backend.socket
 
 [Service]
 ExecSearchPath=/usr/bin
-ExecSearchPath=/git/feria-unq/scripts
-WorkingDirectory=/git/feria-unq
+ExecSearchPath=${APP_DIR}/scripts
 Environment=BANK_URL=https://bank.taler.ar
 Environment=ADMIN_TOKEN=qwe
 Environment=MERCHANT_BASE_URL=https://merchant.taler.ar
