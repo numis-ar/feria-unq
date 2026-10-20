@@ -1,7 +1,7 @@
 // <qr-code url="https://…"></qr-code> — renders a QR as inline SVG (dark ink on paper tone). Copy-paste friendly: change only the url attribute.
 (function () {
   if (customElements.get('qr-code')) return;
-  const LIB = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+  const LIB = './qrcode-generator.js';
   let loading;
   const load = () => window.qrcode ? Promise.resolve() : (loading ||= new Promise((res, rej) => {
     const s = document.createElement('script'); s.src = LIB; s.onload = res; s.onerror = rej; document.head.appendChild(s);
