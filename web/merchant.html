@@ -228,52 +228,49 @@
         box-shadow: 6px 6px 0 var(--numis-green);
       }
 
-      /* Stepper */
-      #stepper-header {
-        position: fixed;
-        top: 64px;
-        left: 0;
-        right: 0;
-        z-index: 35;
-        background: var(--numis-white);
-        border-bottom: 1px solid var(--numis-cream);
-        padding: 12px max(16px, calc((100% - 1100px) / 2));
-      }
-      @media (min-width: 768px) {
-        #stepper-header {
-          left: 16rem;
-        }
-      }
-      #stepper-header .step {
+      /* Withdraw flow stepper inside modals */
+      .withdraw-stepper {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 8px;
-        font-size: 13px;
-        color: var(--numis-text-muted);
-        font-weight: 700;
+        margin-bottom: 1.5rem;
       }
-      #stepper-header .step-number {
-        width: 26px;
-        height: 26px;
+      .withdraw-stepper .step {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--numis-text-muted);
+      }
+      .withdraw-stepper .step-number {
+        width: 24px;
+        height: 24px;
         display: grid;
         place-items: center;
         border-radius: 50%;
         background: var(--numis-cream);
         color: var(--numis-text-muted);
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 900;
         flex: none;
       }
-      #stepper-header .step.active .step-number {
+      .withdraw-stepper .step.active .step-number {
         background: var(--numis-green);
         color: #fff;
       }
-      #stepper-header .step.active {
+      .withdraw-stepper .step.active {
         color: var(--numis-green);
       }
-      #stepper-header .step.completed .step-number {
+      .withdraw-stepper .step.completed .step-number {
         background: var(--numis-orange);
         color: #fff;
+      }
+      .withdraw-stepper .line {
+        flex: 1;
+        height: 2px;
+        background: var(--numis-cream);
       }
 
       /* Footer inside QR modal */
@@ -477,15 +474,32 @@
         </h2>
         <p
           id="qr-modal-desc"
-          class="text-slate-500 mb-6 text-sm"
+          class="text-slate-500 mb-4 text-sm"
           data-i18n="modal_qr_scan"
         >
           Scan the qr code with a taler wallet
         </p>
 
+        <div class="withdraw-stepper" id="withdraw-stepper-2">
+          <div class="step completed" data-step="1">
+            <span class="step-number">1</span>
+            <span data-i18n="withdraw_step_amount">Amount</span>
+          </div>
+          <div class="line"></div>
+          <div class="step active" data-step="2">
+            <span class="step-number">2</span>
+            <span data-i18n="withdraw_step_scan">Scan QR</span>
+          </div>
+          <div class="line"></div>
+          <div class="step" data-step="3">
+            <span class="step-number">3</span>
+            <span data-i18n="withdraw_step_confirm">Confirm</span>
+          </div>
+        </div>
+
         <div
           id="qr-content"
-          class="flex justify-center items-center min-h-[224px]"
+          class="flex justify-center items-center min-h-[180px]"
         >
           <div id="qr-spinner-modal" class="hidden">
             <svg
@@ -807,11 +821,27 @@
         </button>
         <h2
           id="withdraw-modal-title"
-          class="text-2xl font-bold text-slate-900 mb-6"
+          class="text-2xl font-bold text-slate-900 mb-2"
           data-i18n="withdraw_dialog_title"
         >
           Withdraw funds
         </h2>
+        <div class="withdraw-stepper" id="withdraw-stepper-1">
+          <div class="step active" data-step="1">
+            <span class="step-number">1</span>
+            <span data-i18n="withdraw_step_amount">Amount</span>
+          </div>
+          <div class="line"></div>
+          <div class="step" data-step="2">
+            <span class="step-number">2</span>
+            <span data-i18n="withdraw_step_scan">Scan QR</span>
+          </div>
+          <div class="line"></div>
+          <div class="step" data-step="3">
+            <span class="step-number">3</span>
+            <span data-i18n="withdraw_step_confirm">Confirm</span>
+          </div>
+        </div>
         <div class="space-y-4 text-left">
           <div>
             <label
@@ -1102,39 +1132,6 @@
       </div>
     </header>
 
-    <!-- Stepper header -->
-    <div id="stepper-header">
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          max-width: 1100px;
-          margin: 0 auto;
-        "
-      >
-        <div class="step active" data-step="1">
-          <span class="step-number">1</span>
-          <span class="step-label" data-i18n="step_1">Ventas</span>
-        </div>
-        <div
-          style="flex: 1; height: 2px; background: var(--numis-cream)"
-        ></div>
-        <div class="step" data-step="2">
-          <span class="step-number">2</span>
-          <span class="step-label" data-i18n="step_2">Cuenta</span>
-        </div>
-        <div
-          style="flex: 1; height: 2px; background: var(--numis-cream)"
-        ></div>
-        <div class="step" data-step="3">
-          <span class="step-number">3</span>
-          <span class="step-label" data-i18n="step_3">Cierre</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Offline banner -->
     <div
       id="offline-banner"
@@ -1200,7 +1197,7 @@
     <main
       id="main-content"
       tabindex="-1"
-      class="hidden pt-32 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300"
+      class="hidden pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300"
     >
       <!-- SECTION 1: Dashboard (Orders & Stats) -->
       <section id="dashboard" class="main-section space-y-8">
@@ -1698,11 +1695,10 @@
           toast_state_refunded: "refunded",
           nav_dashboard: "Dashboard",
           nav_account: "Account",
-          step_1: "Sales",
-          step_2: "Account",
-          step_3: "Close",
-          step_hint: "Step {step} of 3",
           nav_user: "User",
+          withdraw_step_amount: "Amount",
+          withdraw_step_scan: "Scan QR",
+          withdraw_step_confirm: "Confirm",
           user_title: "User Settings",
           user_desc: "Manage your account and session.",
           change_password: "Change Password",
@@ -1826,11 +1822,10 @@
           toast_state_refunded: "reembolsado",
           nav_dashboard: "Panel de Control",
           nav_account: "Cuenta",
-          step_1: "Ventas",
-          step_2: "Cuenta",
-          step_3: "Cierre",
-          step_hint: "Paso {step} de 3",
           nav_user: "Usuario",
+          withdraw_step_amount: "Monto",
+          withdraw_step_scan: "Escanear QR",
+          withdraw_step_confirm: "Confirmar",
           user_title: "Ajustes de Usuario",
           user_desc: "Gestiona tu cuenta y sesión.",
           change_password: "Cambiar Contraseña",
@@ -2951,6 +2946,8 @@
               document
                 .getElementById("qr-confirm-actions")
                 .classList.remove("hidden");
+              document.getElementById("qr-modal-footer").classList.add("hidden");
+              updateWithdrawStepper("withdraw-stepper-2", 3);
               withdrawalPolling = false;
             } else if (data.status === "aborted") {
               document.getElementById("qr-modal-error").innerHTML =
@@ -2982,6 +2979,21 @@
         document.getElementById("withdraw-modal").classList.remove("hidden");
         document.body.classList.add("modal-active");
         openDialog("withdraw-modal", input);
+        updateWithdrawStepper("withdraw-stepper-1", 1);
+      }
+
+      function updateWithdrawStepper(id, activeStep) {
+        const stepper = document.getElementById(id);
+        if (!stepper) return;
+        stepper.querySelectorAll(".step").forEach((s) => {
+          const stepNum = parseInt(s.getAttribute("data-step"), 10);
+          s.classList.remove("active", "completed");
+          if (stepNum === activeStep) {
+            s.classList.add("active");
+          } else if (stepNum < activeStep) {
+            s.classList.add("completed");
+          }
+        });
       }
 
       const cardAvailableTrigger = document.getElementById(
@@ -3081,6 +3093,7 @@
             document.body.classList.add("modal-active");
             qrModal.classList.remove("hidden");
             openDialog("qr-modal");
+            updateWithdrawStepper("withdraw-stepper-2", 2);
 
             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(talerWithdrawUri)}`;
             const talerLink = document.getElementById("qr-taler-link");
@@ -3117,7 +3130,6 @@
             .classList.remove("hidden");
           document.body.classList.add("modal-active");
           openDialog("close-account-modal");
-          updateStepper(3);
         });
 
       document
@@ -3128,7 +3140,6 @@
             .classList.add("hidden");
           document.body.classList.remove("modal-active");
           closeDialog("close-account-modal");
-          updateStepper(2);
         });
 
       document
@@ -3169,19 +3180,6 @@
             btnSpinner.classList.add("hidden");
           }
         });
-
-      // Stepper indicator
-      function updateStepper(activeStep) {
-        document.querySelectorAll("#stepper-header .step").forEach((s) => {
-          const stepNum = parseInt(s.getAttribute("data-step"), 10);
-          s.classList.remove("active", "completed");
-          if (stepNum === activeStep) {
-            s.classList.add("active");
-          } else if (stepNum < activeStep) {
-            s.classList.add("completed");
-          }
-        });
-      }
 
       // Fragment navigation logic
       function navigateTo(targetId, { push = true } = {}) {
@@ -3230,10 +3228,6 @@
           .forEach((s) => s.classList.add("hidden"));
         document.getElementById(resolvedId).classList.remove("hidden");
         document.getElementById("sidebar").classList.add("max-md:hidden");
-
-        // Update stepper: dashboard = 1, account = 2
-        const stepMap = { dashboard: 1, account: 2 };
-        updateStepper(stepMap[resolvedId] || 1);
 
         if (window.location.hash !== "#" + resolvedId) {
           if (push) {
