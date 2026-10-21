@@ -144,7 +144,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await page.locator('#auth-modal').waitFor({ state: 'hidden' });
 
     await page.click('#nav-account-btn');
-    await page.click('#btn-withdraw');
+    await page.click('#card-available-trigger');
 
     const withdrawModal = page.locator('#withdraw-modal');
     await withdrawModal.waitFor({ state: 'visible' });

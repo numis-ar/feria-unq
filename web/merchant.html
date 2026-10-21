@@ -3,11 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#4f46e5" />
+    <meta name="theme-color" content="#064d2d" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title data-i18n="header_title">FairPay Merchant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
     <script src="./tailwind.js"></script>
     <style>
+      :root {
+        --numis-green: #064d2d;
+        --numis-green-dark: #03321d;
+        --numis-green-light: #0d5e39;
+        --numis-orange: #dc5a1e;
+        --numis-orange-dark: #b8461a;
+        --numis-cream: #f1ecdf;
+        --numis-white: #fbfbf8;
+        --numis-mint: #cfe3d8;
+        --numis-text: #343434;
+        --numis-text-muted: #55544f;
+      }
+      html {
+        font-family: "Archivo", Arial, sans-serif;
+      }
       html {
         scroll-behavior: smooth;
       }
@@ -61,15 +82,260 @@
         }
       }
       .dock-active {
-        background-color: #eef2ff;
+        background-color: var(--numis-mint);
+        color: var(--numis-green);
         border-radius: 0.75rem;
         padding-left: 1.25rem;
         padding-right: 1.25rem;
       }
+
+      /* NUMIS palette overrides for Tailwind utility classes */
+      .bg-indigo-600,
+      .bg-indigo-700 {
+        background-color: var(--numis-green) !important;
+      }
+      .hover\:bg-indigo-700:hover {
+        background-color: var(--numis-green-dark) !important;
+      }
+      .text-indigo-600 {
+        color: var(--numis-green) !important;
+      }
+      .text-indigo-700 {
+        color: var(--numis-green-dark) !important;
+      }
+      .bg-indigo-50 {
+        background-color: var(--numis-mint) !important;
+      }
+      .text-indigo-200 {
+        color: var(--numis-mint) !important;
+      }
+      .border-indigo-700 {
+        border-color: var(--numis-green-dark) !important;
+      }
+      .bg-indigo-800\/50,
+      .group-hover\:bg-indigo-800:hover {
+        background-color: rgba(3, 50, 29, 0.55) !important;
+      }
+      .focus\:ring-indigo-500:focus,
+      .focus\:ring-indigo-500:focus-visible {
+        --tw-ring-color: var(--numis-green) !important;
+      }
+
+      .bg-rose-600,
+      .bg-rose-700 {
+        background-color: var(--numis-orange) !important;
+      }
+      .hover\:bg-rose-700:hover {
+        background-color: var(--numis-orange-dark) !important;
+      }
+      .text-rose-600 {
+        color: var(--numis-orange) !important;
+      }
+      .focus\:ring-rose-500:focus,
+      .focus\:ring-rose-500:focus-visible {
+        --tw-ring-color: var(--numis-orange) !important;
+      }
+      .bg-red-50 {
+        background-color: #fdeee6 !important;
+      }
+      .hover\:bg-red-100:hover {
+        background-color: #fcd9c9 !important;
+      }
+      .bg-red-600,
+      .bg-red-700 {
+        background-color: var(--numis-orange) !important;
+      }
+      .hover\:bg-red-700:hover {
+        background-color: var(--numis-orange-dark) !important;
+      }
+      .text-red-600 {
+        color: var(--numis-orange-dark) !important;
+      }
+
+      .bg-slate-50 {
+        background-color: var(--numis-white) !important;
+      }
+      .bg-slate-100,
+      .bg-slate-200 {
+        background-color: var(--numis-cream) !important;
+      }
+      .hover\:bg-slate-200:hover {
+        background-color: #e5e0d4 !important;
+      }
+      .hover\:bg-slate-300:hover {
+        background-color: #d9d4c8 !important;
+      }
+      .hover\:bg-slate-50:hover {
+        background-color: var(--numis-cream) !important;
+      }
+      .border-slate-100,
+      .border-slate-200,
+      .border-slate-300 {
+        border-color: var(--numis-cream) !important;
+      }
+      .text-slate-800 {
+        color: var(--numis-text) !important;
+      }
+      .text-slate-700 {
+        color: var(--numis-text) !important;
+      }
+      .text-slate-600,
+      .text-slate-500 {
+        color: var(--numis-text-muted) !important;
+      }
+      .text-slate-400 {
+        color: #888 !important;
+      }
+      .text-slate-900 {
+        color: var(--numis-text) !important;
+      }
+      .bg-white {
+        background-color: #fff !important;
+      }
+
+      /* NUMIS button style */
+      .btn-numis {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-family: inherit;
+        font-weight: 700;
+        border: 2.5px solid var(--numis-green);
+        border-radius: 2px;
+        background: var(--numis-green);
+        color: #fff !important;
+        box-shadow: 4px 4px 0 var(--numis-orange);
+        transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+      }
+      .btn-numis:hover {
+        background: var(--numis-green);
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 var(--numis-orange);
+      }
+      .btn-numis:active {
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 var(--numis-orange);
+      }
+      .btn-numis-outline {
+        background: #fff;
+        color: var(--numis-green) !important;
+        border-color: var(--numis-green);
+        box-shadow: 4px 4px 0 var(--numis-green);
+      }
+      .btn-numis-outline:hover {
+        background: var(--numis-cream);
+        box-shadow: 6px 6px 0 var(--numis-green);
+      }
+
+      /* Stepper */
+      #stepper-header {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        right: 0;
+        z-index: 35;
+        background: var(--numis-white);
+        border-bottom: 1px solid var(--numis-cream);
+        padding: 12px max(16px, calc((100% - 1100px) / 2));
+      }
+      @media (min-width: 768px) {
+        #stepper-header {
+          left: 16rem;
+        }
+      }
+      #stepper-header .step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--numis-text-muted);
+        font-weight: 700;
+      }
+      #stepper-header .step-number {
+        width: 26px;
+        height: 26px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--numis-cream);
+        color: var(--numis-text-muted);
+        font-size: 12px;
+        font-weight: 900;
+        flex: none;
+      }
+      #stepper-header .step.active .step-number {
+        background: var(--numis-green);
+        color: #fff;
+      }
+      #stepper-header .step.active {
+        color: var(--numis-green);
+      }
+      #stepper-header .step.completed .step-number {
+        background: var(--numis-orange);
+        color: #fff;
+      }
+
+      /* Footer inside QR modal */
+      #qr-modal-footer {
+        margin-top: 1.5rem;
+        padding: 0.875rem 1rem;
+        background: var(--numis-green);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+      #qr-modal-footer p {
+        margin: 0;
+        color: var(--numis-white);
+        font-size: 13px;
+        line-height: 1.35;
+        flex: 1;
+        text-align: left;
+      }
+      #qr-modal-footer .btn-pay {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--numis-orange);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 900;
+        text-transform: uppercase;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+        transition: transform 0.1s ease, background 0.2s ease;
+      }
+      #qr-modal-footer .btn-pay:hover {
+        background: var(--numis-orange-dark);
+      }
+      #qr-modal-footer .btn-pay:active {
+        transform: translateY(1px);
+      }
+      @media (max-width: 400px) {
+        #qr-modal-footer {
+          flex-direction: column;
+          text-align: center;
+        }
+        #qr-modal-footer p {
+          text-align: center;
+        }
+        #qr-modal-footer .btn-pay {
+          width: 100%;
+        }
+      }
     </style>
   </head>
 
-  <body class="text-slate-800 antialiased bg-slate-50 min-h-screen">
+  <body class="antialiased bg-slate-50 min-h-screen" style="font-family: 'Archivo', Arial, sans-serif; color: var(--numis-text);">
     <a
       href="#main-content"
       data-i18n="skip_to_content"
@@ -250,13 +516,19 @@
             data-i18n-aria-label="aria_qr_code"
           />
         </div>
-        <a
-          id="qr-taler-link"
-          href="#"
-          class="hidden mt-4 inline-block text-indigo-600 hover:underline text-sm font-medium"
-          data-i18n="qr_open_wallet"
-          >Open in Taler wallet</a
-        >
+        <div id="qr-modal-footer" class="hidden">
+          <p data-i18n="qr_same_device">
+            Si la billetera está en el mismo dispositivo donde estás viendo este
+            QR usá el siguiente botón
+          </p>
+          <a
+            id="qr-taler-link"
+            class="btn-pay"
+            href="#"
+            data-i18n="qr_pay_btn"
+            >Pagar</a
+          >
+        </div>
 
         <div id="qr-confirm-actions" class="hidden mt-6 space-y-3">
           <button
@@ -732,11 +1004,11 @@
     <header
       id="top-bar"
       role="banner"
-      class="hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-40 flex items-center px-4 md:px-6 justify-between w-full"
+      class="hidden fixed top-0 left-0 right-0 h-16 bg-[#064d2d] border-b border-[#03321d] z-40 flex items-center px-4 md:px-6 justify-between w-full"
     >
       <div class="flex items-center gap-2">
         <svg
-          class="w-5 h-5 text-slate-600"
+          class="w-5 h-5 text-white"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -752,18 +1024,18 @@
           id="lang-selector"
           data-i18n-aria-label="aria_language"
           aria-label="Idioma"
-          class="bg-white rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 outline-none cursor-pointer"
+          class="bg-white/95 rounded-md border border-[#cfe3d8] px-2 py-1 text-sm font-medium text-[#064d2d] outline-none cursor-pointer"
         >
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <button
           id="btn-install"
           data-i18n-aria-label="aria_install"
           aria-label="Instalar"
-          class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
+          class="hidden flex items-center gap-1.5 bg-white text-[#064d2d] p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-bold transition hover:bg-[#cfe3d8]"
           title="Install"
         >
           <svg
@@ -782,34 +1054,10 @@
           <span class="hidden md:inline" data-i18n="btn_install">Install</span>
         </button>
         <button
-          id="btn-fullscreen"
-          data-i18n-aria-label="aria_fullscreen"
-          aria-label="Pantalla completa"
-          class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
-          title="Fullscreen"
-        >
-          <svg
-            class="w-6 h-6 md:w-5 md:h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"
-            ></path>
-          </svg>
-          <span class="hidden md:inline" data-i18n="btn_fullscreen"
-            >Fullscreen</span
-          >
-        </button>
-        <button
           id="btn-open-change-pass"
           data-i18n-aria-label="aria_change_password"
           aria-label="Cambiar contraseña"
-          class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
+          class="flex items-center gap-1.5 bg-white text-[#064d2d] p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-bold transition hover:bg-[#cfe3d8]"
           title="Change Password"
         >
           <svg
@@ -833,7 +1081,7 @@
           id="btn-top-logout"
           data-i18n-aria-label="aria_logout"
           aria-label="Cerrar sesión"
-          class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
+          class="flex items-center gap-1.5 bg-[#dc5a1e] text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-bold transition hover:bg-[#b8461a]"
           title="Logout"
         >
           <svg
@@ -854,6 +1102,39 @@
       </div>
     </header>
 
+    <!-- Stepper header -->
+    <div id="stepper-header">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          max-width: 1100px;
+          margin: 0 auto;
+        "
+      >
+        <div class="step active" data-step="1">
+          <span class="step-number">1</span>
+          <span class="step-label" data-i18n="step_1">Ventas</span>
+        </div>
+        <div
+          style="flex: 1; height: 2px; background: var(--numis-cream)"
+        ></div>
+        <div class="step" data-step="2">
+          <span class="step-number">2</span>
+          <span class="step-label" data-i18n="step_2">Cuenta</span>
+        </div>
+        <div
+          style="flex: 1; height: 2px; background: var(--numis-cream)"
+        ></div>
+        <div class="step" data-step="3">
+          <span class="step-number">3</span>
+          <span class="step-label" data-i18n="step_3">Cierre</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Offline banner -->
     <div
       id="offline-banner"
@@ -870,12 +1151,12 @@
       role="navigation"
       aria-label="Navegación principal"
       data-i18n-aria-label="nav_main"
-      class="fixed top-16 left-0 w-64 bottom-0 bg-white border-r border-slate-200 z-30 hidden md:flex flex-col"
+      class="fixed top-16 left-0 w-64 bottom-0 bg-[#064d2d] border-r border-[#03321d] z-30 hidden md:flex flex-col"
     >
       <nav class="p-4 space-y-2">
         <button
           id="nav-dashboard-btn"
-          class="sidebar-nav-btn active w-full flex items-center gap-3 px-4 py-3 text-indigo-600 bg-indigo-50 rounded-xl font-medium transition"
+          class="sidebar-nav-btn active w-full flex items-center gap-3 px-4 py-3 text-[#064d2d] bg-white rounded-xl font-bold transition"
           data-target="dashboard"
         >
           <svg
@@ -895,7 +1176,7 @@
         </button>
         <button
           id="nav-account-btn"
-          class="sidebar-nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition"
+          class="sidebar-nav-btn w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-xl font-bold transition"
           data-target="account"
         >
           <svg
@@ -919,7 +1200,7 @@
     <main
       id="main-content"
       tabindex="-1"
-      class="hidden pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300"
+      class="hidden pt-32 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300"
     >
       <!-- SECTION 1: Dashboard (Orders & Stats) -->
       <section id="dashboard" class="main-section space-y-8">
@@ -1106,12 +1387,14 @@
         </div>
 
         <!-- Bank Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="withdraw">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="withdraw">
           <div
-            role="group"
-            aria-label="Available"
-            data-i18n-aria-label="bank_avail"
-            class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden"
+            id="card-available-trigger"
+            role="button"
+            tabindex="0"
+            aria-label="Available. Tap to withdraw."
+            data-i18n-aria-label="bank_avail_action"
+            class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden cursor-pointer hover:bg-indigo-700 transition group"
           >
             <div
               class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2"
@@ -1126,62 +1409,14 @@
               0.00
             </div>
             <div
-              class="relative z-10 text-xs text-indigo-200 mt-2"
-              data-i18n="bank_avail_desc"
+              class="relative z-10 text-xs text-indigo-200 mt-2 flex justify-between items-center"
             >
-              Amount ready to withdraw
-            </div>
-          </div>
-
-          <div
-            role="group"
-            aria-label="Withdraw"
-            data-i18n-aria-label="bank_withdraw"
-            class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between"
-          >
-            <div>
-              <div
-                class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2"
-                data-i18n="bank_withdraw"
+              <span data-i18n="bank_avail_desc">Amount ready to withdraw</span>
+              <span
+                class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition"
+                data-i18n="bank_avail_cta"
+                >Withdraw &rarr;</span
               >
-                Withdraw
-              </div>
-              <div
-                class="text-xs text-slate-400 mb-4"
-                data-i18n="bank_withdraw_desc"
-              >
-                Withdraw your balance
-              </div>
-            </div>
-            <div>
-              <button
-                id="btn-withdraw"
-                class="action-btn w-full rounded-xl bg-rose-600 px-4 py-2 text-white font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
-              >
-                <span class="btn-text" data-i18n="bank_withdraw">Withdraw</span>
-                <span class="btn-spinner hidden">
-                  <svg
-                    class="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    ></circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                </span>
-              </button>
             </div>
           </div>
 
@@ -1414,6 +1649,8 @@
           bank_account_name_lbl: "Account Name",
           bank_avail: "Available",
           bank_avail_desc: "Amount ready to withdraw",
+          bank_avail_cta: "Withdraw &rarr;",
+          bank_avail_action: "Available. Tap to withdraw.",
           bank_withdraw: "Withdraw",
           bank_withdraw_desc: "Withdraw your balance",
           bank_transfer: "Transfer",
@@ -1461,6 +1698,10 @@
           toast_state_refunded: "refunded",
           nav_dashboard: "Dashboard",
           nav_account: "Account",
+          step_1: "Sales",
+          step_2: "Account",
+          step_3: "Close",
+          step_hint: "Step {step} of 3",
           nav_user: "User",
           user_title: "User Settings",
           user_desc: "Manage your account and session.",
@@ -1478,8 +1719,6 @@
           loading_session: "Validating session...",
           offline_banner: "You are offline. Data may be out of date.",
           btn_install: "Install",
-          btn_fullscreen: "Fullscreen",
-          btn_exit_fullscreen: "Exit Fullscreen",
           btn_close_account: "Close Account",
           close_account_title: "Close Account",
           close_account_desc:
@@ -1487,13 +1726,13 @@
           close_account_more_info: "More information about closing the account",
           login_failed: "Login failed",
           session_expired: "Session expired or unauthorized",
-          qr_open_wallet: "Open in Taler wallet",
+          qr_same_device:
+            "If the wallet is on the same device where you are viewing this QR, use the button below",
+          qr_pay_btn: "Pay",
           skip_to_content: "Skip to content",
           nav_main: "Main navigation",
           nav_sections: "Section navigation",
           aria_close: "Close",
-          aria_fullscreen: "Fullscreen",
-          aria_exit_fullscreen: "Exit fullscreen",
           aria_change_password: "Change password",
           aria_logout: "Logout",
           aria_install: "Install",
@@ -1537,6 +1776,8 @@
           bank_account_name_lbl: "Nombre de Cuenta",
           bank_avail: "Disponible",
           bank_avail_desc: "Cantidad lista para retirar",
+          bank_avail_cta: "Retirar &rarr;",
+          bank_avail_action: "Disponible. Tocá para retirar.",
           bank_withdraw: "Retirar",
           bank_withdraw_desc: "Retirar tu saldo",
           bank_transfer: "Transferir",
@@ -1585,6 +1826,10 @@
           toast_state_refunded: "reembolsado",
           nav_dashboard: "Panel de Control",
           nav_account: "Cuenta",
+          step_1: "Ventas",
+          step_2: "Cuenta",
+          step_3: "Cierre",
+          step_hint: "Paso {step} de 3",
           nav_user: "Usuario",
           user_title: "Ajustes de Usuario",
           user_desc: "Gestiona tu cuenta y sesión.",
@@ -1603,8 +1848,6 @@
           offline_banner:
             "Estás sin conexión. Los datos pueden estar desactualizados.",
           btn_install: "Instalar",
-          btn_fullscreen: "Pantalla Completa",
-          btn_exit_fullscreen: "Salir de Pantalla Completa",
           btn_close_account: "Cerrar Cuenta",
           close_account_title: "Cerrar Cuenta",
           close_account_desc:
@@ -1612,13 +1855,13 @@
           close_account_more_info: "Más información sobre el cierre de cuenta",
           login_failed: "Error de acceso",
           session_expired: "Sesión expirada o no autorizada",
-          qr_open_wallet: "Abrir en billetera Taler",
+          qr_same_device:
+            "Si la billetera está en el mismo dispositivo donde estás viendo este QR usá el siguiente botón",
+          qr_pay_btn: "Pagar",
           skip_to_content: "Saltar al contenido",
           nav_main: "Navegación principal",
           nav_sections: "Navegación de secciones",
           aria_close: "Cerrar",
-          aria_fullscreen: "Pantalla completa",
-          aria_exit_fullscreen: "Salir de pantalla completa",
           aria_change_password: "Cambiar contraseña",
           aria_logout: "Cerrar sesión",
           aria_install: "Instalar",
@@ -1809,35 +2052,6 @@
         document.getElementById("btn-install").classList.add("hidden");
         deferredInstallPrompt = null;
       });
-
-      // Fullscreen toggle
-      const btnFullscreen = document.getElementById("btn-fullscreen");
-      if (!document.documentElement.requestFullscreen) {
-        btnFullscreen.classList.add("hidden");
-      } else {
-        btnFullscreen.addEventListener("click", async () => {
-          try {
-            if (document.fullscreenElement) {
-              await document.exitFullscreen();
-            } else {
-              await document.documentElement.requestFullscreen();
-            }
-          } catch (e) {
-            /* ignored */
-          }
-        });
-        document.addEventListener("fullscreenchange", () => {
-          const exiting = Boolean(document.fullscreenElement);
-          btnFullscreen.querySelector("span").textContent = exiting
-            ? translations[currentLang]["btn_exit_fullscreen"] ||
-              "Exit Fullscreen"
-            : translations[currentLang]["btn_fullscreen"] || "Fullscreen";
-          btnFullscreen.setAttribute(
-            "aria-label",
-            t(exiting ? "aria_exit_fullscreen" : "aria_fullscreen"),
-          );
-        });
-      }
 
       // Screen wake lock: keep the display on while the app is visible (e.g. POS use)
       let wakeLock = null;
@@ -2650,7 +2864,7 @@
 
       document.getElementById("btn-close-qr").addEventListener("click", () => {
         document.getElementById("qr-modal").classList.add("hidden");
-        document.getElementById("qr-taler-link").classList.add("hidden");
+        document.getElementById("qr-modal-footer").classList.add("hidden");
         document.body.classList.remove("modal-active");
         closeDialog("qr-modal");
         withdrawalPolling = false;
@@ -2676,7 +2890,7 @@
           }
 
           document.getElementById("qr-modal").classList.add("hidden");
-          document.getElementById("qr-taler-link").classList.add("hidden");
+          document.getElementById("qr-modal-footer").classList.add("hidden");
           document.body.classList.remove("modal-active");
           closeDialog("qr-modal");
         });
@@ -2758,7 +2972,7 @@
         }
       }
 
-      document.getElementById("btn-withdraw").addEventListener("click", () => {
+      function openWithdrawDialog() {
         const input = document.getElementById("withdraw-dialog-amount");
         const errorEl = document.getElementById("withdraw-dialog-error");
         input.value = "";
@@ -2768,6 +2982,17 @@
         document.getElementById("withdraw-modal").classList.remove("hidden");
         document.body.classList.add("modal-active");
         openDialog("withdraw-modal", input);
+      }
+
+      const cardAvailableTrigger = document.getElementById(
+        "card-available-trigger",
+      );
+      cardAvailableTrigger.addEventListener("click", openWithdrawDialog);
+      cardAvailableTrigger.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openWithdrawDialog();
+        }
       });
 
       document
@@ -2852,7 +3077,7 @@
             // trigger regains focus once the QR dialog fully closes.
             document.getElementById("withdraw-modal").classList.add("hidden");
             closeDialog("withdraw-modal", { restoreFocus: false });
-            document.getElementById("btn-withdraw").focus();
+            document.getElementById("card-available-trigger").focus();
             document.body.classList.add("modal-active");
             qrModal.classList.remove("hidden");
             openDialog("qr-modal");
@@ -2860,7 +3085,7 @@
             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(talerWithdrawUri)}`;
             const talerLink = document.getElementById("qr-taler-link");
             talerLink.href = talerWithdrawUri;
-            talerLink.classList.remove("hidden");
+            document.getElementById("qr-modal-footer").classList.remove("hidden");
             qrImg.onload = () => {
               qrSpinnerModal.classList.add("hidden");
               qrImg.classList.remove("hidden");
@@ -2892,6 +3117,7 @@
             .classList.remove("hidden");
           document.body.classList.add("modal-active");
           openDialog("close-account-modal");
+          updateStepper(3);
         });
 
       document
@@ -2902,6 +3128,7 @@
             .classList.add("hidden");
           document.body.classList.remove("modal-active");
           closeDialog("close-account-modal");
+          updateStepper(2);
         });
 
       document
@@ -2943,6 +3170,19 @@
           }
         });
 
+      // Stepper indicator
+      function updateStepper(activeStep) {
+        document.querySelectorAll("#stepper-header .step").forEach((s) => {
+          const stepNum = parseInt(s.getAttribute("data-step"), 10);
+          s.classList.remove("active", "completed");
+          if (stepNum === activeStep) {
+            s.classList.add("active");
+          } else if (stepNum < activeStep) {
+            s.classList.add("completed");
+          }
+        });
+      }
+
       // Fragment navigation logic
       function navigateTo(targetId, { push = true } = {}) {
         let targetBtns = document.querySelectorAll(
@@ -2957,16 +3197,32 @@
         const resolvedId = targetBtns[0].getAttribute("data-target");
 
         document.querySelectorAll(".sidebar-nav-btn").forEach((b) => {
-          b.classList.remove("text-indigo-600", "bg-indigo-50", "dock-active");
-          b.classList.add("text-slate-600");
+          const isDock = !!b.closest("#bottom-dock");
+          b.classList.remove(
+            "text-indigo-600",
+            "bg-indigo-50",
+            "text-[#064d2d]",
+            "bg-white",
+            "text-white",
+            "hover:bg-white/10",
+            "dock-active",
+          );
+          if (isDock) {
+            b.classList.add("text-slate-600");
+          } else {
+            b.classList.add("text-white", "hover:bg-white/10");
+          }
           b.removeAttribute("aria-current");
         });
         targetBtns.forEach((b) => {
-          b.classList.remove("text-slate-600");
-          b.classList.add("text-indigo-600", "bg-indigo-50");
+          const isDock = !!b.closest("#bottom-dock");
+          b.classList.remove("text-slate-600", "text-white", "hover:bg-white/10");
+          if (isDock) {
+            b.classList.add("text-indigo-600", "bg-indigo-50", "dock-active");
+          } else {
+            b.classList.add("text-[#064d2d]", "bg-white");
+          }
           b.setAttribute("aria-current", "page");
-          // Highlight the bottom-dock copy (mobile) with the pill style
-          if (b.closest("#bottom-dock")) b.classList.add("dock-active");
         });
 
         document
@@ -2974,6 +3230,10 @@
           .forEach((s) => s.classList.add("hidden"));
         document.getElementById(resolvedId).classList.remove("hidden");
         document.getElementById("sidebar").classList.add("max-md:hidden");
+
+        // Update stepper: dashboard = 1, account = 2
+        const stepMap = { dashboard: 1, account: 2 };
+        updateStepper(stepMap[resolvedId] || 1);
 
         if (window.location.hash !== "#" + resolvedId) {
           if (push) {
