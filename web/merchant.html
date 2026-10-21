@@ -206,7 +206,10 @@
         background: var(--numis-green);
         color: #fff !important;
         box-shadow: 4px 4px 0 var(--numis-orange);
-        transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+        transition:
+          transform 0.12s,
+          box-shadow 0.12s,
+          background 0.12s;
       }
       .btn-numis:hover {
         background: var(--numis-green);
@@ -312,7 +315,9 @@
         text-decoration: none;
         cursor: pointer;
         box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
-        transition: transform 0.1s ease, background 0.2s ease;
+        transition:
+          transform 0.1s ease,
+          background 0.2s ease;
       }
       #qr-modal-footer .btn-pay:hover {
         background: var(--numis-orange-dark);
@@ -335,7 +340,13 @@
     </style>
   </head>
 
-  <body class="antialiased bg-slate-50 min-h-screen" style="font-family: 'Archivo', Arial, sans-serif; color: var(--numis-text);">
+  <body
+    class="antialiased bg-slate-50 min-h-screen"
+    style="
+      font-family: &quot;Archivo&quot;, Arial, sans-serif;
+      color: var(--numis-text);
+    "
+  >
     <a
       href="#main-content"
       data-i18n="skip_to_content"
@@ -538,11 +549,7 @@
             Si la billetera está en el mismo dispositivo donde estás viendo este
             QR usá el siguiente botón
           </p>
-          <a
-            id="qr-taler-link"
-            class="btn-pay"
-            href="#"
-            data-i18n="qr_pay_btn"
+          <a id="qr-taler-link" class="btn-pay" href="#" data-i18n="qr_pay_btn"
             >Pagar</a
           >
         </div>
@@ -730,7 +737,9 @@
         <!-- Step 2: Confirm & Amount -->
         <div id="transfer-step-2" class="space-y-4 hidden">
           <p class="text-sm text-slate-600">
-            <span data-i18n="transfer_to_name_prefix">You are transferring to</span>
+            <span data-i18n="transfer_to_name_prefix"
+              >You are transferring to</span
+            >
             <span id="verify-fullname" class="font-bold text-slate-800"></span>
           </p>
           <div>
@@ -1999,13 +2008,14 @@
       }
       window.updateLanguage = updateLanguage;
 
-      document.getElementById("lang-selector").value = storedLang;
-      document
-        .getElementById("lang-selector")
-        .addEventListener("change", (e) => {
+      const ls = document.getElementById("lang-selector");
+      if (ls) {
+        ls.value = storedLang;
+        ls.addEventListener("change", (e) => {
           localStorage.setItem("taler_lang", e.target.value);
           window.location.reload();
         });
+      }
 
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
@@ -2937,7 +2947,9 @@
               document
                 .getElementById("qr-confirm-actions")
                 .classList.remove("hidden");
-              document.getElementById("qr-modal-footer").classList.add("hidden");
+              document
+                .getElementById("qr-modal-footer")
+                .classList.add("hidden");
               updateWithdrawStepper("withdraw-stepper-2", 3);
               withdrawalPolling = false;
             } else if (data.status === "aborted") {
@@ -3089,7 +3101,9 @@
             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(talerWithdrawUri)}`;
             const talerLink = document.getElementById("qr-taler-link");
             talerLink.href = talerWithdrawUri;
-            document.getElementById("qr-modal-footer").classList.remove("hidden");
+            document
+              .getElementById("qr-modal-footer")
+              .classList.remove("hidden");
             qrImg.onload = () => {
               qrSpinnerModal.classList.add("hidden");
               qrImg.classList.remove("hidden");
@@ -3205,7 +3219,11 @@
         });
         targetBtns.forEach((b) => {
           const isDock = !!b.closest("#bottom-dock");
-          b.classList.remove("text-slate-600", "text-white", "hover:bg-white/10");
+          b.classList.remove(
+            "text-slate-600",
+            "text-white",
+            "hover:bg-white/10",
+          );
           if (isDock) {
             b.classList.add("text-indigo-600", "bg-indigo-50", "dock-active");
           } else {
