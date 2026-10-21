@@ -11,19 +11,27 @@
       html {
         scroll-behavior: smooth;
       }
-            .modal-active {
+      .modal-active {
         overflow: hidden;
       }
       @keyframes fade-green {
-        0% { background-color: #d1fae5; }
-        100% { background-color: transparent; }
+        0% {
+          background-color: #d1fae5;
+        }
+        100% {
+          background-color: transparent;
+        }
       }
       .animate-fade-green {
         animation: fade-green 3s ease-out;
       }
       @keyframes fade-red {
-        0% { background-color: #ffe4e6; }
-        100% { background-color: transparent; }
+        0% {
+          background-color: #ffe4e6;
+        }
+        100% {
+          background-color: transparent;
+        }
       }
       .animate-fade-red {
         animation: fade-red 3s ease-out;
@@ -35,12 +43,22 @@
         animation: fade-out 0.3s ease-in forwards;
       }
       @keyframes slide-in {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
       }
       @keyframes fade-out {
-        from { opacity: 1; }
-        to { opacity: 0; }
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
       }
       .dock-active {
         background-color: #eef2ff;
@@ -56,15 +74,37 @@
       href="#main-content"
       data-i18n="skip_to_content"
       class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:font-semibold"
-    >Saltar al contenido</a>
+      >Saltar al contenido</a
+    >
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
+    <div
+      id="loading-overlay"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-white"
+    >
       <div class="flex flex-col items-center gap-4">
-        <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <svg
+          class="animate-spin h-10 w-10 text-indigo-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
         </svg>
-        <p class="text-slate-600 font-medium" data-i18n="loading_session">Validating session...</p>
+        <p class="text-slate-600 font-medium" data-i18n="loading_session">
+          Validating session...
+        </p>
       </div>
     </div>
     <!-- Login Modal Overlay -->
@@ -76,10 +116,21 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
       <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4">
-        <h2 id="auth-modal-title" class="text-2xl font-bold text-slate-900 mb-6" data-i18n="login_title">Merchant Login</h2>
+        <h2
+          id="auth-modal-title"
+          class="text-2xl font-bold text-slate-900 mb-6"
+          data-i18n="login_title"
+        >
+          Merchant Login
+        </h2>
         <div class="space-y-4">
           <div>
-            <label for="auth-user" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="username_lbl">Username</label>
+            <label
+              for="auth-user"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="username_lbl"
+              >Username</label
+            >
             <input
               id="auth-user"
               type="text"
@@ -91,7 +142,12 @@
             />
           </div>
           <div>
-            <label for="auth-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="password_lbl">Password</label>
+            <label
+              for="auth-pass"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="password_lbl"
+              >Password</label
+            >
             <input
               id="auth-pass"
               type="password"
@@ -102,7 +158,11 @@
               class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
-          <p id="login-error" role="alert" class="hidden text-sm text-red-600 font-medium text-center"></p>
+          <p
+            id="login-error"
+            role="alert"
+            class="hidden text-sm text-red-600 font-medium text-center"
+          ></p>
           <button
             id="btn-login"
             data-i18n="login_btn"
@@ -122,33 +182,103 @@
       aria-labelledby="qr-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
-      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
-        <button id="btn-close-qr" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <div
+        class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative"
+      >
+        <button
+          id="btn-close-qr"
+          data-i18n-aria-label="aria_close"
+          aria-label="Cerrar"
+          class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
         </button>
         <h2 id="qr-modal-title" class="text-2xl font-bold text-slate-900 mb-2">
-          <span data-i18n="modal_qr_withdrawing">Withdrawing $ </span><span id="qr-modal-amount">xx</span>
+          <span data-i18n="modal_qr_withdrawing">Withdrawing $ </span
+          ><span id="qr-modal-amount">xx</span>
         </h2>
-        <p id="qr-modal-desc" class="text-slate-500 mb-6 text-sm" data-i18n="modal_qr_scan">
+        <p
+          id="qr-modal-desc"
+          class="text-slate-500 mb-6 text-sm"
+          data-i18n="modal_qr_scan"
+        >
           Scan the qr code with a taler wallet
         </p>
 
-        <div id="qr-content" class="flex justify-center items-center min-h-[224px]">
+        <div
+          id="qr-content"
+          class="flex justify-center items-center min-h-[224px]"
+        >
           <div id="qr-spinner-modal" class="hidden">
-            <svg class="animate-spin h-10 w-10 text-rose-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              class="animate-spin h-10 w-10 text-rose-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
           </div>
-          <img id="qr-modal-img" class="w-56 h-56 hidden" alt="Código QR de retiro" data-i18n-aria-label="aria_qr_code" />
+          <img
+            id="qr-modal-img"
+            class="w-56 h-56 hidden"
+            alt="Código QR de retiro"
+            data-i18n-aria-label="aria_qr_code"
+          />
         </div>
-        <a id="qr-taler-link" href="#" class="hidden mt-4 inline-block text-indigo-600 hover:underline text-sm font-medium" data-i18n="qr_open_wallet">Open in Taler wallet</a>
-        
+        <a
+          id="qr-taler-link"
+          href="#"
+          class="hidden mt-4 inline-block text-indigo-600 hover:underline text-sm font-medium"
+          data-i18n="qr_open_wallet"
+          >Open in Taler wallet</a
+        >
+
         <div id="qr-confirm-actions" class="hidden mt-6 space-y-3">
-          <button id="btn-qr-confirm" class="w-full bg-emerald-600 text-white rounded-xl py-3 font-semibold hover:bg-emerald-700 transition" data-i18n="btn_confirm">Confirm Transfer</button>
-          <button id="btn-qr-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
+          <button
+            id="btn-qr-confirm"
+            class="w-full bg-emerald-600 text-white rounded-xl py-3 font-semibold hover:bg-emerald-700 transition"
+            data-i18n="btn_confirm"
+          >
+            Confirm Transfer
+          </button>
+          <button
+            id="btn-qr-cancel"
+            class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition"
+            data-i18n="btn_cancel"
+          >
+            Cancel
+          </button>
         </div>
-        <p id="qr-modal-error" role="alert" class="hidden mt-4 text-red-600 font-medium"></p>
+        <p
+          id="qr-modal-error"
+          role="alert"
+          class="hidden mt-4 text-red-600 font-medium"
+        ></p>
       </div>
     </div>
 
@@ -160,23 +290,70 @@
       aria-labelledby="close-account-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
-      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
-        <h2 id="close-account-modal-title" class="text-2xl font-bold text-red-600 mb-2" data-i18n="close_account_title">Close Account</h2>
+      <div
+        class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative"
+      >
+        <h2
+          id="close-account-modal-title"
+          class="text-2xl font-bold text-red-600 mb-2"
+          data-i18n="close_account_title"
+        >
+          Close Account
+        </h2>
         <p class="text-slate-500 mb-4 text-sm" data-i18n="close_account_desc">
-          Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.
+          Your remaining balance will be transferred to
+          <strong>closing_account</strong> and this operation cannot be undone.
         </p>
-        <a href="https://unq.numis.ar/closing.html" target="_blank" class="text-indigo-500 hover:underline text-sm block mb-6" data-i18n="close_account_more_info">More information about closing the account</a>
-        
+        <a
+          href="https://unq.numis.ar/closing.html"
+          target="_blank"
+          class="text-indigo-500 hover:underline text-sm block mb-6"
+          data-i18n="close_account_more_info"
+          >More information about closing the account</a
+        >
+
         <div class="mt-6 space-y-3">
-          <button id="btn-close-account-confirm" class="w-full flex justify-center items-center gap-2 bg-red-600 text-white rounded-xl py-3 font-semibold hover:bg-red-700 transition disabled:opacity-70">
+          <button
+            id="btn-close-account-confirm"
+            class="w-full flex justify-center items-center gap-2 bg-red-600 text-white rounded-xl py-3 font-semibold hover:bg-red-700 transition disabled:opacity-70"
+          >
             <span class="btn-text" data-i18n="btn_confirm">Confirm</span>
             <span class="btn-spinner hidden">
-              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <svg
+                class="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
             </span>
           </button>
-          <button id="btn-close-account-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
+          <button
+            id="btn-close-account-cancel"
+            class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition"
+            data-i18n="btn_cancel"
+          >
+            Cancel
+          </button>
         </div>
-        <p id="close-account-error" role="alert" class="hidden mt-4 text-red-600 font-medium"></p>
+        <p
+          id="close-account-error"
+          role="alert"
+          class="hidden mt-4 text-red-600 font-medium"
+        ></p>
       </div>
     </div>
 
@@ -188,39 +365,138 @@
       aria-labelledby="transfer-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
-      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative">
-        <button id="btn-close-transfer-modal" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <div
+        class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative"
+      >
+        <button
+          id="btn-close-transfer-modal"
+          data-i18n-aria-label="aria_close"
+          aria-label="Cerrar"
+          class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
         </button>
-        <h3 id="transfer-modal-title" class="text-xl font-bold text-slate-800 mb-4" data-i18n="bank_transfer">Transfer</h3>
+        <h3
+          id="transfer-modal-title"
+          class="text-xl font-bold text-slate-800 mb-4"
+          data-i18n="bank_transfer"
+        >
+          Transfer
+        </h3>
 
         <!-- Step 1: Enter Account -->
         <div id="transfer-step-1" class="space-y-4">
           <div>
-            <label for="transfer-target" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="target_account">Merchant Account</label>
-            <input id="transfer-target" type="text" placeholder="Account name" aria-required="true" aria-invalid="false" aria-describedby="transfer-step1-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label
+              for="transfer-target"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="target_account"
+              >Merchant Account</label
+            >
+            <input
+              id="transfer-target"
+              type="text"
+              placeholder="Account name"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="transfer-step1-error"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
           </div>
-          <p id="transfer-step1-error" role="alert" class="hidden text-xs text-red-600 font-medium"></p>
+          <p
+            id="transfer-step1-error"
+            role="alert"
+            class="hidden text-xs text-red-600 font-medium"
+          ></p>
           <div class="flex gap-3 mt-6">
-            <button id="btn-transfer-cancel-1" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
-            <button id="btn-transfer-verify" class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition" data-i18n="btn_verify">Verify</button>
+            <button
+              id="btn-transfer-cancel-1"
+              class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition"
+              data-i18n="btn_cancel"
+            >
+              Cancel
+            </button>
+            <button
+              id="btn-transfer-verify"
+              class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
+              data-i18n="btn_verify"
+            >
+              Verify
+            </button>
           </div>
         </div>
 
         <!-- Step 2: Confirm & Amount -->
         <div id="transfer-step-2" class="space-y-4 hidden">
-          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
-            <p class="text-sm text-slate-600"><strong data-i18n="col_subject">Username</strong>: <span id="verify-username" class="font-bold text-slate-800"></span></p>
-            <p class="text-sm text-slate-600"><strong data-i18n="account_full_name">Full Name</strong>: <span id="verify-fullname" class="font-bold text-slate-800"></span></p>
+          <div
+            class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2"
+          >
+            <p class="text-sm text-slate-600">
+              <strong data-i18n="col_subject">Username</strong>:
+              <span
+                id="verify-username"
+                class="font-bold text-slate-800"
+              ></span>
+            </p>
+            <p class="text-sm text-slate-600">
+              <strong data-i18n="account_full_name">Full Name</strong>:
+              <span
+                id="verify-fullname"
+                class="font-bold text-slate-800"
+              ></span>
+            </p>
           </div>
           <div>
-            <label for="transfer-amount" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="col_amount">Amount</label>
-            <input id="transfer-amount" type="number" min="1" max="99998" placeholder="Amount" aria-required="true" aria-invalid="false" aria-describedby="transfer-step2-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label
+              for="transfer-amount"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="col_amount"
+              >Amount</label
+            >
+            <input
+              id="transfer-amount"
+              type="number"
+              min="1"
+              max="99998"
+              placeholder="Amount"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="transfer-step2-error"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
           </div>
-          <p id="transfer-step2-error" role="alert" class="hidden text-xs text-red-600 font-medium"></p>
+          <p
+            id="transfer-step2-error"
+            role="alert"
+            class="hidden text-xs text-red-600 font-medium"
+          ></p>
           <div class="flex gap-3 mt-6">
-            <button id="btn-transfer-back" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_back">Back</button>
-            <button id="btn-transfer-confirm" class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition" data-i18n="btn_confirm">Confirm</button>
+            <button
+              id="btn-transfer-back"
+              class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition"
+              data-i18n="btn_back"
+            >
+              Back
+            </button>
+            <button
+              id="btn-transfer-confirm"
+              class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
+              data-i18n="btn_confirm"
+            >
+              Confirm
+            </button>
           </div>
         </div>
       </div>
@@ -234,17 +510,49 @@
       aria-labelledby="withdraw-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
-      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative">
-        <button id="btn-close-withdraw-modal" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <div
+        class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 text-center relative"
+      >
+        <button
+          id="btn-close-withdraw-modal"
+          data-i18n-aria-label="aria_close"
+          aria-label="Cerrar"
+          class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
         </button>
-        <h2 id="withdraw-modal-title" class="text-2xl font-bold text-slate-900 mb-6" data-i18n="withdraw_dialog_title">Withdraw funds</h2>
+        <h2
+          id="withdraw-modal-title"
+          class="text-2xl font-bold text-slate-900 mb-6"
+          data-i18n="withdraw_dialog_title"
+        >
+          Withdraw funds
+        </h2>
         <div class="space-y-4 text-left">
           <div>
-            <label for="withdraw-dialog-amount" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="col_amount">Amount</label>
+            <label
+              for="withdraw-dialog-amount"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="col_amount"
+              >Amount</label
+            >
             <input
               id="withdraw-dialog-amount"
-              type="number" min="1" max="99998"
+              type="number"
+              min="1"
+              max="99998"
               aria-required="true"
               aria-invalid="false"
               aria-describedby="withdraw-dialog-error"
@@ -252,13 +560,45 @@
               data-i18n-placeholder="col_amount"
             />
           </div>
-          <p id="withdraw-dialog-error" role="alert" class="hidden text-xs text-red-600 font-medium"></p>
+          <p
+            id="withdraw-dialog-error"
+            role="alert"
+            class="hidden text-xs text-red-600 font-medium"
+          ></p>
           <div class="flex gap-3 mt-6">
-            <button id="btn-withdraw-cancel" class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition" data-i18n="btn_cancel">Cancel</button>
-            <button id="btn-withdraw-confirm" class="w-full flex justify-center items-center gap-2 bg-rose-600 text-white rounded-xl py-3 font-semibold hover:bg-rose-700 transition disabled:opacity-70">
+            <button
+              id="btn-withdraw-cancel"
+              class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition"
+              data-i18n="btn_cancel"
+            >
+              Cancel
+            </button>
+            <button
+              id="btn-withdraw-confirm"
+              class="w-full flex justify-center items-center gap-2 bg-rose-600 text-white rounded-xl py-3 font-semibold hover:bg-rose-700 transition disabled:opacity-70"
+            >
               <span class="btn-text" data-i18n="bank_withdraw">Withdraw</span>
               <span class="btn-spinner hidden">
-                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <svg
+                  class="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
               </span>
             </button>
           </div>
@@ -274,31 +614,116 @@
       aria-labelledby="change-pass-modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
     >
-      <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative">
-        <button id="btn-close-change-pass-modal" data-i18n-aria-label="aria_close" aria-label="Cerrar" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <div
+        class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative"
+      >
+        <button
+          id="btn-close-change-pass-modal"
+          data-i18n-aria-label="aria_close"
+          aria-label="Cerrar"
+          class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
         </button>
-        <h3 id="change-pass-modal-title" class="text-xl font-bold text-slate-800 mb-4" data-i18n="change_password">Change Password</h3>
-        <div id="temp-password-warning" class="hidden mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded-xl shadow-sm text-xs">
-          <span class="font-medium" data-i18n="temp_pass_warning">You are using a temporary password. It MUST be changed before doing anything else.</span>
+        <h3
+          id="change-pass-modal-title"
+          class="text-xl font-bold text-slate-800 mb-4"
+          data-i18n="change_password"
+        >
+          Change Password
+        </h3>
+        <div
+          id="temp-password-warning"
+          class="hidden mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded-xl shadow-sm text-xs"
+        >
+          <span class="font-medium" data-i18n="temp_pass_warning"
+            >You are using a temporary password. It MUST be changed before doing
+            anything else.</span
+          >
         </div>
         <div class="space-y-4">
           <div>
-            <label for="old-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="old_password">Old Password</label>
-            <input id="old-pass" type="password" aria-required="true" aria-invalid="false" aria-describedby="form-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label
+              for="old-pass"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="old_password"
+              >Old Password</label
+            >
+            <input
+              id="old-pass"
+              type="password"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="form-error"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
           </div>
           <div>
-            <label for="new-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="new_password">New Password</label>
-            <input id="new-pass" type="password" aria-required="true" aria-invalid="false" aria-describedby="new-pass-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <p id="new-pass-error" role="alert" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
+            <label
+              for="new-pass"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="new_password"
+              >New Password</label
+            >
+            <input
+              id="new-pass"
+              type="password"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="new-pass-error"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+            <p
+              id="new-pass-error"
+              role="alert"
+              class="hidden mt-1 text-xs text-red-600 font-medium"
+            ></p>
           </div>
           <div>
-            <label for="repeat-pass" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="repeat_password">Repeat Password</label>
-            <input id="repeat-pass" type="password" aria-required="true" aria-invalid="false" aria-describedby="repeat-pass-error" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <p id="repeat-pass-error" role="alert" class="hidden mt-1 text-xs text-red-600 font-medium"></p>
+            <label
+              for="repeat-pass"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              data-i18n="repeat_password"
+              >Repeat Password</label
+            >
+            <input
+              id="repeat-pass"
+              type="password"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="repeat-pass-error"
+              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+            <p
+              id="repeat-pass-error"
+              role="alert"
+              class="hidden mt-1 text-xs text-red-600 font-medium"
+            ></p>
           </div>
-          <button id="btn-change-pass" class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition" data-i18n="btn_update_pass">Update Password</button>
-          <p id="form-error" role="alert" class="hidden text-sm text-red-600 font-medium text-center"></p>
+          <button
+            id="btn-change-pass"
+            class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
+            data-i18n="btn_update_pass"
+          >
+            Update Password
+          </button>
+          <p
+            id="form-error"
+            role="alert"
+            class="hidden text-sm text-red-600 font-medium text-center"
+          ></p>
         </div>
       </div>
     </div>
@@ -310,27 +735,120 @@
       class="hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-40 flex items-center px-4 md:px-6 justify-between w-full"
     >
       <div class="flex items-center gap-2">
-        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
-        <select id="lang-selector" data-i18n-aria-label="aria_language" aria-label="Idioma" class="bg-white rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 outline-none cursor-pointer">
+        <svg
+          class="w-5 h-5 text-slate-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+          ></path>
+        </svg>
+        <select
+          id="lang-selector"
+          data-i18n-aria-label="aria_language"
+          aria-label="Idioma"
+          class="bg-white rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 outline-none cursor-pointer"
+        >
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
       </div>
       <div class="flex items-center gap-4">
-        <button id="btn-install" data-i18n-aria-label="aria_install" aria-label="Instalar" class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Install">
-          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
+        <button
+          id="btn-install"
+          data-i18n-aria-label="aria_install"
+          aria-label="Instalar"
+          class="hidden flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
+          title="Install"
+        >
+          <svg
+            class="w-6 h-6 md:w-5 md:h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+            ></path>
+          </svg>
           <span class="hidden md:inline" data-i18n="btn_install">Install</span>
         </button>
-        <button id="btn-fullscreen" data-i18n-aria-label="aria_fullscreen" aria-label="Pantalla completa" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Fullscreen">
-          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"></path></svg>
-          <span class="hidden md:inline" data-i18n="btn_fullscreen">Fullscreen</span>
+        <button
+          id="btn-fullscreen"
+          data-i18n-aria-label="aria_fullscreen"
+          aria-label="Pantalla completa"
+          class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
+          title="Fullscreen"
+        >
+          <svg
+            class="w-6 h-6 md:w-5 md:h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"
+            ></path>
+          </svg>
+          <span class="hidden md:inline" data-i18n="btn_fullscreen"
+            >Fullscreen</span
+          >
         </button>
-        <button id="btn-open-change-pass" data-i18n-aria-label="aria_change_password" aria-label="Cambiar contraseña" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Change Password">
-          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-          <span class="hidden md:inline" data-i18n="change_password">Change Password</span>
+        <button
+          id="btn-open-change-pass"
+          data-i18n-aria-label="aria_change_password"
+          aria-label="Cambiar contraseña"
+          class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
+          title="Change Password"
+        >
+          <svg
+            class="w-6 h-6 md:w-5 md:h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+            ></path>
+          </svg>
+          <span class="hidden md:inline" data-i18n="change_password"
+            >Change Password</span
+          >
         </button>
-        <button id="btn-top-logout" data-i18n-aria-label="aria_logout" aria-label="Cerrar sesión" class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition" title="Logout">
-          <svg class="w-6 h-6 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        <button
+          id="btn-top-logout"
+          data-i18n-aria-label="aria_logout"
+          aria-label="Cerrar sesión"
+          class="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-medium transition"
+          title="Logout"
+        >
+          <svg
+            class="w-6 h-6 md:w-5 md:h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            ></path>
+          </svg>
           <span class="hidden md:inline" data-i18n="btn_logout">Logout</span>
         </button>
       </div>
@@ -342,71 +860,218 @@
       role="status"
       class="hidden fixed top-16 left-0 right-0 z-40 bg-yellow-100 border-b border-yellow-300 text-yellow-800 text-center text-sm font-semibold py-1.5 px-4"
     >
-      <span data-i18n="offline_banner">You are offline. Data may be out of date.</span>
+      <span data-i18n="offline_banner"
+        >You are offline. Data may be out of date.</span
+      >
     </div>
     <!-- Sidebar -->
-    <aside id="sidebar" role="navigation" aria-label="Navegación principal" data-i18n-aria-label="nav_main" class="fixed top-16 left-0 w-64 bottom-0 bg-white border-r border-slate-200 z-30 hidden md:flex flex-col">
+    <aside
+      id="sidebar"
+      role="navigation"
+      aria-label="Navegación principal"
+      data-i18n-aria-label="nav_main"
+      class="fixed top-16 left-0 w-64 bottom-0 bg-white border-r border-slate-200 z-30 hidden md:flex flex-col"
+    >
       <nav class="p-4 space-y-2">
-        <button id="nav-dashboard-btn" class="sidebar-nav-btn active w-full flex items-center gap-3 px-4 py-3 text-indigo-600 bg-indigo-50 rounded-xl font-medium transition" data-target="dashboard">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        <button
+          id="nav-dashboard-btn"
+          class="sidebar-nav-btn active w-full flex items-center gap-3 px-4 py-3 text-indigo-600 bg-indigo-50 rounded-xl font-medium transition"
+          data-target="dashboard"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            ></path>
+          </svg>
           <span data-i18n="nav_dashboard">Dashboard</span>
         </button>
-        <button id="nav-account-btn" class="sidebar-nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition" data-target="account">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+        <button
+          id="nav-account-btn"
+          class="sidebar-nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition"
+          data-target="account"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+            ></path>
+          </svg>
           <span data-i18n="nav_account">Account</span>
         </button>
       </nav>
     </aside>
 
-
-    <main id="main-content" tabindex="-1" class="hidden pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300">
+    <main
+      id="main-content"
+      tabindex="-1"
+      class="hidden pt-24 pb-16 px-6 max-w-7xl mx-auto transition-all duration-300"
+    >
       <!-- SECTION 1: Dashboard (Orders & Stats) -->
       <section id="dashboard" class="main-section space-y-8">
         <div class="flex justify-between items-end">
           <div>
-            <h1 class="text-3xl font-extrabold text-slate-900" data-i18n="dash_title">Dashboard</h1>
-            <p class="text-slate-500 mt-1" data-i18n="dash_desc">Overview of your sales and balances.</p>
+            <h1
+              class="text-3xl font-extrabold text-slate-900"
+              data-i18n="dash_title"
+            >
+              Dashboard
+            </h1>
+            <p class="text-slate-500 mt-1" data-i18n="dash_desc">
+              Overview of your sales and balances.
+            </p>
           </div>
         </div>
 
         <!-- 3 Totals Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div role="group" aria-label="Sold" data-i18n-aria-label="stat_sold" class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
-            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_sold">Sold</div>
-            <div class="text-2xl font-bold text-slate-800" id="stat-sold">0.00</div>
-            <div class="text-xs text-slate-400 mt-2" data-i18n="stat_sold_desc">Paid minus Refunded</div>
+          <div
+            role="group"
+            aria-label="Sold"
+            data-i18n-aria-label="stat_sold"
+            class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between"
+          >
+            <div
+              class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2"
+              data-i18n="stat_sold"
+            >
+              Sold
+            </div>
+            <div class="text-2xl font-bold text-slate-800" id="stat-sold">
+              0.00
+            </div>
+            <div class="text-xs text-slate-400 mt-2" data-i18n="stat_sold_desc">
+              Paid minus Refunded
+            </div>
           </div>
-          <div role="group" aria-label="In Transit" data-i18n-aria-label="stat_intransit" class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
-            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="stat_intransit">In Transit</div>
-            <div class="text-2xl font-bold text-yellow-600" id="stat-intransit">0.00</div>
-            <div class="text-xs text-slate-400 mt-2" data-i18n="stat_intransit_desc">Pending wire deadline</div>
+          <div
+            role="group"
+            aria-label="In Transit"
+            data-i18n-aria-label="stat_intransit"
+            class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between"
+          >
+            <div
+              class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2"
+              data-i18n="stat_intransit"
+            >
+              In Transit
+            </div>
+            <div class="text-2xl font-bold text-yellow-600" id="stat-intransit">
+              0.00
+            </div>
+            <div
+              class="text-xs text-slate-400 mt-2"
+              data-i18n="stat_intransit_desc"
+            >
+              Pending wire deadline
+            </div>
           </div>
-          <a href="#account" role="group" aria-label="Settled" data-i18n-aria-label="stat_settled" onclick="document.getElementById('nav-account-btn').click();" class="group bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition relative overflow-hidden">
-            <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="stat_settled">Settled</div>
-            <div class="relative z-10 text-2xl font-bold text-white" id="stat-available">0.00</div>
-            <div class="relative z-10 text-xs text-indigo-200 mt-2 flex justify-between items-center">
+          <a
+            href="#account"
+            role="group"
+            aria-label="Settled"
+            data-i18n-aria-label="stat_settled"
+            onclick="document.getElementById('nav-account-btn').click()"
+            class="group bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition relative overflow-hidden"
+          >
+            <div
+              class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2"
+              data-i18n="stat_settled"
+            >
+              Settled
+            </div>
+            <div
+              class="relative z-10 text-2xl font-bold text-white"
+              id="stat-available"
+            >
+              0.00
+            </div>
+            <div
+              class="relative z-10 text-xs text-indigo-200 mt-2 flex justify-between items-center"
+            >
               <span data-i18n="stat_settled_desc">Present in bank account</span>
-              <span class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition" data-i18n="stat_withdraw">Withdraw &rarr;</span>
+              <span
+                class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition"
+                data-i18n="stat_withdraw"
+                >Withdraw &rarr;</span
+              >
             </div>
           </a>
         </div>
 
         <!-- Latest Orders Table -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <h2 class="text-lg font-bold text-slate-800" data-i18n="orders_title">Latest Orders</h2>
+        <div
+          class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden"
+        >
+          <div
+            class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50"
+          >
+            <h2
+              class="text-lg font-bold text-slate-800"
+              data-i18n="orders_title"
+            >
+              Latest Orders
+            </h2>
           </div>
           <div class="overflow-x-auto">
-            <table aria-label="Latest orders" data-i18n-aria-label="orders_table_label" class="w-full text-left text-sm text-slate-600">
-              <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
+            <table
+              aria-label="Latest orders"
+              data-i18n-aria-label="orders_table_label"
+              class="w-full text-left text-sm text-slate-600"
+            >
+              <thead
+                class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100"
+              >
                 <tr>
-                  <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_summary">Summary</th>
-                  <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_state">State</th>
-                  <th class="px-6 py-4 font-semibold text-right whitespace-nowrap" data-i18n="col_amount">Amount</th>
+                  <th
+                    class="px-6 py-4 font-semibold whitespace-nowrap"
+                    data-i18n="col_summary"
+                  >
+                    Summary
+                  </th>
+                  <th
+                    class="px-6 py-4 font-semibold whitespace-nowrap"
+                    data-i18n="col_state"
+                  >
+                    State
+                  </th>
+                  <th
+                    class="px-6 py-4 font-semibold text-right whitespace-nowrap"
+                    data-i18n="col_amount"
+                  >
+                    Amount
+                  </th>
                 </tr>
               </thead>
-              <tbody id="orders-tbody" aria-live="polite" aria-busy="true" class="divide-y divide-slate-100">
-                <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_orders">Loading orders...</td></tr>
+              <tbody
+                id="orders-tbody"
+                aria-live="polite"
+                aria-busy="true"
+                class="divide-y divide-slate-100"
+              >
+                <tr>
+                  <td
+                    colspan="3"
+                    class="px-6 py-12 text-center text-slate-400"
+                    data-i18n="loading_orders"
+                  >
+                    Loading orders...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -417,27 +1082,76 @@
       <section id="account" class="main-section space-y-8 pb-12 hidden">
         <div class="flex justify-between items-end">
           <div>
-            <h2 class="text-3xl font-extrabold text-slate-900" data-i18n="bank_title">Bank Account</h2>
-            <p class="text-slate-500 mt-1" data-i18n="bank_desc">Incoming and outgoing transactions.</p>
+            <h2
+              class="text-3xl font-extrabold text-slate-900"
+              data-i18n="bank_title"
+            >
+              Bank Account
+            </h2>
+            <p class="text-slate-500 mt-1" data-i18n="bank_desc">
+              Incoming and outgoing transactions.
+            </p>
           </div>
           <div class="text-right">
-            <p class="text-sm text-slate-500 font-medium" data-i18n="bank_account_name_lbl">Account Name</p>
-            <p class="text-lg font-bold text-indigo-700" id="bank-account-name">-</p>
+            <p
+              class="text-sm text-slate-500 font-medium"
+              data-i18n="bank_account_name_lbl"
+            >
+              Account Name
+            </p>
+            <p class="text-lg font-bold text-indigo-700" id="bank-account-name">
+              -
+            </p>
           </div>
         </div>
 
         <!-- Bank Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="withdraw">
-          <div role="group" aria-label="Available" data-i18n-aria-label="bank_avail" class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden">
-            <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="bank_avail">Available</div>
-            <div class="relative z-10 text-2xl font-bold text-white" id="stat-bank-available">0.00</div>
-            <div class="relative z-10 text-xs text-indigo-200 mt-2" data-i18n="bank_avail_desc">Amount ready to withdraw</div>
+          <div
+            role="group"
+            aria-label="Available"
+            data-i18n-aria-label="bank_avail"
+            class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden"
+          >
+            <div
+              class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2"
+              data-i18n="bank_avail"
+            >
+              Available
+            </div>
+            <div
+              class="relative z-10 text-2xl font-bold text-white"
+              id="stat-bank-available"
+            >
+              0.00
+            </div>
+            <div
+              class="relative z-10 text-xs text-indigo-200 mt-2"
+              data-i18n="bank_avail_desc"
+            >
+              Amount ready to withdraw
+            </div>
           </div>
 
-          <div role="group" aria-label="Withdraw" data-i18n-aria-label="bank_withdraw" class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div
+            role="group"
+            aria-label="Withdraw"
+            data-i18n-aria-label="bank_withdraw"
+            class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between"
+          >
             <div>
-              <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2" data-i18n="bank_withdraw">Withdraw</div>
-              <div class="text-xs text-slate-400 mb-4" data-i18n="bank_withdraw_desc">Withdraw your balance</div>
+              <div
+                class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2"
+                data-i18n="bank_withdraw"
+              >
+                Withdraw
+              </div>
+              <div
+                class="text-xs text-slate-400 mb-4"
+                data-i18n="bank_withdraw_desc"
+              >
+                Withdraw your balance
+              </div>
             </div>
             <div>
               <button
@@ -446,72 +1160,157 @@
               >
                 <span class="btn-text" data-i18n="bank_withdraw">Withdraw</span>
                 <span class="btn-spinner hidden">
-                  <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  <svg
+                    class="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
                 </span>
               </button>
             </div>
           </div>
 
-          <div id="card-transfer-trigger" role="group" aria-label="Transfer" data-i18n-aria-label="bank_transfer" class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden cursor-pointer hover:bg-indigo-700 transition group">
-            <div class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2" data-i18n="bank_transfer">Transfer</div>
-            <div class="relative z-10 text-xl font-bold text-white" data-i18n="bank_transfer_desc">Transfer to another merchant</div>
+          <div
+            id="card-transfer-trigger"
+            role="group"
+            aria-label="Transfer"
+            data-i18n-aria-label="bank_transfer"
+            class="bg-indigo-600 rounded-3xl p-4 shadow-lg border border-indigo-700 flex flex-col justify-between relative overflow-hidden cursor-pointer hover:bg-indigo-700 transition group"
+          >
+            <div
+              class="relative z-10 text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-2"
+              data-i18n="bank_transfer"
+            >
+              Transfer
+            </div>
+            <div
+              class="relative z-10 text-xl font-bold text-white"
+              data-i18n="bank_transfer_desc"
+            >
+              Transfer to another merchant
+            </div>
             <div class="relative z-10 mt-4 flex items-center justify-between">
-              <span class="text-xs text-indigo-200" data-i18n="transfer_send_funds">Send funds</span>
-              <span class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition" data-i18n="transfer_link">Transfer &rarr;</span>
+              <span
+                class="text-xs text-indigo-200"
+                data-i18n="transfer_send_funds"
+                >Send funds</span
+              >
+              <span
+                class="font-bold text-white bg-indigo-800/50 px-2 py-1 rounded-md group-hover:bg-indigo-800 transition"
+                data-i18n="transfer_link"
+                >Transfer &rarr;</span
+              >
             </div>
           </div>
         </div>
 
         <!-- Transactions Table -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <h2 class="text-lg font-bold text-slate-800" data-i18n="tx_title">Latest Transactions</h2>
+        <div
+          class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden"
+        >
+          <div
+            class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50"
+          >
+            <h2 class="text-lg font-bold text-slate-800" data-i18n="tx_title">
+              Latest Transactions
+            </h2>
           </div>
           <div class="overflow-x-auto">
-            <table aria-label="Latest transactions" data-i18n-aria-label="tx_table_label" class="w-full text-left text-sm text-slate-600">
-              <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
+            <table
+              aria-label="Latest transactions"
+              data-i18n-aria-label="tx_table_label"
+              class="w-full text-left text-sm text-slate-600"
+            >
+              <thead
+                class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100"
+              >
                 <tr>
-                  <th class="px-6 py-4 font-semibold whitespace-nowrap" data-i18n="col_subject">Subject</th>
-                  <th class="px-6 py-4 font-semibold text-right whitespace-nowrap" data-i18n="col_amount">Amount</th>
+                  <th
+                    class="px-6 py-4 font-semibold whitespace-nowrap"
+                    data-i18n="col_subject"
+                  >
+                    Subject
+                  </th>
+                  <th
+                    class="px-6 py-4 font-semibold text-right whitespace-nowrap"
+                    data-i18n="col_amount"
+                  >
+                    Amount
+                  </th>
                 </tr>
               </thead>
-              <tbody id="bank-tbody" aria-live="polite" aria-busy="true" class="divide-y divide-slate-100">
-                <tr><td colspan="2" class="px-6 py-12 text-center text-slate-400" data-i18n="loading_tx">Loading bank details...</td></tr>
+              <tbody
+                id="bank-tbody"
+                aria-live="polite"
+                aria-busy="true"
+                class="divide-y divide-slate-100"
+              >
+                <tr>
+                  <td
+                    colspan="2"
+                    class="px-6 py-12 text-center text-slate-400"
+                    data-i18n="loading_tx"
+                  >
+                    Loading bank details...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
-        
+
         <div class="flex justify-end mt-6">
-          <button id="btn-open-close-account" class="w-full md:w-auto px-6 bg-red-600 text-white rounded-xl py-2 font-semibold hover:bg-red-700 transition" data-i18n="btn_close_account">Close Account</button>
+          <button
+            id="btn-open-close-account"
+            class="w-full md:w-auto px-6 bg-red-600 text-white rounded-xl py-2 font-semibold hover:bg-red-700 transition"
+            data-i18n="btn_close_account"
+          >
+            Close Account
+          </button>
         </div>
       </section>
-
     </main>
 
     <script type="module">
-      import { 
-        playNotificationSound, 
-        parseAmountStr, 
-        getCurrency, 
-        formatMoney, 
+      import {
+        playNotificationSound,
+        parseAmountStr,
+        getCurrency,
+        formatMoney,
         validatePassword,
         loginToTaler,
         getAccountName,
-        changePassword
-      } from './merchant.js';
+        changePassword,
+      } from "./merchant.js";
 
       function showToast(title, desc, type = "success") {
         playNotificationSound();
         const container = document.getElementById("toast-container");
         const el = document.createElement("div");
-        const icon = type === "success" 
-          ? `<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
-          : type === "error"
-          ? `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
-          : `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        const icon =
+          type === "success"
+            ? `<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            : type === "error"
+              ? `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+              : `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-        el.className = "toast-enter bg-white border border-slate-100 shadow-xl rounded-2xl p-4 flex items-start gap-4 w-full max-w-sm mx-auto md:mx-0 md:w-80";
+        el.className =
+          "toast-enter bg-white border border-slate-100 shadow-xl rounded-2xl p-4 flex items-start gap-4 w-full max-w-sm mx-auto md:mx-0 md:w-80";
         el.innerHTML = `
           <div class="flex-shrink-0 mt-0.5">${icon}</div>
           <div class="flex-1">
@@ -534,15 +1333,26 @@
       const BANK_URL = window.BANK_URL || "/api/bank";
       let bankHost = "bank.taler.ar";
       let swRegistration = null;
-      fetch("/api/config").then(r => r.ok ? r.json() : null).then(cfg => {
-        if (cfg && cfg.bankHost) bankHost = cfg.bankHost;
-      }).catch(() => {});
+      fetch("/api/config")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((cfg) => {
+          if (cfg && cfg.bankHost) bankHost = cfg.bankHost;
+        })
+        .catch(() => {});
 
       function showSystemNotification(title, body, tag) {
-        if (!("Notification" in window) || Notification.permission !== "granted") return;
+        if (
+          !("Notification" in window) ||
+          Notification.permission !== "granted"
+        )
+          return;
         if (!document.hidden) return;
         if (swRegistration) {
-          swRegistration.showNotification(title, { body, icon: "./icons/icon-192.png", tag });
+          swRegistration.showNotification(title, {
+            body,
+            icon: "./icons/icon-192.png",
+            tag,
+          });
         } else {
           new Notification(title, { body, icon: "./icons/icon-192.png", tag });
         }
@@ -661,8 +1471,10 @@
           btn_update_pass: "Update Password",
           pass_changed: "Password changed successfully!",
           pass_mismatch: "New passwords do not match.",
-          temp_pass_warning: "You are using a temporary password. It MUST be changed before doing anything else.",
-          pass_validation: "Password must be at least 8 characters long, contain at least 2 letters, 2 numbers, and only consist of letters, numbers, hyphens, or underscores.",
+          temp_pass_warning:
+            "You are using a temporary password. It MUST be changed before doing anything else.",
+          pass_validation:
+            "Password must be at least 8 characters long, contain at least 2 letters, 2 numbers, and only consist of letters, numbers, hyphens, or underscores.",
           loading_session: "Validating session...",
           offline_banner: "You are offline. Data may be out of date.",
           btn_install: "Install",
@@ -670,7 +1482,8 @@
           btn_exit_fullscreen: "Exit Fullscreen",
           btn_close_account: "Close Account",
           close_account_title: "Close Account",
-          close_account_desc: "Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.",
+          close_account_desc:
+            "Your remaining balance will be transferred to <strong>closing_account</strong> and this operation cannot be undone.",
           close_account_more_info: "More information about closing the account",
           login_failed: "Login failed",
           session_expired: "Session expired or unauthorized",
@@ -687,7 +1500,7 @@
           aria_language: "Language",
           aria_qr_code: "Withdrawal QR code",
           orders_table_label: "Latest orders",
-          tx_table_label: "Latest transactions"
+          tx_table_label: "Latest transactions",
         },
         es: {
           login_title: "Acceso de Comerciante",
@@ -742,7 +1555,8 @@
           col_subject: "Asunto",
           loading_tx: "Cargando transacciones...",
           no_tx: "No se encontraron transacciones.",
-          wallet_connected: "Billetera conectada. Por favor confirma la transferencia.",
+          wallet_connected:
+            "Billetera conectada. Por favor confirma la transferencia.",
           wallet_aborted: "El retiro fue abortado por la billetera.",
           transfer_confirmed: "¡Transferencia confirmada!",
           error_bal: "Saldo insuficiente",
@@ -781,16 +1595,20 @@
           btn_update_pass: "Actualizar Contraseña",
           pass_changed: "¡Contraseña cambiada con éxito!",
           pass_mismatch: "Las nuevas contraseñas no coinciden.",
-          temp_pass_warning: "Estás usando una contraseña temporal. DEBE ser cambiada antes de hacer cualquier otra cosa.",
-          pass_validation: "La contraseña debe tener al menos 8 caracteres, contener al menos 2 letras, 2 números, y solo estar formada por letras, números, guiones o guiones bajos.",
+          temp_pass_warning:
+            "Estás usando una contraseña temporal. DEBE ser cambiada antes de hacer cualquier otra cosa.",
+          pass_validation:
+            "La contraseña debe tener al menos 8 caracteres, contener al menos 2 letras, 2 números, y solo estar formada por letras, números, guiones o guiones bajos.",
           loading_session: "Validando sesión...",
-          offline_banner: "Estás sin conexión. Los datos pueden estar desactualizados.",
+          offline_banner:
+            "Estás sin conexión. Los datos pueden estar desactualizados.",
           btn_install: "Instalar",
           btn_fullscreen: "Pantalla Completa",
           btn_exit_fullscreen: "Salir de Pantalla Completa",
           btn_close_account: "Cerrar Cuenta",
           close_account_title: "Cerrar Cuenta",
-          close_account_desc: "Tu saldo restante se transferirá a <strong>closing_account</strong> y esta operación no se puede deshacer.",
+          close_account_desc:
+            "Tu saldo restante se transferirá a <strong>closing_account</strong> y esta operación no se puede deshacer.",
           close_account_more_info: "Más información sobre el cierre de cuenta",
           login_failed: "Error de acceso",
           session_expired: "Sesión expirada o no autorizada",
@@ -807,12 +1625,16 @@
           aria_language: "Idioma",
           aria_qr_code: "Código QR de retiro",
           orders_table_label: "Últimos pedidos",
-          tx_table_label: "Últimas transacciones"
-        }
+          tx_table_label: "Últimas transacciones",
+        },
       };
 
       function t(key) {
-        return (translations[currentLang] && translations[currentLang][key]) || translations.en[key] || key;
+        return (
+          (translations[currentLang] && translations[currentLang][key]) ||
+          translations.en[key] ||
+          key
+        );
       }
 
       function tf(key, vars) {
@@ -828,11 +1650,13 @@
       // withdraw-modal → qr-modal handoff, where focus moves to the QR dialog and
       // the withdraw trigger regains focus once the QR dialog fully closes.
       const dialogStack = [];
-      const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      const FOCUSABLE_SELECTOR =
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
       function visibleFocusables(dialog) {
-        return Array.from(dialog.querySelectorAll(FOCUSABLE_SELECTOR))
-          .filter((el) => el.getClientRects().length > 0);
+        return Array.from(dialog.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+          (el) => el.getClientRects().length > 0,
+        );
       }
 
       function openDialog(id, focusEl) {
@@ -862,7 +1686,11 @@
             const focusables = visibleFocusables(dialog);
             (focusables[0] || dialog).focus();
           }
-        } else if (prevFocus && document.contains(prevFocus) && prevFocus.focus) {
+        } else if (
+          prevFocus &&
+          document.contains(prevFocus) &&
+          prevFocus.focus
+        ) {
           prevFocus.focus();
         }
       }
@@ -876,7 +1704,8 @@
           return;
         }
         document.getElementById(top.id).classList.add("hidden");
-        if (dialogStack.length === 1) document.body.classList.remove("modal-active");
+        if (dialogStack.length === 1)
+          document.body.classList.remove("modal-active");
         closeDialog(top.id);
       }
 
@@ -898,7 +1727,11 @@
         }
         const first = items[0];
         const last = items[items.length - 1];
-        if (e.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        if (
+          e.shiftKey &&
+          (document.activeElement === first ||
+            !dialog.contains(document.activeElement))
+        ) {
           e.preventDefault();
           last.focus();
         } else if (!e.shiftKey && document.activeElement === last) {
@@ -910,42 +1743,48 @@
       function updateLanguage(lang) {
         currentLang = lang;
         document.documentElement.lang = lang;
-        document.querySelectorAll("[data-i18n]").forEach(el => {
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
           const key = el.getAttribute("data-i18n");
           if (translations[lang] && translations[lang][key]) {
             if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
-               el.value = translations[lang][key];
+              el.value = translations[lang][key];
             } else {
-               el.innerHTML = translations[lang][key];
+              el.innerHTML = translations[lang][key];
             }
           }
         });
-        document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
           const key = el.getAttribute("data-i18n-placeholder");
           if (translations[lang] && translations[lang][key]) {
             el.placeholder = translations[lang][key];
           }
         });
-        document.querySelectorAll("[data-i18n-aria-label]").forEach(el => {
+        document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
           const key = el.getAttribute("data-i18n-aria-label");
           if (translations[lang] && translations[lang][key]) {
             el.setAttribute("aria-label", translations[lang][key]);
-            if (el.tagName === "IMG") el.setAttribute("alt", translations[lang][key]);
+            if (el.tagName === "IMG")
+              el.setAttribute("alt", translations[lang][key]);
           }
         });
       }
       window.updateLanguage = updateLanguage;
 
       document.getElementById("lang-selector").value = storedLang;
-      document.getElementById("lang-selector").addEventListener("change", (e) => {
-        localStorage.setItem("taler_lang", e.target.value);
-        window.location.reload();
-      });
+      document
+        .getElementById("lang-selector")
+        .addEventListener("change", (e) => {
+          localStorage.setItem("taler_lang", e.target.value);
+          window.location.reload();
+        });
 
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("./sw.js").then(reg => {
-          swRegistration = reg;
-        }).catch(() => {});
+        navigator.serviceWorker
+          .register("./sw.js")
+          .then((reg) => {
+            swRegistration = reg;
+          })
+          .catch(() => {});
       }
 
       // PWA install prompt (Chrome/Edge/Android)
@@ -955,15 +1794,17 @@
         deferredInstallPrompt = e;
         document.getElementById("btn-install").classList.remove("hidden");
       });
-      document.getElementById("btn-install").addEventListener("click", async () => {
-        if (!deferredInstallPrompt) return;
-        deferredInstallPrompt.prompt();
-        const { outcome } = await deferredInstallPrompt.userChoice;
-        if (outcome === "accepted") {
-          document.getElementById("btn-install").classList.add("hidden");
-        }
-        deferredInstallPrompt = null;
-      });
+      document
+        .getElementById("btn-install")
+        .addEventListener("click", async () => {
+          if (!deferredInstallPrompt) return;
+          deferredInstallPrompt.prompt();
+          const { outcome } = await deferredInstallPrompt.userChoice;
+          if (outcome === "accepted") {
+            document.getElementById("btn-install").classList.add("hidden");
+          }
+          deferredInstallPrompt = null;
+        });
       window.addEventListener("appinstalled", () => {
         document.getElementById("btn-install").classList.add("hidden");
         deferredInstallPrompt = null;
@@ -981,15 +1822,20 @@
             } else {
               await document.documentElement.requestFullscreen();
             }
-          } catch (e) { /* ignored */ }
+          } catch (e) {
+            /* ignored */
+          }
         });
         document.addEventListener("fullscreenchange", () => {
           const exiting = Boolean(document.fullscreenElement);
-          btnFullscreen.querySelector("span").textContent =
-            exiting
-              ? (translations[currentLang]["btn_exit_fullscreen"] || "Exit Fullscreen")
-              : (translations[currentLang]["btn_fullscreen"] || "Fullscreen");
-          btnFullscreen.setAttribute("aria-label", t(exiting ? "aria_exit_fullscreen" : "aria_fullscreen"));
+          btnFullscreen.querySelector("span").textContent = exiting
+            ? translations[currentLang]["btn_exit_fullscreen"] ||
+              "Exit Fullscreen"
+            : translations[currentLang]["btn_fullscreen"] || "Fullscreen";
+          btnFullscreen.setAttribute(
+            "aria-label",
+            t(exiting ? "aria_exit_fullscreen" : "aria_fullscreen"),
+          );
         });
       }
 
@@ -999,11 +1845,16 @@
         if (!("wakeLock" in navigator)) return;
         try {
           wakeLock = await navigator.wakeLock.request("screen");
-          wakeLock.addEventListener("release", () => { wakeLock = null; });
-        } catch (e) { /* denied or unsupported — non-fatal */ }
+          wakeLock.addEventListener("release", () => {
+            wakeLock = null;
+          });
+        } catch (e) {
+          /* denied or unsupported — non-fatal */
+        }
       }
       document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible" && !wakeLock) acquireWakeLock();
+        if (document.visibilityState === "visible" && !wakeLock)
+          acquireWakeLock();
       });
       acquireWakeLock();
 
@@ -1020,7 +1871,12 @@
 
         if (savedUser && savedPass) {
           document.getElementById("auth-pass").value = savedPass;
-          const loggedIn = await doLogin(API_URL, BANK_URL, savedUser, savedPass);
+          const loggedIn = await doLogin(
+            API_URL,
+            BANK_URL,
+            savedUser,
+            savedPass,
+          );
           if (!loggedIn) {
             document.getElementById("auth-pass").value = "";
             document.getElementById("auth-modal").classList.remove("hidden");
@@ -1044,12 +1900,18 @@
 
         const loginError = document.getElementById("login-error");
         loginError.classList.add("hidden");
-        document.getElementById("auth-user").setAttribute("aria-invalid", "false");
-        document.getElementById("auth-pass").setAttribute("aria-invalid", "false");
+        document
+          .getElementById("auth-user")
+          .setAttribute("aria-invalid", "false");
+        document
+          .getElementById("auth-pass")
+          .setAttribute("aria-invalid", "false");
 
         doLogin(API_URL, BANK_URL, user, pass).then((ok) => {
           if (!ok) {
-            document.getElementById("auth-pass").setAttribute("aria-invalid", "true");
+            document
+              .getElementById("auth-pass")
+              .setAttribute("aria-invalid", "true");
             loginError.textContent = t("login_failed");
             loginError.classList.remove("hidden");
           }
@@ -1087,7 +1949,12 @@
         PASSWORD = pass;
 
         try {
-          const authData = await loginToTaler(API_URL, BANK_URL, INSTANCE_ID, PASSWORD);
+          const authData = await loginToTaler(
+            API_URL,
+            BANK_URL,
+            INSTANCE_ID,
+            PASSWORD,
+          );
           ACCESS_TOKEN = authData.ACCESS_TOKEN;
           BANK_ACCESS_TOKEN = authData.BANK_ACCESS_TOKEN;
 
@@ -1101,12 +1968,20 @@
           document.body.classList.remove("modal-active");
           document.getElementById("main-content").focus();
 
-          if ("Notification" in window && Notification.permission === "default") {
+          if (
+            "Notification" in window &&
+            Notification.permission === "default"
+          ) {
             Notification.requestPermission().catch(() => {});
           }
 
-          const accountName = await getAccountName(BANK_URL, INSTANCE_ID, BANK_ACCESS_TOKEN);
-          document.getElementById("bank-account-name").textContent = accountName;
+          const accountName = await getAccountName(
+            BANK_URL,
+            INSTANCE_ID,
+            BANK_ACCESS_TOKEN,
+          );
+          document.getElementById("bank-account-name").textContent =
+            accountName;
 
           ordersPrevState = new Map();
           ordersFirstFetch = true;
@@ -1120,10 +1995,12 @@
           }
           startRealtime();
           setupPushSubscription();
-          
-          if (PASSWORD.startsWith('__')) {
-              document.getElementById('temp-password-warning').classList.remove('hidden');
-              window.location.hash = '#user';
+
+          if (PASSWORD.startsWith("__")) {
+            document
+              .getElementById("temp-password-warning")
+              .classList.remove("hidden");
+            window.location.hash = "#user";
           }
           return true;
         } catch (err) {
@@ -1142,17 +2019,22 @@
       let bankFirstFetch = true;
 
       function renderSoldStats(paidList) {
-        let soldNum = 0, inTransitNum = 0, availableNum = 0;
+        let soldNum = 0,
+          inTransitNum = 0,
+          availableNum = 0;
         for (const o of paidList) {
-          const net = parseAmountStr(o.amount) - parseAmountStr(o.refund_amount);
+          const net =
+            parseAmountStr(o.amount) - parseAmountStr(o.refund_amount);
           soldNum += net;
           const wired = o.wired || o.wire_transfer_status === "wired";
           if (wired) availableNum += net;
           else inTransitNum += net;
         }
         document.getElementById("stat-sold").textContent = formatMoney(soldNum);
-        document.getElementById("stat-intransit").textContent = formatMoney(inTransitNum);
-        document.getElementById("stat-available").textContent = formatMoney(availableNum);
+        document.getElementById("stat-intransit").textContent =
+          formatMoney(inTransitNum);
+        document.getElementById("stat-available").textContent =
+          formatMoney(availableNum);
       }
 
       function renderOrders(orders) {
@@ -1202,27 +2084,33 @@
           let isNew = false;
 
           if (!ordersFirstFetch) {
-             if (!ordersPrevState.has(orderId)) {
-                isNew = true;
-                changed = true;
-             } else if (ordersPrevState.get(orderId) !== state) {
-                changed = true;
-             }
+            if (!ordersPrevState.has(orderId)) {
+              isNew = true;
+              changed = true;
+            } else if (ordersPrevState.get(orderId) !== state) {
+              changed = true;
+            }
           }
           ordersPrevState.set(orderId, state);
 
           if (changed) {
-             let statePhrase;
-             if (state === "settled") {
-               statePhrase = t("toast_state_settled");
-             } else if (state === "refunded") {
-               statePhrase = t("toast_state_refunded");
-             } else if (o.paid) {
-               statePhrase = tf("toast_state_paid", { amount: formatMoney(amountNum) });
-             } else {
-               statePhrase = t("toast_state_unpaid");
-             }
-             changedOrders.push({ isNew, summary: o.summary || orderId, state: statePhrase });
+            let statePhrase;
+            if (state === "settled") {
+              statePhrase = t("toast_state_settled");
+            } else if (state === "refunded") {
+              statePhrase = t("toast_state_refunded");
+            } else if (o.paid) {
+              statePhrase = tf("toast_state_paid", {
+                amount: formatMoney(amountNum),
+              });
+            } else {
+              statePhrase = t("toast_state_unpaid");
+            }
+            changedOrders.push({
+              isNew,
+              summary: o.summary || orderId,
+              state: statePhrase,
+            });
           }
 
           let rowClass = "hover:bg-slate-50 transition";
@@ -1243,10 +2131,16 @@
         });
 
         if (changedOrders.length > 0) {
-           const first = changedOrders[0];
-           const title = first.isNew ? t("toast_new_order") : t("toast_updated_order");
-           showToast(title, `${first.summary} &rarr; ${first.state}`);
-           showSystemNotification(title, `${first.summary} → ${first.state}`, `order-${first.summary}`);
+          const first = changedOrders[0];
+          const title = first.isNew
+            ? t("toast_new_order")
+            : t("toast_updated_order");
+          showToast(title, `${first.summary} &rarr; ${first.state}`);
+          showSystemNotification(
+            title,
+            `${first.summary} → ${first.state}`,
+            `order-${first.summary}`,
+          );
         }
 
         tbody.innerHTML = htmlBuffer;
@@ -1270,8 +2164,14 @@
 
             const baseUrl = `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/orders`;
             const [resOrders, resPaid] = await Promise.all([
-              fetch(`${baseUrl}?limit=-10`, { headers, signal: pollAbortController.signal }),
-              fetch(`${baseUrl}?paid=yes&limit=-500`, { headers, signal: pollAbortController.signal }),
+              fetch(`${baseUrl}?limit=-10`, {
+                headers,
+                signal: pollAbortController.signal,
+              }),
+              fetch(`${baseUrl}?paid=yes&limit=-500`, {
+                headers,
+                signal: pollAbortController.signal,
+              }),
             ]);
 
             if (!resOrders.ok) {
@@ -1289,7 +2189,8 @@
 
             if (resPaid.ok) {
               const paidData = await resPaid.json();
-              const paidList = paidData.orders || (Array.isArray(paidData) ? paidData : []);
+              const paidList =
+                paidData.orders || (Array.isArray(paidData) ? paidData : []);
               renderSoldStats(paidList);
             }
 
@@ -1302,7 +2203,7 @@
 
             await fetch(
               `${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/orders?limit=2&offset=${maxRowId}&timeout_ms=10000`,
-              { headers, signal: pollAbortController.signal }
+              { headers, signal: pollAbortController.signal },
             );
           } catch (e) {
             if (e.name !== "AbortError" && isPolling) {
@@ -1318,7 +2219,7 @@
           const url = new URL(paytoUri.replace("payto://", "http://"));
           const parts = url.pathname.split("/").filter(Boolean);
           return parts[parts.length - 1] || "";
-        } catch(e) {
+        } catch (e) {
           return "";
         }
       }
@@ -1336,7 +2237,8 @@
 
         txs.forEach((tx) => {
           const amountNum = parseAmountStr(tx.amount);
-          const t_val = tx.date?.t_ms || (tx.date?.t_s ? tx.date.t_s * 1000 : tx.date);
+          const t_val =
+            tx.date?.t_ms || (tx.date?.t_s ? tx.date.t_s * 1000 : tx.date);
           const d = t_val ? new Date(t_val) : null;
           const dayKey = d ? d.toLocaleDateString() : "N/A";
           if (dayKey !== lastDay) {
@@ -1361,7 +2263,9 @@
               subject = t("val_sales");
               iconSvg = `<svg class="w-5 h-5 text-green-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>`;
             } else {
-              label = tf("transfer_from", { account: account || t("unknown_account") });
+              label = tf("transfer_from", {
+                account: account || t("unknown_account"),
+              });
               iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
             }
           } else if (tx.direction === "debit") {
@@ -1377,15 +2281,21 @@
               subject = t("val_closing");
               iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
             } else {
-              label = tf("transfer_to", { account: account || t("unknown_account") });
+              label = tf("transfer_to", {
+                account: account || t("unknown_account"),
+              });
               iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
             }
           }
 
           let isNew = false;
           if (!bankFirstFetch && !bankPrevRows.has(tx.row_id)) {
-             isNew = true;
-             newTxs.push({ subject: isSpecial ? subject : label, isCredit, amount: amountNum });
+            isNew = true;
+            newTxs.push({
+              subject: isSpecial ? subject : label,
+              isCredit,
+              amount: amountNum,
+            });
           }
           bankPrevRows.add(tx.row_id);
 
@@ -1406,9 +2316,17 @@
         });
 
         if (newTxs.length > 0) {
-           const first = newTxs[0];
-           showToast(t("toast_new_tx"), `${first.subject} $${formatMoney(first.amount)}`, first.isCredit ? "success" : "info");
-           showSystemNotification(t("toast_new_tx"), `${first.subject} $${formatMoney(first.amount)}`, `tx-${first.subject}`);
+          const first = newTxs[0];
+          showToast(
+            t("toast_new_tx"),
+            `${first.subject} $${formatMoney(first.amount)}`,
+            first.isCredit ? "success" : "info",
+          );
+          showSystemNotification(
+            t("toast_new_tx"),
+            `${first.subject} $${formatMoney(first.amount)}`,
+            `tx-${first.subject}`,
+          );
         }
 
         tbody.innerHTML = htmlBuffer;
@@ -1429,24 +2347,34 @@
               Authorization: `Bearer ${BANK_ACCESS_TOKEN}`,
             };
 
-            const balRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}`, {
-              headers, signal: pollAbortController.signal,
-            });
+            const balRes = await fetch(
+              `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}`,
+              {
+                headers,
+                signal: pollAbortController.signal,
+              },
+            );
 
             if (balRes.ok) {
               const balData = await balRes.json();
               const availAmt = parseAmountStr(balData.balance.amount);
-              document.getElementById("stat-bank-available").textContent = formatMoney(availAmt);
+              document.getElementById("stat-bank-available").textContent =
+                formatMoney(availAmt);
             }
 
-            const txRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions?limit=-10`, {
-              headers, signal: pollAbortController.signal,
-            });
+            const txRes = await fetch(
+              `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions?limit=-10`,
+              {
+                headers,
+                signal: pollAbortController.signal,
+              },
+            );
 
             if (!txRes.ok) throw new Error(`Bank API error: ${txRes.status}`);
 
             const txData = await txRes.json();
-            const txs = txData.transactions || (Array.isArray(txData) ? txData : []);
+            const txs =
+              txData.transactions || (Array.isArray(txData) ? txData : []);
 
             renderBank(txs);
 
@@ -1457,7 +2385,7 @@
 
             await fetch(
               `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions?limit=2&offset=${maxRowId}&timeout_ms=10000`,
-              { headers, signal: pollAbortController.signal }
+              { headers, signal: pollAbortController.signal },
             );
           } catch (e) {
             if (e.name !== "AbortError" && isPolling) {
@@ -1496,13 +2424,16 @@
       }
 
       async function fetchState() {
-        const res = await fetch(`/api/state/${encodeURIComponent(INSTANCE_ID)}`, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${ACCESS_TOKEN}`,
-            "X-Bank-Authorization": `Bearer ${BANK_ACCESS_TOKEN}`,
+        const res = await fetch(
+          `/api/state/${encodeURIComponent(INSTANCE_ID)}`,
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${ACCESS_TOKEN}`,
+              "X-Bank-Authorization": `Bearer ${BANK_ACCESS_TOKEN}`,
+            },
           },
-        });
+        );
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
             showToast(t("session_expired"), "", "error");
@@ -1517,28 +2448,48 @@
         try {
           const state = await fetchState();
           if (state.accountName) {
-            document.getElementById("bank-account-name").textContent = state.accountName;
+            document.getElementById("bank-account-name").textContent =
+              state.accountName;
           }
           if (state.totals) {
-            document.getElementById("stat-sold").textContent = formatMoney(state.totals.sold);
-            document.getElementById("stat-intransit").textContent = formatMoney(state.totals.inTransit);
-            document.getElementById("stat-available").textContent = formatMoney(state.totals.settled);
-            document.getElementById("stat-bank-available").textContent = formatMoney(state.totals.bankAvailable);
+            document.getElementById("stat-sold").textContent = formatMoney(
+              state.totals.sold,
+            );
+            document.getElementById("stat-intransit").textContent = formatMoney(
+              state.totals.inTransit,
+            );
+            document.getElementById("stat-available").textContent = formatMoney(
+              state.totals.settled,
+            );
+            document.getElementById("stat-bank-available").textContent =
+              formatMoney(state.totals.bankAvailable);
           }
           if (Array.isArray(state.orders)) renderOrders(state.orders);
           if (Array.isArray(state.transactions)) renderBank(state.transactions);
-        } catch (e) { /* keep current view; next tick will retry */ }
+        } catch (e) {
+          /* keep current view; next tick will retry */
+        }
       }
 
       function stopRealtime() {
         wsReady = false;
-        if (wsBackoffTimer) { clearTimeout(wsBackoffTimer); wsBackoffTimer = null; }
-        if (wsReadyTimer) { clearTimeout(wsReadyTimer); wsReadyTimer = null; }
+        if (wsBackoffTimer) {
+          clearTimeout(wsBackoffTimer);
+          wsBackoffTimer = null;
+        }
+        if (wsReadyTimer) {
+          clearTimeout(wsReadyTimer);
+          wsReadyTimer = null;
+        }
         if (ws) {
           const s = ws;
           ws = null;
           s.onopen = s.onmessage = s.onclose = s.onerror = null;
-          try { s.close(); } catch (e) { /* already closed */ }
+          try {
+            s.close();
+          } catch (e) {
+            /* already closed */
+          }
         }
       }
 
@@ -1564,29 +2515,42 @@
 
         wsReadyTimer = setTimeout(() => {
           if (!becameReady) {
-            try { socket.close(); } catch (e) { /* ignore */ }
+            try {
+              socket.close();
+            } catch (e) {
+              /* ignore */
+            }
           }
         }, 5000);
 
         socket.onopen = () => {
-          socket.send(JSON.stringify({
-            type: "auth",
-            instance: INSTANCE_ID,
-            merchantToken: ACCESS_TOKEN,
-            bankToken: BANK_ACCESS_TOKEN,
-          }));
+          socket.send(
+            JSON.stringify({
+              type: "auth",
+              instance: INSTANCE_ID,
+              merchantToken: ACCESS_TOKEN,
+              bankToken: BANK_ACCESS_TOKEN,
+            }),
+          );
         };
 
         socket.onmessage = (ev) => {
           let msg;
-          try { msg = JSON.parse(ev.data); } catch { return; }
+          try {
+            msg = JSON.parse(ev.data);
+          } catch {
+            return;
+          }
           if (msg.type === "ready") {
             becameReady = true;
             wsReady = true;
             wsConnectAttempts = 0;
             refreshFromState();
             stopPolling(); // WS is authoritative now
-          } else if (msg.type === "orders-changed" || msg.type === "tx-changed") {
+          } else if (
+            msg.type === "orders-changed" ||
+            msg.type === "tx-changed"
+          ) {
             refreshFromState();
           }
         };
@@ -1601,7 +2565,11 @@
         };
 
         socket.onerror = () => {
-          try { socket.close(); } catch (e) { /* ignore */ }
+          try {
+            socket.close();
+          } catch (e) {
+            /* ignore */
+          }
         };
       }
 
@@ -1616,17 +2584,25 @@
       // -----------------------------------------------------------------
       function urlBase64ToUint8Array(base64String) {
         const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-        const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+        const base64 = (base64String + padding)
+          .replace(/-/g, "+")
+          .replace(/_/g, "/");
         const rawData = atob(base64);
         const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+        for (let i = 0; i < rawData.length; ++i)
+          outputArray[i] = rawData.charCodeAt(i);
         return outputArray;
       }
 
       async function setupPushSubscription() {
         try {
-          if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-          if (!("Notification" in window) || Notification.permission !== "granted") return;
+          if (!("serviceWorker" in navigator) || !("PushManager" in window))
+            return;
+          if (
+            !("Notification" in window) ||
+            Notification.permission !== "granted"
+          )
+            return;
           const reg = await navigator.serviceWorker.ready;
           swRegistration = reg;
           const keyRes = await fetch("/api/push/vapid-key");
@@ -1642,7 +2618,10 @@
           await fetch("/api/push/subscribe", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ instance: INSTANCE_ID, subscription: sub.toJSON() }),
+            body: JSON.stringify({
+              instance: INSTANCE_ID,
+              subscription: sub.toJSON(),
+            }),
           });
         } catch (e) {
           console.warn("Push subscription setup failed:", e);
@@ -1652,16 +2631,21 @@
       function teardownPushSubscription(instance) {
         try {
           if (!swRegistration || !("PushManager" in window)) return;
-          swRegistration.pushManager.getSubscription().then((sub) => {
-            if (!sub) return;
-            fetch("/api/push/unsubscribe", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ instance, endpoint: sub.endpoint }),
-            }).catch(() => {});
-            sub.unsubscribe().catch(() => {});
-          }).catch(() => {});
-        } catch (e) { /* ignore */ }
+          swRegistration.pushManager
+            .getSubscription()
+            .then((sub) => {
+              if (!sub) return;
+              fetch("/api/push/unsubscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ instance, endpoint: sub.endpoint }),
+              }).catch(() => {});
+              sub.unsubscribe().catch(() => {});
+            })
+            .catch(() => {});
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       document.getElementById("btn-close-qr").addEventListener("click", () => {
@@ -1673,110 +2657,134 @@
         if (withdrawalController) withdrawalController.abort();
       });
 
-      document.getElementById("btn-qr-cancel").addEventListener("click", async () => {
-        withdrawalPolling = false;
-        if (withdrawalController) withdrawalController.abort();
-        
-        try {
-          await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals/${currentWithdrawalId}/abort`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
-          });
-        } catch (e) {
-          console.error("Failed to abort withdrawal", e);
-        }
-        
-        document.getElementById("qr-modal").classList.add("hidden");
-        document.getElementById("qr-taler-link").classList.add("hidden");
-        document.body.classList.remove("modal-active");
-        closeDialog("qr-modal");
-      });
+      document
+        .getElementById("btn-qr-cancel")
+        .addEventListener("click", async () => {
+          withdrawalPolling = false;
+          if (withdrawalController) withdrawalController.abort();
 
-      document.getElementById("btn-qr-confirm").addEventListener("click", async () => {
-        withdrawalPolling = false;
-        if (withdrawalController) withdrawalController.abort();
-        
-        const btn = document.getElementById("btn-qr-confirm");
-        const originalText = btn.textContent;
-        btn.textContent = translations[currentLang]["confirming"];
-        btn.disabled = true;
-
-        try {
-          const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals/${currentWithdrawalId}/confirm`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
-          });
-
-          if (!res.ok) throw new Error(t("err_confirm_transfer"));
+          try {
+            await fetch(
+              `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals/${currentWithdrawalId}/abort`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` },
+              },
+            );
+          } catch (e) {
+            console.error("Failed to abort withdrawal", e);
+          }
 
           document.getElementById("qr-modal").classList.add("hidden");
+          document.getElementById("qr-taler-link").classList.add("hidden");
           document.body.classList.remove("modal-active");
           closeDialog("qr-modal");
-        } catch (e) {
-          document.getElementById("qr-modal-error").textContent = e.message;
-          document.getElementById("qr-modal-error").classList.remove("hidden");
-        } finally {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      });
+        });
+
+      document
+        .getElementById("btn-qr-confirm")
+        .addEventListener("click", async () => {
+          withdrawalPolling = false;
+          if (withdrawalController) withdrawalController.abort();
+
+          const btn = document.getElementById("btn-qr-confirm");
+          const originalText = btn.textContent;
+          btn.textContent = translations[currentLang]["confirming"];
+          btn.disabled = true;
+
+          try {
+            const res = await fetch(
+              `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals/${currentWithdrawalId}/confirm`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` },
+              },
+            );
+
+            if (!res.ok) throw new Error(t("err_confirm_transfer"));
+
+            document.getElementById("qr-modal").classList.add("hidden");
+            document.body.classList.remove("modal-active");
+            closeDialog("qr-modal");
+          } catch (e) {
+            document.getElementById("qr-modal-error").textContent = e.message;
+            document
+              .getElementById("qr-modal-error")
+              .classList.remove("hidden");
+          } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        });
 
       async function pollWithdrawalState() {
         while (withdrawalPolling) {
           try {
             withdrawalController = new AbortController();
-            const res = await fetch(`${BANK_URL}/withdrawals/${currentWithdrawalId}?old_state=pending&timeout_ms=10000`, {
-              signal: withdrawalController.signal
-            });
+            const res = await fetch(
+              `${BANK_URL}/withdrawals/${currentWithdrawalId}?old_state=pending&timeout_ms=10000`,
+              {
+                signal: withdrawalController.signal,
+              },
+            );
             if (!res.ok) throw new Error("Poll error");
             const data = await res.json();
-            
+
             if (data.status === "selected") {
-               document.getElementById("qr-content").classList.add("hidden");
-               document.getElementById("qr-modal-desc").innerHTML = translations[currentLang]["wallet_connected"];
-               document.getElementById("qr-confirm-actions").classList.remove("hidden");
-               withdrawalPolling = false;
+              document.getElementById("qr-content").classList.add("hidden");
+              document.getElementById("qr-modal-desc").innerHTML =
+                translations[currentLang]["wallet_connected"];
+              document
+                .getElementById("qr-confirm-actions")
+                .classList.remove("hidden");
+              withdrawalPolling = false;
             } else if (data.status === "aborted") {
-               document.getElementById("qr-modal-error").innerHTML = translations[currentLang]["wallet_aborted"];
-               document.getElementById("qr-modal-error").classList.remove("hidden");
-               withdrawalPolling = false;
+              document.getElementById("qr-modal-error").innerHTML =
+                translations[currentLang]["wallet_aborted"];
+              document
+                .getElementById("qr-modal-error")
+                .classList.remove("hidden");
+              withdrawalPolling = false;
             } else if (data.status === "confirmed") {
-               document.getElementById("qr-modal-desc").innerHTML = translations[currentLang]["transfer_confirmed"];
-               withdrawalPolling = false;
+              document.getElementById("qr-modal-desc").innerHTML =
+                translations[currentLang]["transfer_confirmed"];
+              withdrawalPolling = false;
             }
           } catch (e) {
             if (e.name !== "AbortError" && withdrawalPolling) {
-              await new Promise(r => setTimeout(r, 2000));
+              await new Promise((r) => setTimeout(r, 2000));
             }
           }
         }
       }
 
+      document.getElementById("btn-withdraw").addEventListener("click", () => {
+        const input = document.getElementById("withdraw-dialog-amount");
+        const errorEl = document.getElementById("withdraw-dialog-error");
+        input.value = "";
+        input.setAttribute("aria-invalid", "false");
+        errorEl.classList.add("hidden");
+        errorEl.textContent = "";
+        document.getElementById("withdraw-modal").classList.remove("hidden");
+        document.body.classList.add("modal-active");
+        openDialog("withdraw-modal", input);
+      });
+
       document
-        .getElementById("btn-withdraw")
+        .getElementById("btn-close-withdraw-modal")
         .addEventListener("click", () => {
-          const input = document.getElementById("withdraw-dialog-amount");
-          const errorEl = document.getElementById("withdraw-dialog-error");
-          input.value = "";
-          input.setAttribute("aria-invalid", "false");
-          errorEl.classList.add("hidden");
-          errorEl.textContent = "";
-          document.getElementById("withdraw-modal").classList.remove("hidden");
-          document.body.classList.add("modal-active");
-          openDialog("withdraw-modal", input);
+          document.getElementById("withdraw-modal").classList.add("hidden");
+          document.body.classList.remove("modal-active");
+          closeDialog("withdraw-modal");
         });
 
-      document.getElementById("btn-close-withdraw-modal").addEventListener("click", () => {
-        document.getElementById("withdraw-modal").classList.add("hidden");
-        document.body.classList.remove("modal-active");
-        closeDialog("withdraw-modal");
-      });
-
-      document.getElementById("btn-withdraw-cancel").addEventListener("click", () => {
-        document.getElementById("withdraw-modal").classList.add("hidden");
-        document.body.classList.remove("modal-active");
-        closeDialog("withdraw-modal");
-      });
+      document
+        .getElementById("btn-withdraw-cancel")
+        .addEventListener("click", () => {
+          document.getElementById("withdraw-modal").classList.add("hidden");
+          document.body.classList.remove("modal-active");
+          closeDialog("withdraw-modal");
+        });
 
       document
         .getElementById("btn-withdraw-confirm")
@@ -1806,18 +2814,21 @@
           btnSpinner.classList.remove("hidden");
 
           try {
-            const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
+            const res = await fetch(
+              `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/withdrawals`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${BANK_ACCESS_TOKEN}`,
+                },
+                body: JSON.stringify({ amount: `NUMIS:${amount}` }), // hidden format string
               },
-              body: JSON.stringify({ amount: `NUMIS:${amount}` }), // hidden format string
-            });
+            );
 
             if (!res.ok) {
-               if (res.status === 409) throw new Error(t("error_bal"));
-               throw new Error(t("err_withdraw_server"));
+              if (res.status === 409) throw new Error(t("error_bal"));
+              throw new Error(t("err_withdraw_server"));
             }
 
             const data = await res.json();
@@ -1825,9 +2836,12 @@
             const talerWithdrawUri = data.taler_withdraw_uri;
 
             document.getElementById("qr-modal-amount").textContent = amount;
-            document.getElementById("qr-modal-desc").innerHTML = t("modal_qr_scan");
+            document.getElementById("qr-modal-desc").innerHTML =
+              t("modal_qr_scan");
             document.getElementById("qr-content").classList.remove("hidden");
-            document.getElementById("qr-confirm-actions").classList.add("hidden");
+            document
+              .getElementById("qr-confirm-actions")
+              .classList.add("hidden");
 
             qrImg.classList.add("hidden");
             qrError.classList.add("hidden");
@@ -1870,318 +2884,452 @@
           }
         });
 
+      document
+        .getElementById("btn-open-close-account")
+        .addEventListener("click", () => {
+          document
+            .getElementById("close-account-modal")
+            .classList.remove("hidden");
+          document.body.classList.add("modal-active");
+          openDialog("close-account-modal");
+        });
 
-
-      document.getElementById("btn-open-close-account").addEventListener("click", () => {
-        document.getElementById("close-account-modal").classList.remove("hidden");
-        document.body.classList.add("modal-active");
-        openDialog("close-account-modal");
-      });
-
-      document.getElementById("btn-close-account-cancel").addEventListener("click", () => {
-        document.getElementById("close-account-modal").classList.add("hidden");
-        document.body.classList.remove("modal-active");
-        closeDialog("close-account-modal");
-      });
-
-      document.getElementById("btn-close-account-confirm").addEventListener("click", async () => {
-        const errorEl = document.getElementById("close-account-error");
-        const btn = document.getElementById("btn-close-account-confirm");
-        const btnText = btn.querySelector(".btn-text");
-        const btnSpinner = btn.querySelector(".btn-spinner");
-
-        errorEl.classList.add("hidden");
-        btn.disabled = true;
-        btnText.classList.add("hidden");
-        btnSpinner.classList.remove("hidden");
-
-        try {
-          await import('./merchant.js').then(m => m.closeAccount(INSTANCE_ID, BANK_ACCESS_TOKEN));
-
-          document.getElementById("close-account-modal").classList.add("hidden");
+      document
+        .getElementById("btn-close-account-cancel")
+        .addEventListener("click", () => {
+          document
+            .getElementById("close-account-modal")
+            .classList.add("hidden");
           document.body.classList.remove("modal-active");
           closeDialog("close-account-modal");
-          showToast(t("toast_success"), t("account_closed"), "success");
-          
-          // Force logout
-          setTimeout(() => {
-             performLogout();
-          }, 2000);
-        } catch (e) {
-          errorEl.textContent = e.message;
-          errorEl.classList.remove("hidden");
-        } finally {
-          btn.disabled = false;
-          btnText.classList.remove("hidden");
-          btnSpinner.classList.add("hidden");
-        }
-      });
-    
-      
+        });
 
+      document
+        .getElementById("btn-close-account-confirm")
+        .addEventListener("click", async () => {
+          const errorEl = document.getElementById("close-account-error");
+          const btn = document.getElementById("btn-close-account-confirm");
+          const btnText = btn.querySelector(".btn-text");
+          const btnSpinner = btn.querySelector(".btn-spinner");
 
-      
+          errorEl.classList.add("hidden");
+          btn.disabled = true;
+          btnText.classList.add("hidden");
+          btnSpinner.classList.remove("hidden");
+
+          try {
+            await import("./merchant.js").then((m) =>
+              m.closeAccount(INSTANCE_ID, BANK_ACCESS_TOKEN),
+            );
+
+            document
+              .getElementById("close-account-modal")
+              .classList.add("hidden");
+            document.body.classList.remove("modal-active");
+            closeDialog("close-account-modal");
+            showToast(t("toast_success"), t("account_closed"), "success");
+
+            // Force logout
+            setTimeout(() => {
+              performLogout();
+            }, 2000);
+          } catch (e) {
+            errorEl.textContent = e.message;
+            errorEl.classList.remove("hidden");
+          } finally {
+            btn.disabled = false;
+            btnText.classList.remove("hidden");
+            btnSpinner.classList.add("hidden");
+          }
+        });
+
       // Fragment navigation logic
       function navigateTo(targetId, { push = true } = {}) {
-        let targetBtns = document.querySelectorAll(`.sidebar-nav-btn[data-target="${targetId}"]`);
+        let targetBtns = document.querySelectorAll(
+          `.sidebar-nav-btn[data-target="${targetId}"]`,
+        );
         if (targetBtns.length === 0) {
-          targetBtns = document.querySelectorAll('.sidebar-nav-btn[data-target="dashboard"]');
+          targetBtns = document.querySelectorAll(
+            '.sidebar-nav-btn[data-target="dashboard"]',
+          );
         }
         if (targetBtns.length === 0) return;
-        const resolvedId = targetBtns[0].getAttribute('data-target');
+        const resolvedId = targetBtns[0].getAttribute("data-target");
 
-        document.querySelectorAll('.sidebar-nav-btn').forEach(b => {
-          b.classList.remove('text-indigo-600', 'bg-indigo-50', 'dock-active');
-          b.classList.add('text-slate-600');
-          b.removeAttribute('aria-current');
+        document.querySelectorAll(".sidebar-nav-btn").forEach((b) => {
+          b.classList.remove("text-indigo-600", "bg-indigo-50", "dock-active");
+          b.classList.add("text-slate-600");
+          b.removeAttribute("aria-current");
         });
-        targetBtns.forEach(b => {
-          b.classList.remove('text-slate-600');
-          b.classList.add('text-indigo-600', 'bg-indigo-50');
-          b.setAttribute('aria-current', 'page');
+        targetBtns.forEach((b) => {
+          b.classList.remove("text-slate-600");
+          b.classList.add("text-indigo-600", "bg-indigo-50");
+          b.setAttribute("aria-current", "page");
           // Highlight the bottom-dock copy (mobile) with the pill style
-          if (b.closest('#bottom-dock')) b.classList.add('dock-active');
+          if (b.closest("#bottom-dock")) b.classList.add("dock-active");
         });
 
-        document.querySelectorAll('.main-section').forEach(s => s.classList.add('hidden'));
-        document.getElementById(resolvedId).classList.remove('hidden');
-        document.getElementById('sidebar').classList.add('max-md:hidden');
+        document
+          .querySelectorAll(".main-section")
+          .forEach((s) => s.classList.add("hidden"));
+        document.getElementById(resolvedId).classList.remove("hidden");
+        document.getElementById("sidebar").classList.add("max-md:hidden");
 
-        if (window.location.hash !== '#' + resolvedId) {
+        if (window.location.hash !== "#" + resolvedId) {
           if (push) {
-            window.history.pushState({ screen: resolvedId }, '', '#' + resolvedId);
+            window.history.pushState(
+              { screen: resolvedId },
+              "",
+              "#" + resolvedId,
+            );
           } else {
-            window.history.replaceState(null, null, '#' + resolvedId);
+            window.history.replaceState(null, null, "#" + resolvedId);
           }
         }
       }
 
       function handleHash() {
         const hash = window.location.hash.substring(1);
-        navigateTo(hash || 'dashboard', { push: false });
+        navigateTo(hash || "dashboard", { push: false });
       }
-      window.addEventListener('hashchange', handleHash);
-      window.addEventListener('popstate', handleHash);
+      window.addEventListener("hashchange", handleHash);
+      window.addEventListener("popstate", handleHash);
 
       // Navigation Logic
-      document.querySelectorAll('.sidebar-nav-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          navigateTo(e.currentTarget.getAttribute('data-target'), { push: true });
+      document.querySelectorAll(".sidebar-nav-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          navigateTo(e.currentTarget.getAttribute("data-target"), {
+            push: true,
+          });
         });
       });
 
-      document.getElementById('btn-change-pass').addEventListener('click', async () => {
-         const oldPassEl = document.getElementById('old-pass');
-         const newPassEl = document.getElementById('new-pass');
-         const repeatPassEl = document.getElementById('repeat-pass');
-         const newPassErr = document.getElementById('new-pass-error');
-         const repeatPassErr = document.getElementById('repeat-pass-error');
-         const formErr = document.getElementById('form-error');
+      document
+        .getElementById("btn-change-pass")
+        .addEventListener("click", async () => {
+          const oldPassEl = document.getElementById("old-pass");
+          const newPassEl = document.getElementById("new-pass");
+          const repeatPassEl = document.getElementById("repeat-pass");
+          const newPassErr = document.getElementById("new-pass-error");
+          const repeatPassErr = document.getElementById("repeat-pass-error");
+          const formErr = document.getElementById("form-error");
 
-         // Reset previous errors
-         [oldPassEl, newPassEl, repeatPassEl].forEach(el => {
-             el.classList.remove('border-red-500', 'focus:ring-red-500');
-             el.classList.add('border-slate-300', 'focus:ring-indigo-500');
-             el.setAttribute('aria-invalid', 'false');
-         });
-         [newPassErr, repeatPassErr, formErr].forEach(el => el.classList.add('hidden'));
+          // Reset previous errors
+          [oldPassEl, newPassEl, repeatPassEl].forEach((el) => {
+            el.classList.remove("border-red-500", "focus:ring-red-500");
+            el.classList.add("border-slate-300", "focus:ring-indigo-500");
+            el.setAttribute("aria-invalid", "false");
+          });
+          [newPassErr, repeatPassErr, formErr].forEach((el) =>
+            el.classList.add("hidden"),
+          );
 
-         const oldP = oldPassEl.value;
-         const newP = newPassEl.value;
-         const repP = repeatPassEl.value;
+          const oldP = oldPassEl.value;
+          const newP = newPassEl.value;
+          const repP = repeatPassEl.value;
 
-         if (newP !== repP) {
-             repeatPassEl.classList.remove('border-slate-300', 'focus:ring-indigo-500');
-             repeatPassEl.classList.add('border-red-500', 'focus:ring-red-500');
-             repeatPassEl.setAttribute('aria-invalid', 'true');
-             repeatPassErr.textContent = translations[currentLang]["pass_mismatch"];
-             repeatPassErr.classList.remove('hidden');
-             return;
-         }
+          if (newP !== repP) {
+            repeatPassEl.classList.remove(
+              "border-slate-300",
+              "focus:ring-indigo-500",
+            );
+            repeatPassEl.classList.add("border-red-500", "focus:ring-red-500");
+            repeatPassEl.setAttribute("aria-invalid", "true");
+            repeatPassErr.textContent =
+              translations[currentLang]["pass_mismatch"];
+            repeatPassErr.classList.remove("hidden");
+            return;
+          }
 
-         if (!validatePassword(newP)) {
-             newPassEl.classList.remove('border-slate-300', 'focus:ring-indigo-500');
-             newPassEl.classList.add('border-red-500', 'focus:ring-red-500');
-             newPassEl.setAttribute('aria-invalid', 'true');
-             newPassErr.textContent = translations[currentLang]["pass_validation"];
-             newPassErr.classList.remove('hidden');
-             return;
-         }
-         
-         const btn = document.getElementById('btn-change-pass');
-         const origText = btn.textContent;
-         btn.textContent = t("updating");
-         btn.disabled = true;
+          if (!validatePassword(newP)) {
+            newPassEl.classList.remove(
+              "border-slate-300",
+              "focus:ring-indigo-500",
+            );
+            newPassEl.classList.add("border-red-500", "focus:ring-red-500");
+            newPassEl.setAttribute("aria-invalid", "true");
+            newPassErr.textContent =
+              translations[currentLang]["pass_validation"];
+            newPassErr.classList.remove("hidden");
+            return;
+          }
 
-         try {
-             await import('./merchant.js').then(m => m.changePassword(API_URL, BANK_URL, INSTANCE_ID, ACCESS_TOKEN, BANK_ACCESS_TOKEN, oldP, newP));
+          const btn = document.getElementById("btn-change-pass");
+          const origText = btn.textContent;
+          btn.textContent = t("updating");
+          btn.disabled = true;
 
-             if (newP.length > 0) {
-                 PASSWORD = newP;
-                 localStorage.setItem("taler_password", newP);
-                 
-                 // Re-login to refresh tokens with the new password
-                 doLogin(API_URL, BANK_URL, INSTANCE_ID, newP);
+          try {
+            await import("./merchant.js").then((m) =>
+              m.changePassword(
+                API_URL,
+                BANK_URL,
+                INSTANCE_ID,
+                ACCESS_TOKEN,
+                BANK_ACCESS_TOKEN,
+                oldP,
+                newP,
+              ),
+            );
 
-                 oldPassEl.value = '';
-                 newPassEl.value = '';
-                 repeatPassEl.value = '';
-                 document.getElementById('temp-password-warning').classList.add('hidden');
-                 showToast(t("toast_success"), translations[currentLang]["pass_changed"], "success");
-             }
-         } catch (e) {
-             formErr.textContent = e.message;
-             formErr.classList.remove('hidden');
-             oldPassEl.setAttribute('aria-invalid', 'true');
-         } finally {
-             btn.textContent = origText;
-             btn.disabled = false;
-         }
-      });
+            if (newP.length > 0) {
+              PASSWORD = newP;
+              localStorage.setItem("taler_password", newP);
+
+              // Re-login to refresh tokens with the new password
+              doLogin(API_URL, BANK_URL, INSTANCE_ID, newP);
+
+              oldPassEl.value = "";
+              newPassEl.value = "";
+              repeatPassEl.value = "";
+              document
+                .getElementById("temp-password-warning")
+                .classList.add("hidden");
+              showToast(
+                t("toast_success"),
+                translations[currentLang]["pass_changed"],
+                "success",
+              );
+            }
+          } catch (e) {
+            formErr.textContent = e.message;
+            formErr.classList.remove("hidden");
+            oldPassEl.setAttribute("aria-invalid", "true");
+          } finally {
+            btn.textContent = origText;
+            btn.disabled = false;
+          }
+        });
 
       window.updateLanguage = updateLanguage;
 
-      document.getElementById('btn-open-change-pass').addEventListener('click', () => {
-        document.getElementById('change-pass-modal').classList.remove('hidden');
-        document.body.classList.add('modal-active');
-        openDialog('change-pass-modal');
-      });
+      document
+        .getElementById("btn-open-change-pass")
+        .addEventListener("click", () => {
+          document
+            .getElementById("change-pass-modal")
+            .classList.remove("hidden");
+          document.body.classList.add("modal-active");
+          openDialog("change-pass-modal");
+        });
 
-      document.getElementById('btn-close-change-pass-modal').addEventListener('click', () => {
-        document.getElementById('change-pass-modal').classList.add('hidden');
-        document.body.classList.remove('modal-active');
-        closeDialog('change-pass-modal');
-      });
+      document
+        .getElementById("btn-close-change-pass-modal")
+        .addEventListener("click", () => {
+          document.getElementById("change-pass-modal").classList.add("hidden");
+          document.body.classList.remove("modal-active");
+          closeDialog("change-pass-modal");
+        });
 
-      document.getElementById('btn-top-logout').addEventListener('click', () => {
-        performLogout();
-      });
+      document
+        .getElementById("btn-top-logout")
+        .addEventListener("click", () => {
+          performLogout();
+        });
 
       let verifiedAccountData = null;
 
-      document.getElementById("card-transfer-trigger").addEventListener("click", () => {
-        document.getElementById("transfer-target").value = "";
-        document.getElementById("transfer-target").setAttribute("aria-invalid", "false");
-        document.getElementById("transfer-step1-error").classList.add("hidden");
-        document.getElementById("transfer-step-1").classList.remove("hidden");
-        document.getElementById("transfer-step-2").classList.add("hidden");
-        document.getElementById("transfer-modal").classList.remove("hidden");
-        document.body.classList.add("modal-active");
-        openDialog("transfer-modal", document.getElementById("transfer-target"));
-      });
+      document
+        .getElementById("card-transfer-trigger")
+        .addEventListener("click", () => {
+          document.getElementById("transfer-target").value = "";
+          document
+            .getElementById("transfer-target")
+            .setAttribute("aria-invalid", "false");
+          document
+            .getElementById("transfer-step1-error")
+            .classList.add("hidden");
+          document.getElementById("transfer-step-1").classList.remove("hidden");
+          document.getElementById("transfer-step-2").classList.add("hidden");
+          document.getElementById("transfer-modal").classList.remove("hidden");
+          document.body.classList.add("modal-active");
+          openDialog(
+            "transfer-modal",
+            document.getElementById("transfer-target"),
+          );
+        });
 
-      document.getElementById("btn-close-transfer-modal").addEventListener("click", () => {
-        document.getElementById("transfer-modal").classList.add("hidden");
-        document.body.classList.remove("modal-active");
-        closeDialog("transfer-modal");
-      });
-
-      document.getElementById("btn-transfer-cancel-1").addEventListener("click", () => {
-        document.getElementById("transfer-modal").classList.add("hidden");
-        document.body.classList.remove("modal-active");
-        closeDialog("transfer-modal");
-      });
-
-      document.getElementById("btn-transfer-back").addEventListener("click", () => {
-        document.getElementById("transfer-step-2").classList.add("hidden");
-        document.getElementById("transfer-step-1").classList.remove("hidden");
-      });
-
-      document.getElementById("btn-transfer-verify").addEventListener("click", async () => {
-        const targetInput = document.getElementById("transfer-target");
-        const target = targetInput.value.trim();
-        const errEl = document.getElementById("transfer-step1-error");
-        errEl.classList.add("hidden");
-        targetInput.setAttribute("aria-invalid", "false");
-
-        if (!target) return;
-
-        try {
-          const res = await fetch(`/get-money/${encodeURIComponent(INSTANCE_ID)}/verify-account/${encodeURIComponent(target)}`, {
-            headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` }
-          });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || t("err_account_not_found"));
-          }
-          const data = await res.json();
-          verifiedAccountData = data;
-
-          document.getElementById("verify-username").textContent = data.username;
-          document.getElementById("verify-fullname").textContent = data.name;
-          document.getElementById("transfer-amount").value = "";
-          document.getElementById("transfer-amount").setAttribute("aria-invalid", "false");
-          document.getElementById("transfer-step2-error").classList.add("hidden");
-
-          document.getElementById("transfer-step-1").classList.add("hidden");
-          document.getElementById("transfer-step-2").classList.remove("hidden");
-          document.getElementById("transfer-amount").focus();
-        } catch (e) {
-          targetInput.setAttribute("aria-invalid", "true");
-          errEl.textContent = e.message;
-          errEl.classList.remove("hidden");
-        }
-      });
-
-      document.getElementById("btn-transfer-confirm").addEventListener("click", async () => {
-        const amountInput = document.getElementById("transfer-amount");
-        const amount = amountInput.value;
-        const errEl = document.getElementById("transfer-step2-error");
-        errEl.classList.add("hidden");
-        amountInput.setAttribute("aria-invalid", "false");
-
-        if (!amount || amount <= 0 || !verifiedAccountData) return;
-
-        try {
-          const payto_uri = `payto://x-taler-bank/${bankHost}/${encodeURIComponent(verifiedAccountData.username)}?message=Transfer`;
-          const charset = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-          let request_uid = '';
-          for(let i = 0; i < 52; i++) {
-            request_uid += charset[Math.floor(Math.random() * charset.length)];
-          }
-
-          const res = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions`, {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${BANK_ACCESS_TOKEN}`
-            },
-            body: JSON.stringify({ 
-              payto_uri,
-              amount: `NUMIS:${amount}`,
-              request_uid
-            }),
-          });
-          
-          if (!res.ok) {
-             if (res.status === 409) throw new Error(translations[currentLang]["error_bal"]);
-             throw new Error(t("err_transfer_server"));
-          }
-
+      document
+        .getElementById("btn-close-transfer-modal")
+        .addEventListener("click", () => {
           document.getElementById("transfer-modal").classList.add("hidden");
           document.body.classList.remove("modal-active");
           closeDialog("transfer-modal");
-          showToast(t("toast_success"), translations[currentLang]["transfer_confirmed"], "success");
-        } catch (e) {
-          amountInput.setAttribute("aria-invalid", "true");
-          errEl.textContent = e.message || t("err_transfer_generic");
-          errEl.classList.remove("hidden");
-        }
-      });
+        });
 
+      document
+        .getElementById("btn-transfer-cancel-1")
+        .addEventListener("click", () => {
+          document.getElementById("transfer-modal").classList.add("hidden");
+          document.body.classList.remove("modal-active");
+          closeDialog("transfer-modal");
+        });
+
+      document
+        .getElementById("btn-transfer-back")
+        .addEventListener("click", () => {
+          document.getElementById("transfer-step-2").classList.add("hidden");
+          document.getElementById("transfer-step-1").classList.remove("hidden");
+        });
+
+      document
+        .getElementById("btn-transfer-verify")
+        .addEventListener("click", async () => {
+          const targetInput = document.getElementById("transfer-target");
+          const target = targetInput.value.trim();
+          const errEl = document.getElementById("transfer-step1-error");
+          errEl.classList.add("hidden");
+          targetInput.setAttribute("aria-invalid", "false");
+
+          if (!target) return;
+
+          try {
+            const res = await fetch(
+              `/get-money/${encodeURIComponent(INSTANCE_ID)}/verify-account/${encodeURIComponent(target)}`,
+              {
+                headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` },
+              },
+            );
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.message || t("err_account_not_found"));
+            }
+            const data = await res.json();
+            verifiedAccountData = data;
+
+            document.getElementById("verify-username").textContent =
+              data.username;
+            document.getElementById("verify-fullname").textContent = data.name;
+            document.getElementById("transfer-amount").value = "";
+            document
+              .getElementById("transfer-amount")
+              .setAttribute("aria-invalid", "false");
+            document
+              .getElementById("transfer-step2-error")
+              .classList.add("hidden");
+
+            document.getElementById("transfer-step-1").classList.add("hidden");
+            document
+              .getElementById("transfer-step-2")
+              .classList.remove("hidden");
+            document.getElementById("transfer-amount").focus();
+          } catch (e) {
+            targetInput.setAttribute("aria-invalid", "true");
+            errEl.textContent = e.message;
+            errEl.classList.remove("hidden");
+          }
+        });
+
+      document
+        .getElementById("btn-transfer-confirm")
+        .addEventListener("click", async () => {
+          const amountInput = document.getElementById("transfer-amount");
+          const amount = amountInput.value;
+          const errEl = document.getElementById("transfer-step2-error");
+          errEl.classList.add("hidden");
+          amountInput.setAttribute("aria-invalid", "false");
+
+          if (!amount || amount <= 0 || !verifiedAccountData) return;
+
+          try {
+            const payto_uri = `payto://x-taler-bank/${bankHost}/${encodeURIComponent(verifiedAccountData.username)}?message=Transfer`;
+            const charset = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+            let request_uid = "";
+            for (let i = 0; i < 52; i++) {
+              request_uid +=
+                charset[Math.floor(Math.random() * charset.length)];
+            }
+
+            const res = await fetch(
+              `${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/transactions`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${BANK_ACCESS_TOKEN}`,
+                },
+                body: JSON.stringify({
+                  payto_uri,
+                  amount: `NUMIS:${amount}`,
+                  request_uid,
+                }),
+              },
+            );
+
+            if (!res.ok) {
+              if (res.status === 409)
+                throw new Error(translations[currentLang]["error_bal"]);
+              throw new Error(t("err_transfer_server"));
+            }
+
+            document.getElementById("transfer-modal").classList.add("hidden");
+            document.body.classList.remove("modal-active");
+            closeDialog("transfer-modal");
+            showToast(
+              t("toast_success"),
+              translations[currentLang]["transfer_confirmed"],
+              "success",
+            );
+          } catch (e) {
+            amountInput.setAttribute("aria-invalid", "true");
+            errEl.textContent = e.message || t("err_transfer_generic");
+            errEl.classList.remove("hidden");
+          }
+        });
     </script>
     <!-- Mobile Bottom Navigation Dock -->
-    <div id="bottom-dock" role="navigation" aria-label="Navegación de secciones" data-i18n-aria-label="nav_sections" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 flex justify-around py-3">
-      <button class="sidebar-nav-btn active dock-active flex flex-col items-center gap-1 text-indigo-600 font-medium text-xs" data-target="dashboard">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+    <div
+      id="bottom-dock"
+      role="navigation"
+      aria-label="Navegación de secciones"
+      data-i18n-aria-label="nav_sections"
+      class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 flex justify-around py-3"
+    >
+      <button
+        class="sidebar-nav-btn active dock-active flex flex-col items-center gap-1 text-indigo-600 font-medium text-xs"
+        data-target="dashboard"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+          ></path>
+        </svg>
         <span data-i18n="nav_dashboard">Dashboard</span>
       </button>
-      <button class="sidebar-nav-btn flex flex-col items-center gap-1 text-slate-600 font-medium text-xs" data-target="account">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+      <button
+        class="sidebar-nav-btn flex flex-col items-center gap-1 text-slate-600 font-medium text-xs"
+        data-target="account"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+          ></path>
+        </svg>
         <span data-i18n="nav_account">Account</span>
       </button>
     </div>
 
-    <div id="toast-container" role="status" aria-live="polite" class="fixed top-20 right-4 left-4 md:top-4 md:left-auto z-50 flex flex-col gap-3"></div>
+    <div
+      id="toast-container"
+      role="status"
+      aria-live="polite"
+      class="fixed top-20 right-4 left-4 md:top-4 md:left-auto z-50 flex flex-col gap-3"
+    ></div>
   </body>
 </html>

@@ -22,8 +22,9 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  let safeSuffix = path.normalize(req.url).replace(/^(\.\.(\/|\\|$))+/, '');
-  
+  const pathname = req.url.split('?')[0];
+  let safeSuffix = path.normalize(pathname).replace(/^(\.\.(\/|\\|$))+/, '');
+
   if (safeSuffix === '/' || safeSuffix === '') {
     safeSuffix = '/index.html';
   }

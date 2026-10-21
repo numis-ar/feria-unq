@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#064d2d" />
+  <title>Puesto NUMIS · Escaneá y pagá</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;900&display=swap" rel="stylesheet" />
+  <script src="./qrcode-generator.js"></script>
+  <style>
+    :root {
+      --numis-green: #064d2d;
+      --numis-green-light: #0d5e39;
+      --numis-orange: #dc5a1e;
+      --numis-cream: #f1ecdf;
+      --numis-white: #fbfbf8;
+      --numis-mint: #cfe3d8;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: 'Archivo', Arial, sans-serif;
+    }
+
+    body {
+      background: #1a1a1a url('../puesto-feria.png') center center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0) 45%,
+        rgba(0, 0, 0, 0.15) 100%
+      );
+      pointer-events: none;
+    }
+
+    .scene {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1000px;
+      z-index: 10;
+      padding: 3vh 16px;
+      min-height: 0;
+    }
+
+    .qr-stand {
+      position: relative;
+      width: clamp(240px, 30vw, 360px);
+      transform-style: preserve-3d;
+      transform: rotateX(4deg);
+    }
+
+    .qr-poster {
+      position: relative;
+      width: 100%;
+      background: var(--numis-green);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow:
+        0 22px 50px rgba(0, 0, 0, 0.4),
+        0 6px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .qr-poster::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -18px;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 18px;
+      background: linear-gradient(to bottom, var(--numis-green-light), var(--numis-green));
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      z-index: -1;
+    }
+
+    .poster-head {
+      padding: clamp(12px, 1.6vw, 18px) clamp(16px, 2.4vw, 24px) clamp(6px, 1vw, 10px);
+      text-align: center;
+    }
+
+    .poster-head img {
+      width: clamp(110px, 16vw, 170px);
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .poster-title {
+      text-align: center;
+      color: var(--numis-white);
+      padding: 0 clamp(16px, 2.4vw, 24px) clamp(10px, 1.4vw, 16px);
+    }
+
+    .poster-title h1 {
+      margin: 0;
+      font-size: clamp(22px, 3.2vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .poster-title p {
+      margin: clamp(4px, 0.7vw, 6px) 0 0;
+      font-size: clamp(12px, 1.7vw, 18px);
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.95;
+    }
+
+    .qr-frame-wrap {
+      padding: 0 clamp(16px, 2.4vw, 24px) clamp(12px, 1.6vw, 18px);
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+
+    .qr-frame {
+      width: 100%;
+      max-width: 280px;
+      aspect-ratio: 1 / 1;
+      background: var(--numis-white);
+      border-radius: 10px;
+      padding: clamp(8px, 1.1vw, 12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-frame svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .poster-foot {
+      background: var(--numis-white);
+      padding: clamp(8px, 1.1vw, 12px) clamp(14px, 2vw, 20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(6px, 1vw, 10px);
+      color: var(--numis-green);
+      font-size: clamp(11px, 1.4vw, 14px);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .poster-foot img {
+      width: clamp(60px, 8vw, 90px);
+      height: auto;
+      display: block;
+    }
+
+    .page-footer {
+      background: var(--numis-green);
+      padding: clamp(12px, 1.6vw, 18px) clamp(16px, 3vw, 32px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(12px, 2vw, 24px);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      z-index: 20;
+      flex: none;
+    }
+
+    .page-footer p {
+      margin: 0;
+      color: var(--numis-white);
+      font-size: clamp(12px, 1.4vw, 15px);
+      line-height: 1.35;
+      flex: 1;
+      text-align: left;
+      max-width: 720px;
+    }
+
+    .btn-pay {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--numis-orange);
+      color: var(--numis-white);
+      border: none;
+      border-radius: 10px;
+      padding: clamp(10px, 1.2vw, 13px) clamp(24px, 3vw, 40px);
+      font-family: inherit;
+      font-size: clamp(14px, 1.6vw, 17px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      transition: transform 0.1s ease, background 0.2s ease;
+    }
+
+    .btn-pay:hover {
+      background: #c44d18;
+    }
+
+    .btn-pay:active {
+      transform: translateY(1px);
+    }
+
+    .btn-pay:disabled,
+    .btn-pay[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .page-footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 14px 20px;
+      }
+      .page-footer p {
+        text-align: center;
+        font-size: 13px;
+      }
+      .btn-pay {
+        width: 100%;
+      }
+      .scene {
+        padding: 2vh 12px;
+      }
+      .qr-stand {
+        width: clamp(220px, 72vw, 300px);
+        transform: rotateX(2deg);
+      }
+    }
+
+    @media (min-aspect-ratio: 16/9) {
+      .scene {
+        padding: 4vh 16px;
+      }
+    }
+
+    .qr-missing {
+      position: absolute;
+      top: 5vh;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--numis-green);
+      padding: 16px 24px;
+      border-radius: 12px;
+      border-left: 5px solid var(--numis-orange);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      max-width: min(90vw, 520px);
+      font-size: 14px;
+      line-height: 1.5;
+      z-index: 20;
+    }
+
+    .qr-missing code {
+      background: var(--numis-cream);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--numis-orange);
+      word-break: break-all;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="overlay" aria-hidden="true"></div>
+
+  <div id="missing-qr" class="qr-missing" hidden>
+    <strong>Falta el contenido del QR.</strong><br />
+    Pasá el valor por URL con <code>?qr=...</code> o <code>&amp;qr=...</code>.<br />
+    Ejemplo: <code>https://unq.numis.ar/puesto.html?qr=pagar-a-mi-puesto</code>
+  </div>
+
+  <div class="scene" role="main" aria-label="Código QR para pagar en el puesto">
+    <div class="qr-stand">
+      <div class="qr-poster">
+        <div class="poster-head">
+          <img src="./numis-logo.svg" alt="NUMIS" />
+        </div>
+
+        <div class="poster-title">
+          <h1>Escaneá y pagá</h1>
+          <p>desde tu celular</p>
+        </div>
+
+        <div class="qr-frame-wrap">
+          <div id="qr-frame" class="qr-frame" aria-live="polite">
+            <!-- QR generado por JS -->
+          </div>
+        </div>
+
+        <div class="poster-foot">
+          <span>Con la app de</span>
+          <img src="./taler-logo.svg" alt="Taler" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    <p>Si la billetera está en el mismo dispositivo donde estás viendo este QR usá el siguiente botón</p>
+    <a id="btn-pay" class="btn-pay" href="#" role="button">Pagar</a>
+  </footer>
+
+  <script>
+    (function () {
+      function getQrValue() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('qr');
+      }
+
+      function renderQR(url) {
+        if (!window.qrcode) {
+          document.getElementById('qr-frame').innerHTML =
+            '<div style="color:#dc5a1e;font-size:12px;text-align:center;padding:8px">Error al cargar el generador de QR</div>';
+          return;
+        }
+
+        const q = window.qrcode(0, 'M');
+        q.addData(url);
+        q.make();
+
+        const n = q.getModuleCount();
+        let d = '';
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            if (q.isDark(r, c)) {
+              d += `M${c} ${r}h1v1h-1z`;
+            }
+          }
+        }
+
+        const margin = 3;
+        const s = n + margin * 2;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', `-${margin} -${margin} ${s} ${s}`);
+        svg.setAttribute('shape-rendering', 'crispEdges');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', 'Código QR para pagar: ' + url);
+
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bg.setAttribute('x', -margin);
+        bg.setAttribute('y', -margin);
+        bg.setAttribute('width', s);
+        bg.setAttribute('height', s);
+        bg.setAttribute('fill', '#fbfbf8');
+        svg.appendChild(bg);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', '#064d2d');
+        svg.appendChild(path);
+
+        const frame = document.getElementById('qr-frame');
+        frame.innerHTML = '';
+        frame.appendChild(svg);
+      }
+
+      const value = getQrValue();
+      const payBtn = document.getElementById('btn-pay');
+
+      if (!value) {
+        document.getElementById('missing-qr').hidden = false;
+        if (payBtn) payBtn.hidden = true;
+      } else {
+        renderQR(value);
+        if (payBtn) payBtn.href = value;
+      }
+    })();
+  </script>
+</body>
+</html>
