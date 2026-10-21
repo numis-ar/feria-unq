@@ -10,6 +10,9 @@ import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 
+// ---------------------------------------------------------------------------
+// Environment configuration
+// ---------------------------------------------------------------------------
 export const PORT = parseInt(process.env.PORT || '3000', 10);
 const LISTEN_PID = process.env.LISTEN_PID;
 const LISTEN_FDS = process.env.LISTEN_FDS;
@@ -21,16 +24,22 @@ const GET_MONEY_SCRIPT = 'wallet-get-money.sh';
 export function getBankUrl() {
   return process.env.BANK_URL || 'https://bank.taler.ar';
 }
+function getAdminToken() { return process.env.ADMIN_TOKEN || ''; }
+function getVapidFile() { return process.env.VAPID_FILE || ''; }
+function getVapidPublicKey() { return process.env.VAPID_PUBLIC_KEY || ''; }
+function getVapidPrivateKey() { return process.env.VAPID_PRIVATE_KEY || ''; }
+function getVapidSubject() { return process.env.VAPID_SUBJECT || ''; }
+function getPushSubscriptionsFile() { return process.env.PUSH_SUBSCRIPTIONS_FILE || ''; }
+
 export const RESTRICTED_ACCOUNTS = ['exchange', 'admin', 'closing_account'];
 export const CLOSING_ACCOUNT = 'closing_account';
 
-export async function handleVerifyAccount(req: http.IncomingMessage, res: http.ServerResponse, instanceId: string, targetAccount: string) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    sendError(res, 401, 'Unauthorized');
+export async function handleVerifyAccount(req: http.IncomingMessage, res: http.ServerResponse, targetAccount: string) {
+  const adminToken = getAdminToken();
+  if (!adminToken) {
+    sendError(res, 500, 'Server misconfiguration: admin token not set');
     return;
   }
-  const token = authHeader.substring(7);
 
   if (RESTRICTED_ACCOUNTS.includes(targetAccount)) {
     sendError(res, 400, 'Transfer to this account is restricted');
@@ -43,7 +52,7 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
       const options: https.RequestOptions = {
         hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
         path: url.pathname + url.search, method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Accept': 'application/json' },
         rejectUnauthorized: false
       };
       const client = url.protocol === 'https:' ? https : http;
@@ -64,7 +73,7 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
 
     sendJson(res, 200, {
       username: targetAccount,
-      name: accountInfo.name || targetAccount
+      name: accountInfo.full_name || accountInfo.name || targetAccount
     });
   } catch (e: any) {
     log('Account not found error:', e.message || e);
@@ -790,7 +799,7 @@ export interface VapidKeys {
 let vapidCache: VapidKeys | null = null;
 
 function vapidFile(): string {
-  return process.env.VAPID_FILE || path.join(process.cwd(), '.vapid.json');
+  return getVapidFile() || path.join(process.cwd(), '.vapid.json');
 }
 
 function generateVapidKeys(): VapidKeys {
@@ -829,8 +838,8 @@ function deriveVapidKeys(publicKey: string, privateKey: string): VapidKeys {
 
 export function getVapidKeys(): VapidKeys {
   if (vapidCache) return vapidCache;
-  const envPub = process.env.VAPID_PUBLIC_KEY;
-  const envPriv = process.env.VAPID_PRIVATE_KEY;
+  const envPub = getVapidPublicKey();
+  const envPriv = getVapidPrivateKey();
   if (envPub && envPriv) {
     vapidCache = deriveVapidKeys(envPub, envPriv);
     return vapidCache;
@@ -889,7 +898,7 @@ function derToRawSignature(der: Buffer): Buffer {
 
 export function buildVapidJwt(endpointUrl: string, keys: VapidKeys, subject?: string, now?: number): string {
   const aud = new URL(endpointUrl).origin;
-  const sub = subject || process.env.VAPID_SUBJECT || 'mailto:admin@unq.numis.ar';
+  const sub = subject || getVapidSubject() || 'mailto:admin@unq.numis.ar';
   const exp = (now ?? Math.floor(Date.now() / 1000)) + 12 * 3600;
   const header = Buffer.from(JSON.stringify({ typ: 'JWT', alg: 'ES256' })).toString('base64url');
   const payload = Buffer.from(JSON.stringify({ aud, exp, sub })).toString('base64url');
@@ -932,7 +941,7 @@ export interface PushSubscriptionData {
 const subscriptionStores = new Map<string, Record<string, PushSubscriptionData[]>>();
 
 function subscriptionsFile(): string {
-  return process.env.PUSH_SUBSCRIPTIONS_FILE || path.join(process.cwd(), '.push-subscriptions.json');
+  return getPushSubscriptionsFile() || path.join(process.cwd(), '.push-subscriptions.json');
 }
 
 function loadSubscriptions(): Record<string, PushSubscriptionData[]> {
@@ -1101,7 +1110,7 @@ export async function sendPushTick(instance: string): Promise<void> {
   if (now - last < 30000) return;
   lastPushAt.set(instance, now);
   const keys = getVapidKeys();
-  const subject = process.env.VAPID_SUBJECT || 'mailto:admin@unq.numis.ar';
+  const subject = getVapidSubject() || 'mailto:admin@unq.numis.ar';
   for (const sub of getSubscriptions(instance)) {
     try {
       const status = await postPush(sub.endpoint, keys, subject);
@@ -1118,7 +1127,7 @@ function allInstances(): string[] {
 
 export async function sendAdminNotification(opts: { message: string; title?: string; instance?: string }): Promise<number> {
   const keys = getVapidKeys();
-  const subject = process.env.VAPID_SUBJECT || 'mailto:admin@unq.numis.ar';
+  const subject = getVapidSubject() || 'mailto:admin@unq.numis.ar';
   const targets = (!opts.instance || opts.instance === 'all')
     ? allInstances()
     : [opts.instance];
@@ -1138,7 +1147,7 @@ export async function sendAdminNotification(opts: { message: string; title?: str
 }
 
 export async function handleAdminNotify(req: http.IncomingMessage, res: http.ServerResponse) {
-  const adminToken = process.env.ADMIN_TOKEN;
+  const adminToken = getAdminToken();
   if (!adminToken || req.headers['x-admin-token'] !== adminToken) {
     sendError(res, 403, 'Forbidden');
     return;
@@ -1218,9 +1227,9 @@ export const server = http.createServer((req, res) => {
     return;
   }
 
-  const verifyMatch = path.match(/^\/get-money\/([^/]+)\/verify-account\/([^/]+)$/);
+  const verifyMatch = path.match(/^\/api\/verify-account\/([^/]+)$/);
   if (req.method === 'GET' && verifyMatch) {
-    handleVerifyAccount(req, res, verifyMatch[1], verifyMatch[2]).catch((e) => {
+    handleVerifyAccount(req, res, verifyMatch[1]).catch((e) => {
       log(e);
       sendError(res, 500, 'Internal server error');
     });

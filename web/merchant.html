@@ -284,6 +284,9 @@
         justify-content: space-between;
         gap: 0.75rem;
       }
+      #qr-modal-footer.hidden {
+        display: none !important;
+      }
       #qr-modal-footer p {
         margin: 0;
         color: var(--numis-white);
@@ -726,24 +729,10 @@
 
         <!-- Step 2: Confirm & Amount -->
         <div id="transfer-step-2" class="space-y-4 hidden">
-          <div
-            class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2"
-          >
-            <p class="text-sm text-slate-600">
-              <strong data-i18n="col_subject">Username</strong>:
-              <span
-                id="verify-username"
-                class="font-bold text-slate-800"
-              ></span>
-            </p>
-            <p class="text-sm text-slate-600">
-              <strong data-i18n="account_full_name">Full Name</strong>:
-              <span
-                id="verify-fullname"
-                class="font-bold text-slate-800"
-              ></span>
-            </p>
-          </div>
+          <p class="text-sm text-slate-600">
+            <span data-i18n="transfer_to_name_prefix">You are transferring to</span>
+            <span id="verify-fullname" class="font-bold text-slate-800"></span>
+          </p>
           <div>
             <label
               for="transfer-amount"
@@ -1656,6 +1645,7 @@
           transfer_send_funds: "Send funds",
           transfer_from: "transfer from {account}",
           transfer_to: "transfer to {account}",
+          transfer_to_name_prefix: "You are transferring to",
           unknown_account: "unknown",
           target_account: "Merchant Account",
           transfer_btn: "Send",
@@ -1782,6 +1772,7 @@
           transfer_send_funds: "Enviar fondos",
           transfer_from: "transfer desde {account}",
           transfer_to: "transfer a {account}",
+          transfer_to_name_prefix: "Estás transfiriendo a",
           unknown_account: "desconocido",
           target_account: "Cuenta del comerciante",
           transfer_btn: "Enviar",
@@ -3439,7 +3430,7 @@
 
           try {
             const res = await fetch(
-              `/get-money/${encodeURIComponent(INSTANCE_ID)}/verify-account/${encodeURIComponent(target)}`,
+              `/api/verify-account/${encodeURIComponent(target)}`,
               {
                 headers: { Authorization: `Bearer ${BANK_ACCESS_TOKEN}` },
               },
@@ -3451,8 +3442,6 @@
             const data = await res.json();
             verifiedAccountData = data;
 
-            document.getElementById("verify-username").textContent =
-              data.username;
             document.getElementById("verify-fullname").textContent = data.name;
             document.getElementById("transfer-amount").value = "";
             document

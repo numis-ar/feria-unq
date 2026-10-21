@@ -190,6 +190,9 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await page.click('#btn-transfer-verify');
 
     await page.locator('#transfer-step-2').waitFor({ state: 'visible' });
+    const transferName = await page.locator('#verify-fullname').textContent();
+    assert.strictEqual(transferName.trim(), 'Target Merchant Store');
+
     await page.fill('#transfer-amount', '15');
     await page.click('#btn-transfer-confirm');
 
