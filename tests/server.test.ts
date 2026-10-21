@@ -17,6 +17,7 @@ import {
   removeSubscription,
   getSubscriptions,
   encryptAes128Gcm,
+  resetBankAdminTokenCacheForTests,
 } from '../server/backend.ts';
 
 describe('Backend tests', () => {
@@ -731,6 +732,180 @@ describe('Backend tests', () => {
         .send({ message: 'hi', instance: 'shop1' })
         .expect(200);
       assert.strictEqual(res.body.sent, 0);
+    });
+  });
+
+  describe('GET /api/verify-account/:target', () => {
+    const OLD_BANK_ADMIN_PWD = process.env.BANK_ADMIN_PWD;
+
+    beforeEach(() => {
+      resetBankAdminTokenCacheForTests();
+      process.env.BANK_ADMIN_PWD = 'admin-secret';
+    });
+
+    afterEach(() => {
+      resetBankAdminTokenCacheForTests();
+      process.env.BANK_ADMIN_PWD = OLD_BANK_ADMIN_PWD;
+    });
+
+    it('returns 500 when BANK_ADMIN_PWD is not configured', async () => {
+      delete process.env.BANK_ADMIN_PWD;
+      const res = await request(server)
+        .get('/api/verify-account/someuser')
+        .expect(500);
+      assert.strictEqual(res.body.type, 'error');
+    });
+
+    it('fetches a bank admin token and returns account name', async () => {
+      let tokenRequestBody: any = null;
+      let tokenAuthHeader: string | undefined;
+      mockBankHandler = (req, res) => {
+        const url = req.url || '';
+        if (req.method === 'POST' && url.startsWith('/accounts/admin/token')) {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', () => {
+            tokenRequestBody = JSON.parse(body);
+            tokenAuthHeader = req.headers.authorization;
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              access_token: 'bank-admin-token-123',
+              expiration: { t_ms: Date.now() + 24 * 60 * 60 * 1000 },
+            }));
+          });
+          return;
+        }
+        if (req.method === 'GET' && url === '/accounts/someuser') {
+          assert.strictEqual(req.headers.authorization, 'Bearer bank-admin-token-123');
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ name: 'Some User' }));
+          return;
+        }
+        res.writeHead(404);
+        res.end();
+      };
+
+      const res = await request(server)
+        .get('/api/verify-account/someuser')
+        .expect(200);
+      assert.deepStrictEqual(res.body, { username: 'someuser', name: 'Some User' });
+      assert.ok(tokenRequestBody);
+      assert.strictEqual(tokenRequestBody.scope, 'readwrite');
+      assert.strictEqual(tokenRequestBody.refreshable, true);
+      assert.ok(tokenAuthHeader?.startsWith('Basic '));
+      const decoded = Buffer.from(tokenAuthHeader!.substring(6), 'base64').toString('utf8');
+      assert.strictEqual(decoded, 'admin:admin-secret');
+    });
+
+    it('prefers full_name when present', async () => {
+      mockBankHandler = (req, res) => {
+        const url = req.url || '';
+        if (req.method === 'POST' && url.startsWith('/accounts/admin/token')) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            access_token: 'bank-admin-token-123',
+            expiration: { t_ms: Date.now() + 24 * 60 * 60 * 1000 },
+          }));
+          return;
+        }
+        if (req.method === 'GET' && url === '/accounts/nameduser') {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ name: 'Name', full_name: 'Full Name' }));
+          return;
+        }
+        res.writeHead(404);
+        res.end();
+      };
+
+      const res = await request(server)
+        .get('/api/verify-account/nameduser')
+        .expect(200);
+      assert.deepStrictEqual(res.body, { username: 'nameduser', name: 'Full Name' });
+    });
+
+    it('returns 400 for restricted accounts', async () => {
+      mockBankHandler = (req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ access_token: 't', expiration: { t_ms: Date.now() + 10000 } }));
+      };
+      const res = await request(server)
+        .get('/api/verify-account/admin')
+        .expect(400);
+      assert.strictEqual(res.body.type, 'error');
+    });
+
+    it('returns 404 when the bank account does not exist', async () => {
+      mockBankHandler = (req, res) => {
+        const url = req.url || '';
+        if (req.method === 'POST' && url.startsWith('/accounts/admin/token')) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ access_token: 't', expiration: { t_ms: Date.now() + 10000 } }));
+          return;
+        }
+        res.writeHead(404);
+        res.end();
+      };
+      const res = await request(server)
+        .get('/api/verify-account/unknown')
+        .expect(404);
+      assert.strictEqual(res.body.type, 'error');
+    });
+
+    it('reuses the cached token while it is valid', async () => {
+      let tokenHits = 0;
+      mockBankHandler = (req, res) => {
+        const url = req.url || '';
+        if (req.method === 'POST' && url.startsWith('/accounts/admin/token')) {
+          tokenHits++;
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            access_token: `token-${tokenHits}`,
+            expiration: { t_ms: Date.now() + 24 * 60 * 60 * 1000 },
+          }));
+          return;
+        }
+        if (req.method === 'GET' && url.startsWith('/accounts/')) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ name: 'User' }));
+          return;
+        }
+        res.writeHead(404);
+        res.end();
+      };
+
+      await request(server).get('/api/verify-account/u1').expect(200);
+      await request(server).get('/api/verify-account/u2').expect(200);
+      assert.strictEqual(tokenHits, 1);
+    });
+
+    it('refreshes the token when it has expired', async () => {
+      let tokenHits = 0;
+      mockBankHandler = (req, res) => {
+        const url = req.url || '';
+        if (req.method === 'POST' && url.startsWith('/accounts/admin/token')) {
+          tokenHits++;
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            access_token: `token-${tokenHits}`,
+            expiration: { t_ms: Date.now() + 500 },
+          }));
+          return;
+        }
+        if (req.method === 'GET' && url.startsWith('/accounts/')) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ name: 'User' }));
+          return;
+        }
+        res.writeHead(404);
+        res.end();
+      };
+
+      await request(server).get('/api/verify-account/u1').expect(200);
+      assert.strictEqual(tokenHits, 1);
+
+      await new Promise((r) => setTimeout(r, 600));
+      await request(server).get('/api/verify-account/u2').expect(200);
+      assert.strictEqual(tokenHits, 2);
     });
   });
 });

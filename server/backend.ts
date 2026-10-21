@@ -25,6 +25,8 @@ export function getBankUrl() {
   return process.env.BANK_URL || 'https://bank.taler.ar';
 }
 function getAdminToken() { return process.env.ADMIN_TOKEN || ''; }
+function getBankAdminUser() { return process.env.BANK_ADMIN_USER || 'admin'; }
+function getBankAdminPwd() { return process.env.BANK_ADMIN_PWD || ''; }
 function getVapidFile() { return process.env.VAPID_FILE || ''; }
 function getVapidPublicKey() { return process.env.VAPID_PUBLIC_KEY || ''; }
 function getVapidPrivateKey() { return process.env.VAPID_PRIVATE_KEY || ''; }
@@ -34,10 +36,110 @@ function getPushSubscriptionsFile() { return process.env.PUSH_SUBSCRIPTIONS_FILE
 export const RESTRICTED_ACCOUNTS = ['exchange', 'admin', 'closing_account'];
 export const CLOSING_ACCOUNT = 'closing_account';
 
+interface BankAdminTokenCache {
+  token: string;
+  expiresAt: number;
+}
+let bankAdminTokenCache: BankAdminTokenCache | null = null;
+let bankAdminTokenRefreshTimer: NodeJS.Timeout | null = null;
+
+export function resetBankAdminTokenCacheForTests() {
+  bankAdminTokenCache = null;
+  if (bankAdminTokenRefreshTimer) {
+    clearTimeout(bankAdminTokenRefreshTimer);
+    bankAdminTokenRefreshTimer = null;
+  }
+}
+
+function basicAuthHeader(user: string, pass: string): string {
+  return 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
+}
+
+export async function refreshBankAdminToken(): Promise<string> {
+  const user = getBankAdminUser();
+  const pwd = getBankAdminPwd();
+  if (!pwd) {
+    throw new Error('Server misconfiguration: BANK_ADMIN_PWD not set');
+  }
+
+  const durationMs = 24 * 60 * 60 * 1000; // 24 hours
+  const payload = JSON.stringify({
+    scope: 'readwrite',
+    duration: { d_ms: durationMs },
+    refreshable: true,
+  });
+
+  const tokenResponse = await new Promise<{ access_token: string; expiration: { t_ms: number } }>((resolve, reject) => {
+    const url = new URL(`/accounts/${encodeURIComponent(user)}/token`, getBankUrl());
+    const options: https.RequestOptions = {
+      hostname: url.hostname,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      path: url.pathname + url.search,
+      method: 'POST',
+      headers: {
+        'Authorization': basicAuthHeader(user, pwd),
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+        'Accept': 'application/json',
+      },
+      rejectUnauthorized: false,
+    };
+    const client = url.protocol === 'https:' ? https : http;
+    const request = client.request(options, (response) => {
+      let data = '';
+      response.on('data', chunk => data += chunk);
+      response.on('end', () => {
+        if (response.statusCode && response.statusCode >= 400) {
+          reject(new Error(`Bank admin token request failed: ${response.statusCode} ${data}`));
+        } else {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error('Failed to parse bank admin token response'));
+          }
+        }
+      });
+    });
+    request.on('error', reject);
+    request.write(payload);
+    request.end();
+  });
+
+  const expiresAt = tokenResponse.expiration?.t_ms || (Date.now() + durationMs);
+  bankAdminTokenCache = { token: tokenResponse.access_token, expiresAt };
+  scheduleBankAdminTokenRefresh(expiresAt);
+  log('Bank admin token refreshed, expires at', new Date(expiresAt).toISOString());
+  return tokenResponse.access_token;
+}
+
+function scheduleBankAdminTokenRefresh(expiresAt: number) {
+  if (bankAdminTokenRefreshTimer) {
+    clearTimeout(bankAdminTokenRefreshTimer);
+    bankAdminTokenRefreshTimer = null;
+  }
+  const refreshMs = Math.max(1000, expiresAt - Date.now() - 60 * 1000); // refresh 1 min before expiry
+  bankAdminTokenRefreshTimer = setTimeout(() => {
+    void refreshBankAdminToken().catch((e) => log('Scheduled bank admin token refresh failed:', e.message || e));
+  }, refreshMs);
+  (bankAdminTokenRefreshTimer as any).unref?.();
+}
+
+export async function getBankAdminToken(): Promise<string> {
+  const now = Date.now();
+  const marginMs = 60 * 1000; // renew if expiring within 1 minute
+  if (bankAdminTokenCache && bankAdminTokenCache.expiresAt > now + marginMs) {
+    return bankAdminTokenCache.token;
+  }
+  return refreshBankAdminToken();
+}
+
 export async function handleVerifyAccount(req: http.IncomingMessage, res: http.ServerResponse, targetAccount: string) {
-  const adminToken = getAdminToken();
-  if (!adminToken) {
-    sendError(res, 500, 'Server misconfiguration: admin token not set');
+  let adminToken: string;
+  try {
+    adminToken = await getBankAdminToken();
+  } catch (e: any) {
+    log('Failed to obtain bank admin token:', e.message || e);
+    sendError(res, 500, 'Server misconfiguration: unable to obtain bank admin token');
     return;
   }
 
@@ -83,19 +185,20 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
 
 export function proxyRequest(req: http.IncomingMessage, res: http.ServerResponse, targetBase: string, rest: string, authOverride?: string) {
   const target = new URL(rest.replace(/^\/+/, ''), targetBase.endsWith('/') ? targetBase : targetBase + '/');
+  const headers: Record<string, string> = {
+    'Accept': req.headers.accept || 'application/json',
+    'Authorization': authOverride !== undefined ? authOverride : (req.headers.authorization || ''),
+  };
+  if (req.headers['content-type']) headers['Content-Type'] = req.headers['content-type'];
+  if (req.headers['content-length']) headers['Content-Length'] = req.headers['content-length'];
   const options: https.RequestOptions = {
     hostname: target.hostname,
     port: target.port || (target.protocol === 'https:' ? 443 : 80),
     path: target.pathname + target.search,
     method: req.method,
-    headers: {
-      'Accept': req.headers.accept || 'application/json',
-      'Authorization': authOverride !== undefined ? authOverride : (req.headers.authorization || ''),
-    },
+    headers,
     rejectUnauthorized: false,
   };
-  if (req.headers['content-type']) options.headers!['Content-Type'] = req.headers['content-type'];
-  if (req.headers['content-length']) options.headers!['Content-Length'] = req.headers['content-length'];
 
   const client = target.protocol === 'https:' ? https : http;
   const upstream = client.request(options, (upRes) => {
@@ -1354,7 +1457,14 @@ import { pathToFileURL } from 'url';
 
 // Avoid listening when required as a module (e.g. in tests)
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && parseInt(LISTEN_FDS, 10) > 0) {
+  // Pre-fetch and schedule rotation of the bank admin token on startup.
+  if (getBankAdminPwd()) {
+    refreshBankAdminToken().catch((e) => {
+      log('Failed to fetch initial bank admin token:', e.message || e);
+    });
+  }
+
+  if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && LISTEN_FDS && parseInt(LISTEN_FDS, 10) > 0) {
     server.listen({ fd: 3 }, () => {
       console.log('Server executing via systemd socket activation (FD 3)');
     });
