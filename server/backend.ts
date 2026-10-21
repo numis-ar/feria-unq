@@ -27,6 +27,17 @@ export function getBankUrl() {
 function getAdminToken() { return process.env.ADMIN_TOKEN || ''; }
 function getBankAdminUser() { return process.env.BANK_ADMIN_USER || 'admin'; }
 function getBankAdminPwd() { return process.env.BANK_ADMIN_PWD || ''; }
+function getBankAdminTokenEnv() { return process.env.BANK_ADMIN_TOKEN || ''; }
+function getBankAdminTokenScope() { return process.env.BANK_ADMIN_TOKEN_SCOPE || 'readwrite'; }
+function getBankAdminTokenDurationMs(): number | null {
+  const v = process.env.BANK_ADMIN_TOKEN_DURATION_MS;
+  if (!v) return null;
+  const n = parseInt(v, 10);
+  return isNaN(n) ? null : n;
+}
+function getBankAdminTokenRefreshable(): boolean {
+  return process.env.BANK_ADMIN_TOKEN_REFRESHABLE === '1' || process.env.BANK_ADMIN_TOKEN_REFRESHABLE === 'true';
+}
 function getVapidFile() { return process.env.VAPID_FILE || ''; }
 function getVapidPublicKey() { return process.env.VAPID_PUBLIC_KEY || ''; }
 function getVapidPrivateKey() { return process.env.VAPID_PRIVATE_KEY || ''; }
@@ -62,14 +73,16 @@ export async function refreshBankAdminToken(): Promise<string> {
     throw new Error('Server misconfiguration: BANK_ADMIN_PWD not set');
   }
 
-  const durationMs = 24 * 60 * 60 * 1000; // 24 hours
-  const payload = JSON.stringify({
-    scope: 'readwrite',
-    duration: { d_ms: durationMs },
-    refreshable: true,
-  });
+  const scope = getBankAdminTokenScope();
+  const durationMs = getBankAdminTokenDurationMs();
+  const refreshable = getBankAdminTokenRefreshable();
+  const body: Record<string, unknown> = { scope };
+  if (durationMs !== null) body.duration = { d_ms: durationMs };
+  if (refreshable) body.refreshable = true;
+  const payload = JSON.stringify(body);
+  log('Requesting bank admin token for user', user, 'with body', body);
 
-  const tokenResponse = await new Promise<{ access_token: string; expiration: { t_ms: number } }>((resolve, reject) => {
+  const tokenResponse = await new Promise<{ access_token: string; expiration?: { t_ms: number } }>((resolve, reject) => {
     const url = new URL(`/accounts/${encodeURIComponent(user)}/token`, getBankUrl());
     const options: https.RequestOptions = {
       hostname: url.hostname,
@@ -105,9 +118,14 @@ export async function refreshBankAdminToken(): Promise<string> {
     request.end();
   });
 
-  const expiresAt = tokenResponse.expiration?.t_ms || (Date.now() + durationMs);
+  // If the bank returned an expiration, schedule a refresh; otherwise the token
+  // will be lazily recreated when it fails.
+  const defaultDurationMs = 24 * 60 * 60 * 1000;
+  const expiresAt = tokenResponse.expiration?.t_ms || (Date.now() + defaultDurationMs);
   bankAdminTokenCache = { token: tokenResponse.access_token, expiresAt };
-  scheduleBankAdminTokenRefresh(expiresAt);
+  if (tokenResponse.expiration) {
+    scheduleBankAdminTokenRefresh(expiresAt);
+  }
   log('Bank admin token refreshed, expires at', new Date(expiresAt).toISOString());
   return tokenResponse.access_token;
 }
@@ -125,6 +143,11 @@ function scheduleBankAdminTokenRefresh(expiresAt: number) {
 }
 
 export async function getBankAdminToken(): Promise<string> {
+  const staticToken = getBankAdminTokenEnv();
+  if (staticToken) {
+    return staticToken;
+  }
+
   const now = Date.now();
   const marginMs = 60 * 1000; // renew if expiring within 1 minute
   if (bankAdminTokenCache && bankAdminTokenCache.expiresAt > now + marginMs) {
@@ -133,7 +156,42 @@ export async function getBankAdminToken(): Promise<string> {
   return refreshBankAdminToken();
 }
 
+function fetchAccount(targetAccount: string, adminToken: string): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
+    const url = new URL(`/accounts/${encodeURIComponent(targetAccount)}`, getBankUrl());
+    const options: https.RequestOptions = {
+      hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      path: url.pathname + url.search, method: 'GET',
+      headers: { 'Authorization': `Bearer ${adminToken}`, 'Accept': 'application/json' },
+      rejectUnauthorized: false
+    };
+    const client = url.protocol === 'https:' ? https : http;
+    const request = client.request(options, (response) => {
+      let data = '';
+      response.on('data', chunk => data += chunk);
+      response.on('end', () => {
+        if (response.statusCode === 401) {
+          reject({ status: 401, message: 'Unauthorized' });
+          return;
+        }
+        if (response.statusCode && response.statusCode >= 400) {
+          reject({ status: response.statusCode, message: `Account not found or error: ${response.statusCode}` });
+          return;
+        }
+        resolve(JSON.parse(data));
+      });
+    });
+    request.on('error', (e) => reject({ status: 0, message: e.message || e }));
+    request.end();
+  });
+}
+
 export async function handleVerifyAccount(req: http.IncomingMessage, res: http.ServerResponse, targetAccount: string) {
+  if (RESTRICTED_ACCOUNTS.includes(targetAccount)) {
+    sendError(res, 400, 'Transfer to this account is restricted');
+    return;
+  }
+
   let adminToken: string;
   try {
     adminToken = await getBankAdminToken();
@@ -143,43 +201,29 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
     return;
   }
 
-  if (RESTRICTED_ACCOUNTS.includes(targetAccount)) {
-    sendError(res, 400, 'Transfer to this account is restricted');
-    return;
+  async function tryFetch(retryOn401: boolean): Promise<any> {
+    try {
+      return await fetchAccount(targetAccount, adminToken);
+    } catch (e: any) {
+      if (retryOn401 && e.status === 401) {
+        log('Bank admin token was rejected, forcing refresh');
+        resetBankAdminTokenCacheForTests();
+        adminToken = await refreshBankAdminToken();
+        return tryFetch(false);
+      }
+      throw e;
+    }
   }
 
   try {
-    const accountInfo = await new Promise<any>((resolve, reject) => {
-      const url = new URL(`/accounts/${encodeURIComponent(targetAccount)}`, getBankUrl());
-      const options: https.RequestOptions = {
-        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
-        path: url.pathname + url.search, method: 'GET',
-        headers: { 'Authorization': `Bearer ${adminToken}`, 'Accept': 'application/json' },
-        rejectUnauthorized: false
-      };
-      const client = url.protocol === 'https:' ? https : http;
-      const request = client.request(options, (response) => {
-        let data = '';
-        response.on('data', chunk => data += chunk);
-        response.on('end', () => {
-          if (response.statusCode && response.statusCode >= 400) {
-            reject(new Error(`Account not found or error: ${response.statusCode}`));
-          } else {
-            resolve(JSON.parse(data));
-          }
-        });
-      });
-      request.on('error', reject);
-      request.end();
-    });
-
+    const accountInfo = await tryFetch(true);
     sendJson(res, 200, {
       username: targetAccount,
       name: accountInfo.full_name || accountInfo.name || targetAccount
     });
   } catch (e: any) {
     log('Account not found error:', e.message || e);
-    sendError(res, 404, 'Account not found');
+    sendError(res, e.status === 401 ? 500 : 404, e.status === 401 ? 'Unable to authenticate with bank' : 'Account not found');
   }
 }
 
@@ -1458,7 +1502,7 @@ import { pathToFileURL } from 'url';
 // Avoid listening when required as a module (e.g. in tests)
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   // Pre-fetch and schedule rotation of the bank admin token on startup.
-  if (getBankAdminPwd()) {
+  if (!getBankAdminTokenEnv() && getBankAdminPwd()) {
     refreshBankAdminToken().catch((e) => {
       log('Failed to fetch initial bank admin token:', e.message || e);
     });

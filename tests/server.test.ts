@@ -791,10 +791,49 @@ describe('Backend tests', () => {
       assert.deepStrictEqual(res.body, { username: 'someuser', name: 'Some User' });
       assert.ok(tokenRequestBody);
       assert.strictEqual(tokenRequestBody.scope, 'readwrite');
-      assert.strictEqual(tokenRequestBody.refreshable, true);
+      assert.strictEqual('duration' in tokenRequestBody, false);
+      assert.strictEqual('refreshable' in tokenRequestBody, false);
       assert.ok(tokenAuthHeader?.startsWith('Basic '));
       const decoded = Buffer.from(tokenAuthHeader!.substring(6), 'base64').toString('utf8');
       assert.strictEqual(decoded, 'admin:admin-secret');
+    });
+
+    it('sends duration and refreshable when configured', async () => {
+      process.env.BANK_ADMIN_TOKEN_DURATION_MS = '3600000';
+      process.env.BANK_ADMIN_TOKEN_REFRESHABLE = 'true';
+      let tokenRequestBody: any = null;
+      mockBankHandler = (req, res) => {
+        const url = req.url || '';
+        if (req.method === 'POST' && url.startsWith('/accounts/admin/token')) {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', () => {
+            tokenRequestBody = JSON.parse(body);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              access_token: 'bank-admin-token-123',
+              expiration: { t_ms: Date.now() + 24 * 60 * 60 * 1000 },
+            }));
+          });
+          return;
+        }
+        if (req.method === 'GET' && url.startsWith('/accounts/')) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ name: 'Some User' }));
+          return;
+        }
+        res.writeHead(404);
+        res.end();
+      };
+
+      await request(server).get('/api/verify-account/someuser').expect(200);
+      assert.ok(tokenRequestBody);
+      assert.strictEqual(tokenRequestBody.scope, 'readwrite');
+      assert.deepStrictEqual(tokenRequestBody.duration, { d_ms: 3600000 });
+      assert.strictEqual(tokenRequestBody.refreshable, true);
+
+      delete process.env.BANK_ADMIN_TOKEN_DURATION_MS;
+      delete process.env.BANK_ADMIN_TOKEN_REFRESHABLE;
     });
 
     it('prefers full_name when present', async () => {
