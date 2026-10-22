@@ -219,6 +219,7 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
     const accountInfo = await tryFetch(true);
     sendJson(res, 200, {
       username: targetAccount,
+      alias: targetAccount,
       name: accountInfo.full_name || accountInfo.name || targetAccount
     });
   } catch (e: any) {

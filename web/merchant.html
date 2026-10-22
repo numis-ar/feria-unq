@@ -736,12 +736,7 @@
 
         <!-- Step 2: Confirm & Amount -->
         <div id="transfer-step-2" class="space-y-4 hidden">
-          <p class="text-sm text-slate-600">
-            <span data-i18n="transfer_to_name_prefix"
-              >You are transferring to</span
-            >
-            <span id="verify-fullname" class="font-bold text-slate-800"></span>
-          </p>
+          <p id="verify-target-summary" class="text-sm text-slate-600"></p>
           <div>
             <label
               for="transfer-amount"
@@ -1657,7 +1652,7 @@
           transfer_send_funds: "Send funds",
           transfer_from: "transfer from {account}",
           transfer_to: "transfer to {account}",
-          transfer_to_name_prefix: "You are transferring to",
+          transfer_to_name_prefix: "You are transferring to alias {alias} belonging to {name}",
           unknown_account: "unknown",
           target_account: "Merchant Account",
           transfer_btn: "Send",
@@ -1789,7 +1784,7 @@
           transfer_send_funds: "Enviar fondos",
           transfer_from: "transferencia desde {account}",
           transfer_to: "transferencia a {account}",
-          transfer_to_name_prefix: "Estás transfiriendo a",
+          transfer_to_name_prefix: "Estás transfiriendo al alias {alias} perteneciente a {name}",
           unknown_account: "desconocido",
           target_account: "El nombre de la cuenta lo podes encontrar en el QR del puesto del productor.",
           transfer_btn: "Enviar",
@@ -1894,6 +1889,15 @@
           str = str.replace(`{${name}}`, value);
         }
         return str;
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
       }
 
       // --- Dialog focus management -----------------------------------------
@@ -3473,7 +3477,13 @@
             const data = await res.json();
             verifiedAccountData = data;
 
-            document.getElementById("verify-fullname").textContent = data.name;
+            document.getElementById("verify-target-summary").innerHTML = tf(
+              "transfer_to_name_prefix",
+              {
+                alias: escapeHtml(data.alias || data.username),
+                name: escapeHtml(data.name),
+              },
+            );
             document.getElementById("transfer-amount").value = "";
             document
               .getElementById("transfer-amount")

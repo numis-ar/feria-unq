@@ -788,7 +788,7 @@ describe('Backend tests', () => {
       const res = await request(server)
         .get('/api/verify-account/someuser')
         .expect(200);
-      assert.deepStrictEqual(res.body, { username: 'someuser', name: 'Some User' });
+      assert.deepStrictEqual(res.body, { username: 'someuser', alias: 'someuser', name: 'Some User' });
       assert.ok(tokenRequestBody);
       assert.strictEqual(tokenRequestBody.scope, 'readwrite');
       assert.strictEqual('duration' in tokenRequestBody, false);
@@ -859,7 +859,7 @@ describe('Backend tests', () => {
       const res = await request(server)
         .get('/api/verify-account/nameduser')
         .expect(200);
-      assert.deepStrictEqual(res.body, { username: 'nameduser', name: 'Full Name' });
+      assert.deepStrictEqual(res.body, { username: 'nameduser', alias: 'nameduser', name: 'Full Name' });
     });
 
     it('returns 400 for restricted accounts', async () => {
