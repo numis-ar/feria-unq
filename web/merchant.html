@@ -704,7 +704,7 @@
             <input
               id="transfer-target"
               type="text"
-              placeholder="Account name"
+              placeholder="Alias de la cuenta"
               aria-required="true"
               aria-invalid="false"
               aria-describedby="transfer-step1-error"
@@ -1781,8 +1781,8 @@
           bank_transfer_desc: "Transferir a otro productor",
           transfer_link: "Transferir &rarr;",
           transfer_send_funds: "Enviar fondos",
-          transfer_from: "transfer desde {account}",
-          transfer_to: "transfer a {account}",
+          transfer_from: "transferencia desde {account}",
+          transfer_to: "transferencia a {account}",
           transfer_to_name_prefix: "Estás transfiriendo a",
           unknown_account: "desconocido",
           target_account: "Cuenta del productor",
@@ -2284,12 +2284,12 @@
 
           const t_val = o.timestamp?.t_s ? o.timestamp.t_s * 1000 : null;
           const d = t_val ? new Date(t_val) : null;
-          const dayKey = d ? d.toLocaleDateString() : "N/A";
+          const dayKey = d ? d.toLocaleDateString("es") : "N/A";
           if (dayKey !== lastDay) {
             lastDay = dayKey;
             htmlBuffer += `<tr role="row"><td colspan="3" aria-colspan="3" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
           }
-          const timeStr = d ? d.toLocaleTimeString() : "";
+          const timeStr = d ? d.toLocaleTimeString("es") : "";
 
           const orderId = o.order_id || o.summary;
           let changed = false;
@@ -2452,12 +2452,12 @@
           const t_val =
             tx.date?.t_ms || (tx.date?.t_s ? tx.date.t_s * 1000 : tx.date);
           const d = t_val ? new Date(t_val) : null;
-          const dayKey = d ? d.toLocaleDateString() : "N/A";
+          const dayKey = d ? d.toLocaleDateString("es") : "N/A";
           if (dayKey !== lastDay) {
             lastDay = dayKey;
             htmlBuffer += `<tr role="row"><td colspan="2" aria-colspan="2" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${dayKey}</td></tr>`;
           }
-          const timeStr = d ? d.toLocaleTimeString() : "";
+          const timeStr = d ? d.toLocaleTimeString("es") : "";
 
           let colorClass = "text-slate-800";
           let subject = tx.subject || t("tx_fallback");
