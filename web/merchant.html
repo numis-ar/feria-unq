@@ -754,6 +754,7 @@
               type="number"
               min="1"
               max="99998"
+              data-i18n-placeholder="col_amount"
               placeholder="Amount"
               aria-required="true"
               aria-invalid="false"
@@ -1582,11 +1583,11 @@
         if (swRegistration) {
           swRegistration.showNotification(title, {
             body,
-            icon: "./icons/icon-192.png",
+            icon: "./icons/icon-orange-192.png",
             tag,
           });
         } else {
-          new Notification(title, { body, icon: "./icons/icon-192.png", tag });
+          new Notification(title, { body, icon: "./icons/icon-orange-192.png", tag });
         }
       }
 
@@ -1694,6 +1695,11 @@
           toast_state_unpaid: "Payment initiated",
           toast_state_settled: "settled",
           toast_state_refunded: "refunded",
+          order_state_claimed: "Claimed",
+          order_state_in_transit: "In Transit",
+          order_state_settled: "Settled",
+          order_state_refunded: "Refunded",
+          order_state_unpaid: "Unpaid",
           nav_dashboard: "Dashboard",
           nav_account: "Account",
           nav_user: "User",
@@ -1822,6 +1828,11 @@
           toast_state_unpaid: "Pago iniciado",
           toast_state_settled: "acreditado",
           toast_state_refunded: "reembolsado",
+          order_state_claimed: "Reclamado",
+          order_state_in_transit: "En Tránsito",
+          order_state_settled: "Acreditado",
+          order_state_refunded: "Reembolsado",
+          order_state_unpaid: "No Pagado",
           nav_dashboard: "Panel",
           nav_account: "Cuenta",
           nav_user: "Usuario",
@@ -2336,7 +2347,7 @@
               <div class="font-medium text-slate-800">${o.summary || o.order_id || t("order_fallback")}</div>
               <div class="text-xs text-slate-400">${timeStr}</div>
             </td>
-            <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${state.toUpperCase()}</span></td>
+            <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${t("order_state_" + state.replace(/-/g, "_"))}</span></td>
             <td class="px-6 py-4 text-right font-semibold text-slate-800">${formatMoney(amountNum)}</td>
           </tr>
         `;

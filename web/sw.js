@@ -4,9 +4,9 @@ const PRECACHE = [
   "./merchant.js",
   "./tailwind.js",
   "./manifest.webmanifest",
-  "./icons/icon.svg",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
+  "./icons/icon-orange.svg",
+  "./icons/icon-orange-192.png",
+  "./icons/icon-orange-512.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -67,7 +67,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: "./icons/icon-192.png",
+      icon: "./icons/icon-orange-192.png",
     })
   );
 });
