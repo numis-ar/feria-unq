@@ -1839,7 +1839,7 @@
           change_password: "Cambiar Contraseña",
           old_password: "Contraseña actual",
           new_password: "Nueva contraseña",
-          repeat_password: "Repetir contraseña",
+          repeat_password: "Repetir la nueva contraseña",
           btn_update_pass: "Actualizar",
           pass_changed: "¡Contraseña cambiada con éxito!",
           pass_mismatch: "Las nuevas contraseñas no coinciden.",
@@ -2227,7 +2227,11 @@
             document
               .getElementById("temp-password-warning")
               .classList.remove("hidden");
-            window.location.hash = "#user";
+            document
+              .getElementById("change-pass-modal")
+              .classList.remove("hidden");
+            document.body.classList.add("modal-active");
+            openDialog("change-pass-modal");
           }
           return true;
         } catch (err) {
@@ -3480,8 +3484,8 @@
             document.getElementById("verify-target-summary").innerHTML = tf(
               "transfer_to_name_prefix",
               {
-                alias: escapeHtml(data.alias || data.username),
-                name: escapeHtml(data.name),
+                alias: `<b>${escapeHtml(data.alias || data.username)}</b>`,
+                name: `<b>${escapeHtml(data.name)}</b>`,
               },
             );
             document.getElementById("transfer-amount").value = "";
