@@ -5,6 +5,74 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 
+function createMockServer(balanceAmount) {
+  return http.createServer((req, res) => {
+    let cleanUrl = req.url.split('?')[0];
+
+    if (cleanUrl.includes('/private/token') || cleanUrl.includes('/token')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ access_token: 'mock_token' }));
+      return;
+    }
+    if (cleanUrl.includes('/private/orders')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ orders: [
+        { order_id: '1', summary: 'Coffee', amount: 'NUMIS:10', refund_amount: 'NUMIS:0', paid: true, wired: true, timestamp: { t_s: Math.floor(Date.now()/1000) } }
+      ] }));
+      return;
+    }
+    if (cleanUrl.includes('/transactions')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ transactions: [], row_id: 123 }));
+      return;
+    }
+    if (cleanUrl.includes('/withdrawals')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ withdrawal_id: 'w1', taler_withdraw_uri: 'taler://withdraw/...' }));
+      return;
+    }
+    if (cleanUrl.includes('/verify-account/')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ username: 'targetmerchant', name: 'Target Merchant Store' }));
+      return;
+    }
+    if (cleanUrl.includes('/close-account')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ type: 'ok' }));
+      return;
+    }
+    if (cleanUrl.match(/\/accounts\/[^/?]+$/)) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ name: 'Test Merchant', balance: { amount: `NUMIS:${balanceAmount}` } }));
+      return;
+    }
+    if (cleanUrl.includes('/private/auth') || cleanUrl.includes('/auth')) {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    if (cleanUrl === '/') cleanUrl = '/merchant.html';
+    let filePath = path.join(process.cwd(), 'web', cleanUrl.replace(/^\/+/, ''));
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath);
+      const map = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+      res.setHeader('Content-Type', map[ext] || 'text/plain');
+      fs.createReadStream(filePath).pipe(res);
+    } else {
+      res.writeHead(404);
+      res.end('Not found: ' + filePath);
+    }
+  });
+}
+
+async function launchBrowser() {
+  return chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+}
+
 describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
   let browser;
   let page;
@@ -213,5 +281,148 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await orderRow.waitFor({ state: 'visible' });
     const text = await orderRow.textContent();
     assert.ok(text.includes('Coffee'));
+  });
+});
+
+describe('Merchant UI with zero balance', () => {
+  let browser;
+  let page;
+  let staticServer;
+  let baseUrl;
+
+  before(async () => {
+    staticServer = createMockServer(0);
+    await new Promise(resolve => staticServer.listen(0, resolve));
+    const addr = staticServer.address();
+    baseUrl = `http://localhost:${addr.port}`;
+    browser = await launchBrowser();
+  });
+
+  after(async () => {
+    await browser.close();
+    await new Promise(resolve => staticServer.close(resolve));
+  });
+
+  beforeEach(async () => {
+    page = await browser.newPage();
+    page.setDefaultTimeout(5000);
+    page.on('dialog', dialog => dialog.accept());
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    await page.addInitScript(() => {
+      window.API_URL = '/api/merchant';
+      window.BANK_URL = '/api/bank';
+    });
+  });
+
+  afterEach(async () => {
+    await page.close();
+  });
+
+  async function loginAndNavigateToAccount() {
+    await page.goto(`${baseUrl}/merchant.html`);
+    await page.fill('#auth-user', 'default');
+    await page.fill('#auth-pass', 'secret1234');
+    await page.click('#btn-login');
+    await page.locator('#auth-modal').waitFor({ state: 'hidden' });
+    await page.click('#nav-account-btn');
+  }
+
+  it('should block withdraw and show no funds toast', async () => {
+    await loginAndNavigateToAccount();
+    await page.click('#card-available-trigger');
+    await page.locator('#withdraw-modal').waitFor({ state: 'hidden' });
+    const toast = page.locator('#toast-container > div');
+    await toast.waitFor({ state: 'visible' });
+    const text = await toast.textContent();
+    assert.ok(text.includes('No tiene fondos') || text.includes('fondos'));
+  });
+
+  it('should block transfer and show no funds toast', async () => {
+    await loginAndNavigateToAccount();
+    await page.click('#card-transfer-trigger');
+    await page.locator('#transfer-modal').waitFor({ state: 'hidden' });
+    const toast = page.locator('#toast-container > div');
+    await toast.waitFor({ state: 'visible' });
+    const text = await toast.textContent();
+    assert.ok(text.includes('No tiene fondos') || text.includes('fondos'));
+  });
+
+  it('should block close account and show no funds toast', async () => {
+    await loginAndNavigateToAccount();
+    await page.click('#btn-open-close-account');
+    await page.locator('#close-account-modal').waitFor({ state: 'hidden' });
+    const toast = page.locator('#toast-container > div');
+    await toast.waitFor({ state: 'visible' });
+    const text = await toast.textContent();
+    assert.ok(text.includes('No tiene fondos') || text.includes('fondos'));
+  });
+});
+
+describe('Merchant UI input validation against available balance', () => {
+  let browser;
+  let page;
+  let staticServer;
+  let baseUrl;
+
+  before(async () => {
+    staticServer = createMockServer(10);
+    await new Promise(resolve => staticServer.listen(0, resolve));
+    const addr = staticServer.address();
+    baseUrl = `http://localhost:${addr.port}`;
+    browser = await launchBrowser();
+  });
+
+  after(async () => {
+    await browser.close();
+    await new Promise(resolve => staticServer.close(resolve));
+  });
+
+  beforeEach(async () => {
+    page = await browser.newPage();
+    page.setDefaultTimeout(5000);
+    page.on('dialog', dialog => dialog.accept());
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    await page.addInitScript(() => {
+      window.API_URL = '/api/merchant';
+      window.BANK_URL = '/api/bank';
+    });
+  });
+
+  afterEach(async () => {
+    await page.close();
+  });
+
+  async function loginAndNavigateToAccount() {
+    await page.goto(`${baseUrl}/merchant.html`);
+    await page.fill('#auth-user', 'default');
+    await page.fill('#auth-pass', 'secret1234');
+    await page.click('#btn-login');
+    await page.locator('#auth-modal').waitFor({ state: 'hidden' });
+    await page.click('#nav-account-btn');
+  }
+
+  it('should show error when withdraw amount exceeds available balance', async () => {
+    await loginAndNavigateToAccount();
+    await page.click('#card-available-trigger');
+    await page.locator('#withdraw-modal').waitFor({ state: 'visible' });
+    await page.fill('#withdraw-dialog-amount', '50');
+    const errorEl = page.locator('#withdraw-dialog-error');
+    await errorEl.waitFor({ state: 'visible' });
+    const text = await errorEl.textContent();
+    assert.ok(text.includes('Saldo insuficiente') || text.includes('Balance is not enough'));
+  });
+
+  it('should show error when transfer amount exceeds available balance', async () => {
+    await loginAndNavigateToAccount();
+    await page.click('#card-transfer-trigger');
+    await page.locator('#transfer-modal').waitFor({ state: 'visible' });
+    await page.fill('#transfer-target', 'targetmerchant');
+    await page.click('#btn-transfer-verify');
+    await page.locator('#transfer-step-2').waitFor({ state: 'visible' });
+    await page.fill('#transfer-amount', '50');
+    const errorEl = page.locator('#transfer-step2-error');
+    await errorEl.waitFor({ state: 'visible' });
+    const text = await errorEl.textContent();
+    assert.ok(text.includes('Saldo insuficiente') || text.includes('Balance is not enough'));
   });
 });

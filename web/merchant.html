@@ -1666,6 +1666,8 @@
           wallet_connected: "Wallet connected. Please confirm the transfer.",
           wallet_aborted: "Withdrawal was aborted by the wallet.",
           transfer_confirmed: "Transfer confirmed!",
+          no_funds_title: "No funds",
+          no_funds_desc: "You have no funds, wait until you make a sale",
           error_bal: "Balance is not enough",
           error_qr: "Failed to load QR code",
           val_sales: "sales",
@@ -1799,6 +1801,8 @@
             "Una billetera tomo el QR, si es la tuya podes confirmar la operación. Si no fuiste vos, podes cancelar y volver a empezar.",
           wallet_aborted: "El retiro fue abortado por la billetera.",
           transfer_confirmed: "¡Transferencia confirmada!",
+          no_funds_title: "Sin fondos",
+          no_funds_desc: "No tiene fondos, espere a tener una venta",
           error_bal: "Saldo insuficiente",
           error_qr: "Fallo al cargar el código QR",
           val_sales: "ventas",
@@ -1898,6 +1902,30 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#039;");
+      }
+
+      function getAvailableBalance() {
+        const el = document.getElementById("stat-bank-available");
+        if (!el) return 0;
+        return parseAmountStr(el.textContent) || 0;
+      }
+
+      function showNoFundsToast() {
+        showToast(t("no_funds_title"), t("no_funds_desc"), "error");
+      }
+
+      function validateAmountInput(input, errorEl, available) {
+        const val = parseFloat(input.value) || 0;
+        errorEl.classList.add("hidden");
+        input.setAttribute("aria-invalid", "false");
+        if (val <= 0) return false;
+        if (available !== undefined && val > available) {
+          input.setAttribute("aria-invalid", "true");
+          errorEl.textContent = t("error_bal");
+          errorEl.classList.remove("hidden");
+          return false;
+        }
+        return true;
       }
 
       // --- Dialog focus management -----------------------------------------
@@ -2994,10 +3022,16 @@
       }
 
       function openWithdrawDialog() {
+        if (getAvailableBalance() <= 0) {
+          showNoFundsToast();
+          return;
+        }
         const input = document.getElementById("withdraw-dialog-amount");
         const errorEl = document.getElementById("withdraw-dialog-error");
+        const available = getAvailableBalance();
         input.value = "";
         input.setAttribute("aria-invalid", "false");
+        input.setAttribute("max", Math.min(99998, Math.max(1, available)));
         errorEl.classList.add("hidden");
         errorEl.textContent = "";
         document.getElementById("withdraw-modal").classList.remove("hidden");
@@ -3048,6 +3082,16 @@
         });
 
       document
+        .getElementById("withdraw-dialog-amount")
+        .addEventListener("input", (e) => {
+          validateAmountInput(
+            e.target,
+            document.getElementById("withdraw-dialog-error"),
+            getAvailableBalance(),
+          );
+        });
+
+      document
         .getElementById("btn-withdraw-confirm")
         .addEventListener("click", async () => {
           const input = document.getElementById("withdraw-dialog-amount");
@@ -3057,10 +3101,12 @@
           const btnText = btn.querySelector(".btn-text");
           const btnSpinner = btn.querySelector(".btn-spinner");
 
+          const available = getAvailableBalance();
           errorEl.classList.add("hidden");
-          if (!amount || amount <= 0) {
+          if (!amount || amount <= 0 || amount > available) {
             input.setAttribute("aria-invalid", "true");
-            errorEl.textContent = t("err_amount_required");
+            errorEl.textContent =
+              !amount || amount <= 0 ? t("err_amount_required") : t("error_bal");
             errorEl.classList.remove("hidden");
             return;
           }
@@ -3151,6 +3197,10 @@
       document
         .getElementById("btn-open-close-account")
         .addEventListener("click", () => {
+          if (getAvailableBalance() <= 0) {
+            showNoFundsToast();
+            return;
+          }
           document
             .getElementById("close-account-modal")
             .classList.remove("hidden");
@@ -3416,6 +3466,10 @@
       document
         .getElementById("card-transfer-trigger")
         .addEventListener("click", () => {
+          if (getAvailableBalance() <= 0) {
+            showNoFundsToast();
+            return;
+          }
           document.getElementById("transfer-target").value = "";
           document
             .getElementById("transfer-target")
@@ -3454,6 +3508,16 @@
         .addEventListener("click", () => {
           document.getElementById("transfer-step-2").classList.add("hidden");
           document.getElementById("transfer-step-1").classList.remove("hidden");
+        });
+
+      document
+        .getElementById("transfer-amount")
+        .addEventListener("input", (e) => {
+          validateAmountInput(
+            e.target,
+            document.getElementById("transfer-step2-error"),
+            getAvailableBalance(),
+          );
         });
 
       document
@@ -3514,10 +3578,18 @@
           const amountInput = document.getElementById("transfer-amount");
           const amount = amountInput.value;
           const errEl = document.getElementById("transfer-step2-error");
+          const available = getAvailableBalance();
           errEl.classList.add("hidden");
           amountInput.setAttribute("aria-invalid", "false");
 
-          if (!amount || amount <= 0 || !verifiedAccountData) return;
+          if (!amount || amount <= 0 || amount > available || !verifiedAccountData) {
+            if (amount > available) {
+              amountInput.setAttribute("aria-invalid", "true");
+              errEl.textContent = t("error_bal");
+              errEl.classList.remove("hidden");
+            }
+            return;
+          }
 
           try {
             const payto_uri = `payto://x-taler-bank/${bankHost}/${encodeURIComponent(verifiedAccountData.username)}?message=Transfer`;
