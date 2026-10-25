@@ -1807,7 +1807,7 @@
           confirming: "Confirmando...",
           updating: "Actualizando...",
           toast_success: "Éxito",
-          account_closed: "Cuenta cerrada con éxito",
+          account_closed: "Caja cerrada con éxito",
           withdraw_dialog_title: "Retirar fondos",
           err_amount_required: "Ingresa un monto mayor a 0",
           err_account_not_found: "Cuenta no encontrada o restringida",
@@ -1828,8 +1828,8 @@
           order_state_settled: "Acreditado",
           order_state_refunded: "Reembolsado",
           order_state_unpaid: "No Pagado",
-          nav_dashboard: "Panel",
-          nav_account: "Cuenta",
+          nav_dashboard: "Ventas",
+          nav_account: "Caja",
           nav_user: "Usuario",
           withdraw_step_amount: "Monto",
           withdraw_step_scan: "Escanear QR",
@@ -1851,11 +1851,11 @@
           offline_banner:
             "Estás sin conexión. Los datos pueden estar desactualizados.",
           btn_install: "Instalar",
-          btn_close_account: "Cerrar Cuenta",
-          close_account_title: "Cerrar Cuenta",
+          btn_close_account: "Cerrar CAJA",
+          close_account_title: "Cerrar CAJA",
           close_account_desc:
             "Tu saldo restante se transferirá a <strong>Administración</strong> y esta operación no se puede deshacer.",
-          close_account_more_info: "Más información sobre el cierre de cuenta",
+          close_account_more_info: "Más información sobre el cierre de caja",
           login_failed: "Error de acceso",
           session_expired: "Sesión expirada o no autorizada",
           qr_same_device:
@@ -2223,7 +2223,7 @@
           startRealtime();
           setupPushSubscription();
 
-          if (PASSWORD.startsWith("__")) {
+          if (PASSWORD.startsWith("@") && PASSWORD.endsWith("@")) {
             document
               .getElementById("temp-password-warning")
               .classList.remove("hidden");
