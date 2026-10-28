@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Imagen de productor no disponible">
+  <rect width="200" height="200" fill="#cfe3d8"/>
+  <circle cx="100" cy="80" r="32" fill="#064d2d"/>
+  <path d="M48 160c0-28 23-52 52-52h0c28 0 52 23 52 52v8H48v-8z" fill="#064d2d"/>
+  <circle cx="100" cy="80" r="36" fill="none" stroke="#dc5a1e" stroke-width="3"/>
+</svg>

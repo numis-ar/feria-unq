@@ -1,0 +1,1156 @@
+<!doctype html>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>Dónde encontrar lxs productorxs · Feria UNQ</title>
+    <meta
+      name="description"
+      content="Mapa, ubicación y listado de productorxs de la Feria de Economía Popular, Social y Solidaria de la UNQ."
+    />
+    <meta property="og:title" content="Dónde encontrar lxs productorxs · Feria UNQ" />
+    <meta property="og:description" content="Mapa, ubicación y listado de productorxs de la Feria de Economía Popular, Social y Solidaria de la UNQ." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://unq.numis.ar/donde.html" />
+    <meta property="og:image" content="https://unq.numis.ar/mapa-unq.png" />
+    <meta property="og:locale" content="es_AR" />
+
+    <link rel="stylesheet" href="./fonts/archivo.css" />
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+      }
+      body.modal-active {
+        overflow: hidden;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 8px;
+        z-index: 100;
+        padding: 8px 12px;
+        background: var(--verde);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        border-radius: var(--radius-md);
+        transition: top 0.15s;
+      }
+      .skip-link:focus {
+        top: 8px;
+      }
+
+      [data-guide][data-theme="numis"] {
+        --verde: #064d2d;
+        --verde-hondo: #03321d;
+        --naranja: #dc5a1e;
+        --menta: #cfe3d8;
+        --color-bg: #fbfbf8;
+        --color-surface: #fff;
+        --color-text: #343434;
+        --color-accent: #dc5a1e;
+        --color-accent-400: #b8461a;
+        --color-divider: #cfcec6;
+        --g-muted: #55544f;
+        --g-accent-text: #064d2d;
+        --font-body: "Archivo", Arial, sans-serif;
+        --font-heading: "Archivo", Arial, sans-serif;
+        --radius-md: 2px;
+        font-size: 16px !important;
+      }
+      [data-theme="numis"] h1,
+      [data-theme="numis"] h2,
+      [data-theme="numis"] h3 {
+        font-weight: 900 !important;
+        letter-spacing: -0.035em;
+        line-height: 0.98 !important;
+        color: var(--verde);
+      }
+      [data-theme="numis"] a {
+        color: var(--verde);
+        font-weight: 700;
+      }
+      [data-theme="numis"] a:hover {
+        color: var(--verde-hondo);
+      }
+      [data-theme="numis"] nav {
+        background: var(--verde) !important;
+        backdrop-filter: none !important;
+      }
+      [data-theme="numis"] nav a {
+        color: #fff !important;
+      }
+      [data-theme="numis"] #inicio {
+        --color-text: #fff;
+        --g-muted: var(--menta);
+        --color-accent: var(--menta);
+        background: var(--verde) !important;
+        box-shadow: 0 0 0 100vmax var(--verde);
+        clip-path: inset(0 -100vmax);
+        color: #fff;
+      }
+      [data-theme="numis"] #inicio h1 {
+        color: #fff;
+        font-size: clamp(38px, 5.2vw, 64px) !important;
+      }
+      [data-theme="numis"] :focus-visible {
+        outline: 3px solid var(--naranja);
+        outline-offset: 3px;
+      }
+      [data-theme="numis"] footer[data-noprint] {
+        --g-muted: var(--menta);
+        background: var(--verde) !important;
+        box-shadow: 0 0 0 100vmax var(--verde);
+        clip-path: inset(0 -100vmax);
+        color: var(--menta);
+        padding-bottom: 32px;
+        border-top: none;
+      }
+      [data-theme="numis"] footer[data-noprint] a {
+        color: #fff;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 1.2;
+        border: 2.5px solid var(--verde);
+        border-radius: var(--radius-md);
+        background: var(--verde);
+        color: #fff !important;
+        box-shadow: 4px 4px 0 var(--naranja);
+        transition: transform 0.12s, box-shadow 0.12s;
+        padding: 8px 14px;
+      }
+      .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 var(--naranja);
+      }
+      .btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 var(--naranja);
+      }
+      .btn-secondary {
+        background: var(--color-surface);
+        color: var(--verde) !important;
+      }
+
+      .producer-card {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 16px;
+        padding: 16px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-divider);
+        border-radius: var(--radius-md);
+        text-align: left;
+        cursor: pointer;
+        transition: box-shadow 0.15s, transform 0.15s;
+      }
+      .producer-card:hover,
+      .producer-card:focus-visible {
+        box-shadow: 5px 5px 0 var(--naranja);
+        transform: translate(-2px, -2px);
+      }
+      .producer-card:focus-visible {
+        outline: 3px solid var(--naranja);
+        outline-offset: 3px;
+      }
+      .producer-card__image {
+        width: 96px;
+        height: 96px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        background: var(--menta);
+        flex: none;
+      }
+      .producer-card__body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+      .producer-card__title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 900;
+        color: var(--verde);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .producer-card__desc {
+        margin: 0;
+        font-size: 14px;
+        color: var(--g-muted);
+        line-height: 1.45;
+        text-wrap: pretty;
+      }
+      .producer-card__tag {
+        align-self: flex-start;
+        display: inline-flex;
+        padding: 4px 10px;
+        background: var(--menta);
+        color: var(--verde-hondo);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-radius: var(--radius-md);
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-end;
+      }
+      .control {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 240px;
+        flex: 1 1 280px;
+      }
+      .control label {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--g-muted);
+      }
+      .control input,
+      .control select {
+        padding: 10px 12px;
+        font-family: inherit;
+        font-size: 15px;
+        border: 1px solid var(--color-divider);
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        color: var(--color-text);
+      }
+      .control input:focus,
+      .control select:focus {
+        outline: 3px solid var(--naranja);
+        outline-offset: 2px;
+      }
+
+      .map-link {
+        display: block;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        border: 3px solid var(--color-surface);
+        box-shadow: 6px 6px 0 var(--naranja);
+        transition: transform 0.12s, box-shadow 0.12s;
+      }
+      .map-link:hover,
+      .map-link:focus-visible {
+        transform: translate(-2px, -2px);
+        box-shadow: 8px 8px 0 var(--naranja);
+      }
+      .map-link img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.88);
+        backdrop-filter: blur(4px);
+      }
+      .modal-overlay[aria-hidden="false"] {
+        display: flex;
+      }
+      .modal {
+        position: relative;
+        width: min(100%, 560px);
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        background: var(--color-bg);
+        border-radius: var(--radius-md);
+        padding: 28px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+      .modal__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: 50%;
+        background: var(--color-divider);
+        color: var(--color-text);
+        font-size: 22px;
+        cursor: pointer;
+      }
+      .modal__close:hover,
+      .modal__close:focus-visible {
+        background: var(--naranja);
+        color: #fff;
+        outline: 3px solid var(--verde);
+        outline-offset: 2px;
+      }
+      .modal__header {
+        display: flex;
+        gap: 18px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+      .modal__image {
+        width: 110px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        background: var(--menta);
+        flex: none;
+      }
+      .modal__title {
+        margin: 0;
+        font-size: 28px;
+        color: var(--verde);
+      }
+      .modal__tag {
+        display: inline-flex;
+        margin-top: 8px;
+        padding: 4px 10px;
+        background: var(--menta);
+        color: var(--verde-hondo);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-radius: var(--radius-md);
+      }
+      .modal__section {
+        margin-top: 18px;
+      }
+      .modal__section h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--g-muted);
+      }
+      .modal__section p {
+        margin: 0;
+        color: var(--color-text);
+        line-height: 1.5;
+      }
+      .social-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .social-list a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-divider);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        font-size: 13px;
+        color: var(--verde) !important;
+      }
+      .social-list a:hover,
+      .social-list a:focus-visible {
+        background: var(--menta);
+        outline: 3px solid var(--naranja);
+        outline-offset: 2px;
+      }
+      .social-list svg {
+        width: 18px;
+        height: 18px;
+        flex: none;
+      }
+
+      @media (max-width: 640px) {
+        .producer-card {
+          grid-template-columns: 72px 1fr;
+          gap: 12px;
+          padding: 12px;
+        }
+        .producer-card__image {
+          width: 72px;
+          height: 72px;
+        }
+        .producer-card__title {
+          font-size: 17px;
+        }
+        .producer-card__desc {
+          font-size: 13px;
+        }
+        .modal {
+          padding: 20px;
+        }
+        .modal__header {
+          flex-direction: column;
+          gap: 12px;
+        }
+        .modal__image {
+          width: 90px;
+          height: 90px;
+        }
+        .modal__title {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido principal</a>
+    <div
+      data-guide=""
+      data-theme="numis"
+      style="
+        min-height: 100vh;
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+      "
+    >
+      <nav
+        aria-label="Navegación principal"
+        style="
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px 20px;
+          padding: 12px max(20px, calc((100% - 1040px) / 2));
+        "
+      >
+        <a
+          href="./"
+          style="
+            font-weight: 500;
+            font-size: 16px;
+            color: #fff;
+            text-decoration: none;
+            margin-right: auto;
+          "
+          >Feria UNQ</a
+        >
+        <a
+          href="./descripcion.html"
+          style="color: #fff; text-decoration: none; font-size: 14px"
+          >Guía de pagos</a
+        >
+        <a
+          href="./donde.html"
+          aria-current="page"
+          style="color: #fff; text-decoration: none; font-size: 14px"
+          >Productorxs</a
+        >
+      </nav>
+
+      <main id="contenido" style="max-width: 1040px; margin: 0 auto; padding: 0 20px 64px">
+        <header
+          id="inicio"
+          style="
+            padding: 56px 0 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+          "
+        >
+          <div
+            style="
+              font-size: 12px;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+              color: var(--color-accent);
+            "
+          >
+            Feria de Economía Popular, Social y Solidaria
+          </div>
+          <h1
+            style="
+              margin: 0;
+              font-size: clamp(32px, 5vw, 54px);
+              line-height: 1.05;
+              max-width: 18ch;
+              text-wrap: balance;
+            "
+          >
+            Dónde encontrar lxs productorxs
+          </h1>
+          <p
+            style="
+              margin: 0;
+              max-width: 62ch;
+              color: var(--g-muted);
+              text-wrap: pretty;
+            "
+          >
+            Recorré la feria y encontrá puestos de gastronomía, artesanías,
+            textil, marroquinería, huerta y mucho más. Podés filtrar por rubro o
+            buscar por nombre, productos o ubicación.
+          </p>
+
+          <a
+            class="map-link"
+            href="https://maps.app.goo.gl/vZywwv2taYNDyCwd8"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Ver ubicación de la feria en Google Maps (se abre en una nueva pestaña)"
+          >
+            <img
+              src="./mapa-unq.png"
+              alt="Mapa de ubicación de la Feria UNQ. Hacé click para abrir la dirección en Google Maps."
+              width="1200"
+              height="630"
+            />
+          </a>
+          <p
+            style="
+              margin: 0;
+              max-width: 62ch;
+              font-size: 13px;
+              color: var(--g-muted);
+            "
+          >
+            Hacé click en el mapa para abrir la ubicación en Google Maps y
+            llegar caminando o en transporte público.
+          </p>
+        </header>
+
+        <section
+          aria-labelledby="listado-titulo"
+          style="padding-top: 24px"
+        >
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              padding: 24px 0 16px;
+            "
+          >
+            <div
+              style="width: 32px; height: 2px; background: var(--color-accent)"
+            ></div>
+            <div
+              style="
+                font-size: 12px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--color-accent);
+              "
+            >
+              Listado
+            </div>
+            <h2 id="listado-titulo" style="margin: 0; font-size: 32px">
+              Productorxs de la feria
+            </h2>
+            <p style="margin: 0; max-width: 62ch; color: var(--g-muted)">
+              Hacé click en una tarjeta para ver sus datos de contacto,
+              redes sociales y ubicación exacta del puesto.
+            </p>
+          </div>
+
+          <div class="controls" style="margin: 24px 0">
+            <div class="control">
+              <label for="buscador">Buscar productorxs</label>
+              <input
+                id="buscador"
+                type="search"
+                autocomplete="off"
+                placeholder="Nombre, producto, rubro, ubicación..."
+              />
+            </div>
+            <div class="control" style="flex: 0 1 220px; min-width: 160px">
+              <label for="filtro-rubro">Filtrar por rubro</label>
+              <select id="filtro-rubro">
+                <option value="">Todos los rubros</option>
+              </select>
+            </div>
+            <div class="control" style="flex: 0 1 220px; min-width: 160px">
+              <label for="orden">Ordenar</label>
+              <select id="orden">
+                <option value="aleatorio">Aleatorio</option>
+                <option value="nombre-asc">Nombre (A-Z)</option>
+                <option value="rubro-asc">Rubro (A-Z)</option>
+                <option value="ubicacion-asc">Ubicación (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <p
+            id="resultados-info"
+            aria-live="polite"
+            style="margin: 0 0 16px; font-size: 14px; color: var(--g-muted)"
+          >
+            Cargando listado…
+          </p>
+
+          <div
+            id="productores-grid"
+            role="list"
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+              gap: 16px;
+            "
+          >
+            <!-- Las cards se generan con JavaScript -->
+          </div>
+        </section>
+      </main>
+
+      <footer
+        data-noprint=""
+        style="padding: 40px max(20px, calc((100% - 1040px) / 2))"
+      >
+        <p style="margin: 0 0 8px; font-size: 14px">
+          <strong>Feria de Economía Popular, Social y Solidaria · UNQ</strong>
+        </p>
+        <p style="margin: 0; font-size: 13px; color: var(--menta)">
+          Los datos de contacto son responsabilidad de cada productorx.
+          Ante cualquier duda, acercate al puesto de atención de la
+          organización.
+        </p>
+        <p style="margin: 16px 0 0; font-size: 13px">
+          <a href="./" style="color: #fff">Volver al inicio</a>
+        </p>
+      </footer>
+    </div>
+
+    <div
+      id="modal-overlay"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-titulo"
+      aria-hidden="true"
+    >
+      <div class="modal" role="document" tabindex="-1" id="modal">
+        <button
+          type="button"
+          class="modal__close"
+          id="modal-cerrar"
+          aria-label="Cerrar detalles"
+        >
+          ×
+        </button>
+        <div id="modal-contenido">
+          <!-- El contenido se carga con JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        const STORAGE_SEED_KEY = "donde-semilla";
+        const grid = document.getElementById("productores-grid");
+        const resultadosInfo = document.getElementById("resultados-info");
+        const inputBusqueda = document.getElementById("buscador");
+        const selectRubro = document.getElementById("filtro-rubro");
+        const selectOrden = document.getElementById("orden");
+        const overlay = document.getElementById("modal-overlay");
+        const modal = document.getElementById("modal");
+        const modalCerrar = document.getElementById("modal-cerrar");
+        const modalContenido = document.getElementById("modal-contenido");
+
+        // Flags globales de visibilidad de campos.
+        // Cambiar cualquier valor a false oculta ese dato en toda la app,
+        // como si no estuviera presente en el JSON.
+        const CAMPOS_VISIBLES = {
+          descripcion: true,
+          nombreApellido: true,
+          organizacion: true,
+          email: true,
+          telefono: true,
+          whatsapp: true,
+          instagram: true,
+          twitter: true,
+          facebook: true,
+          ubicacion: true,
+        };
+
+        let productores = [];
+        let ordenados = [];
+        let rubros = [];
+        let triggerFocus = null;
+
+        function mulberry32(seed) {
+          return function () {
+            let t = (seed += 0x6d2b79f5);
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        function getSeed() {
+          const guardada = sessionStorage.getItem(STORAGE_SEED_KEY);
+          if (guardada) return parseInt(guardada, 10);
+          const nueva = Math.floor(Math.random() * 1_000_000_000);
+          sessionStorage.setItem(STORAGE_SEED_KEY, String(nueva));
+          return nueva;
+        }
+
+        function shuffle(array, rng) {
+          const copia = array.slice();
+          for (let i = copia.length - 1; i > 0; i--) {
+            const j = Math.floor(rng() * (i + 1));
+            [copia[i], copia[j]] = [copia[j], copia[i]];
+          }
+          return copia;
+        }
+
+        function escapeHtml(text) {
+          if (text == null) return "";
+          return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
+        function normalizar(texto) {
+          return String(texto || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function obtenerRubros(lista) {
+          const conjunto = new Set(lista.map((p) => p.rubro).filter(Boolean));
+          return Array.from(conjunto).sort((a, b) => a.localeCompare(b));
+        }
+
+        function llenarSelectRubros() {
+          selectRubro.innerHTML =
+            '<option value="">Todos los rubros</option>';
+          for (const rubro of rubros) {
+            const option = document.createElement("option");
+            option.value = rubro;
+            option.textContent = rubro;
+            selectRubro.appendChild(option);
+          }
+        }
+
+        function campoVisible(campo) {
+          return CAMPOS_VISIBLES[campo] !== false;
+        }
+
+        function levenshtein(a, b) {
+          const m = a.length,
+            n = b.length;
+          if (m === 0) return n;
+          if (n === 0) return m;
+          const matrix = Array.from({ length: m + 1 }, (_, i) => [i]);
+          for (let j = 1; j <= n; j++) matrix[0][j] = j;
+          for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+              const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+              matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j - 1] + cost
+              );
+            }
+          }
+          return matrix[m][n];
+        }
+
+        function fuzzyScore(termino, texto) {
+          const palabras = texto.split(/\s+/).filter(Boolean);
+          let mejor = 0;
+          for (const palabra of palabras) {
+            if (palabra.includes(termino)) {
+              mejor = Math.max(mejor, 1 + (palabra === termino ? 0.5 : 0));
+              continue;
+            }
+            if (termino.length >= 3 && palabra.length >= 3) {
+              const ventana = palabra.slice(0, termino.length + 1);
+              const dist = levenshtein(termino, ventana);
+              if (dist <= 1) mejor = Math.max(mejor, 0.6 - dist * 0.2);
+            }
+          }
+          return mejor;
+        }
+
+        function calcularScore(p, terminos) {
+          const campos = {
+            nombreEmprendimiento: 10,
+            nombreApellido: 6,
+            rubro: 5,
+            descripcion: 4,
+            organizacion: 3,
+            ubicacion: 2,
+          };
+          let score = 0;
+          for (const termino of terminos) {
+            for (const [campo, peso] of Object.entries(campos)) {
+              const valor = normalizar(p[campo]);
+              const fs = fuzzyScore(termino, valor);
+              if (fs > 0) {
+                score += peso * fs;
+                if (valor.startsWith(termino)) score += peso * 0.3;
+              }
+            }
+          }
+          return score;
+        }
+
+        function filtrarYOrdenar() {
+          const texto = normalizar(inputBusqueda.value).trim();
+          const rubro = selectRubro.value;
+          const orden = selectOrden.value;
+          const terminos = texto
+            ? texto.split(/\s+/).filter((t) => t.length > 0)
+            : [];
+
+          let filtrados = ordenados.filter((p) => {
+            if (rubro && p.rubro !== rubro) return false;
+            if (terminos.length === 0) return true;
+            const score = calcularScore(p, terminos);
+            p.__score = score;
+            return score > 0;
+          });
+
+          if (terminos.length > 0) {
+            filtrados = filtrados.slice().sort((a, b) => b.__score - a.__score);
+          } else if (orden !== "aleatorio") {
+            filtrados = filtrados.slice().sort((a, b) => {
+              switch (orden) {
+                case "nombre-asc":
+                  return a.nombreEmprendimiento.localeCompare(
+                    b.nombreEmprendimiento
+                  );
+                case "rubro-asc":
+                  return (
+                    a.rubro.localeCompare(b.rubro) ||
+                    a.nombreEmprendimiento.localeCompare(b.nombreEmprendimiento)
+                  );
+                case "ubicacion-asc":
+                  return (
+                    (a.ubicacion || "").localeCompare(b.ubicacion || "") ||
+                    a.nombreEmprendimiento.localeCompare(b.nombreEmprendimiento)
+                  );
+              }
+              return 0;
+            });
+          }
+
+          return filtrados;
+        }
+
+        function renderizar(lista) {
+          grid.innerHTML = "";
+
+          if (lista.length === 0) {
+            resultadosInfo.textContent =
+              "No se encontraron productorxs con esos criterios.";
+            const vacio = document.createElement("p");
+            vacio.textContent =
+              'Probá con otra palabra o seleccioná "Todos los rubros".';
+            vacio.style.cssText = "grid-column: 1 / -1; color: var(--g-muted);";
+            grid.appendChild(vacio);
+            return;
+          }
+
+          resultadosInfo.textContent = `Mostrando ${lista.length} productorx${
+            lista.length === 1 ? "" : "s"
+          }.`;
+
+          for (const p of lista) {
+            const card = document.createElement("article");
+            card.className = "producer-card";
+            card.setAttribute("role", "listitem");
+            card.setAttribute("tabindex", "0");
+            card.setAttribute(
+              "aria-label",
+              `Ver detalles de ${escapeHtml(p.nombreEmprendimiento)}`
+            );
+            card.dataset.id = p.id;
+
+            const img = escapeHtml(
+              p.imagen || "./screenshots/productor-placeholder.svg"
+            );
+            const altImg = `Imagen de ${escapeHtml(p.nombreEmprendimiento)}`;
+            const desc = campoVisible("descripcion") ? p.descripcion : "";
+            const rubroTag = campoVisible("rubro") ? p.rubro : "";
+
+            card.innerHTML = `
+              <img class="producer-card__image" src="${img}" alt="${altImg}" loading="lazy" />
+              <div class="producer-card__body">
+                <h3 class="producer-card__title">${escapeHtml(
+                  p.nombreEmprendimiento
+                )}</h3>
+                <p class="producer-card__desc">${escapeHtml(desc)}</p>
+                <span class="producer-card__tag">${escapeHtml(
+                  rubroTag
+                )}</span>
+              </div>
+            `;
+
+            card.addEventListener("click", () => abrirModal(p, card));
+            card.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                abrirModal(p, card);
+              }
+            });
+
+            grid.appendChild(card);
+          }
+        }
+
+        function actualizar() {
+          renderizar(filtrarYOrdenar());
+        }
+
+        function redesSociales(p) {
+          const items = [];
+          if (campoVisible("instagram") && p.instagram) {
+            items.push({
+              nombre: "Instagram",
+              href: `https://instagram.com/${encodeURIComponent(p.instagram)}`,
+              icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
+            });
+          }
+          if (campoVisible("whatsapp") && p.whatsapp) {
+            items.push({
+              nombre: "WhatsApp",
+              href: `https://wa.me/${encodeURIComponent(
+                String(p.whatsapp).replace(/\D/g, "")
+              )}`,
+              icono: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
+            });
+          }
+          if (campoVisible("telefono") && p.telefono) {
+            items.push({
+              nombre: "Teléfono",
+              href: `tel:${encodeURIComponent(
+                String(p.telefono).replace(/\s/g, "")
+              )}`,
+              icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+            });
+          }
+          if (campoVisible("twitter") && p.twitter) {
+            items.push({
+              nombre: "Twitter",
+              href: `https://twitter.com/${encodeURIComponent(p.twitter)}`,
+              icono: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+            });
+          }
+          if (campoVisible("facebook") && p.facebook) {
+            items.push({
+              nombre: "Facebook",
+              href: `https://facebook.com/${encodeURIComponent(p.facebook)}`,
+              icono: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
+            });
+          }
+          return items;
+        }
+
+        function datoModal(label, campo, valor) {
+          if (!campoVisible(campo) || !valor) return "";
+          return `
+            <div class="modal__section">
+              <h3>${escapeHtml(label)}</h3>
+              <p>${escapeHtml(valor)}</p>
+            </div>
+          `;
+        }
+
+        function abrirModal(p, trigger, updateUrl = true) {
+          triggerFocus = trigger || null;
+          if (updateUrl && p.slug) {
+            history.pushState({ slug: p.slug }, "", `#${p.slug}`);
+          }
+
+          const img = escapeHtml(
+            p.imagen || "./screenshots/productor-placeholder.svg"
+          );
+          const redes = redesSociales(p);
+
+          let redesHtml = "";
+          if (redes.length > 0) {
+            redesHtml = `
+              <div class="modal__section">
+                <h3>Redes sociales y contacto</h3>
+                <ul class="social-list">
+                  ${redes
+                    .map(
+                      (r) => `
+                    <li>
+                      <a href="${escapeHtml(r.href)}" target="_blank" rel="noopener noreferrer">
+                        ${r.icono}
+                        <span>${escapeHtml(r.nombre)}</span>
+                      </a>
+                    </li>
+                  `
+                    )
+                    .join("")}
+                </ul>
+              </div>
+            `;
+          }
+
+          modalContenido.innerHTML = `
+            <div class="modal__header">
+              <img class="modal__image" src="${img}" alt="" />
+              <div>
+                <h2 class="modal__title" id="modal-titulo">${escapeHtml(
+                  p.nombreEmprendimiento
+                )}</h2>
+                <span class="modal__tag">${escapeHtml(p.rubro)}</span>
+              </div>
+            </div>
+            ${datoModal("Descripción", "descripcion", p.descripcion)}
+            ${datoModal("Nombre y apellido", "nombreApellido", p.nombreApellido)}
+            ${datoModal("Organización", "organizacion", p.organizacion)}
+            ${datoModal("Correo electrónico", "email", p.email)}
+            ${datoModal("Ubicación del puesto", "ubicacion", p.ubicacion)}
+            ${redesHtml}
+          `;
+
+          overlay.setAttribute("aria-hidden", "false");
+          document.body.classList.add("modal-active");
+          modalCerrar.focus();
+          trapFocus(modal);
+        }
+
+        function cerrarModal(updateUrl = true) {
+          if (updateUrl) {
+            history.pushState(null, "", location.pathname + location.search);
+          }
+          overlay.setAttribute("aria-hidden", "true");
+          document.body.classList.remove("modal-active");
+          modalContenido.innerHTML = "";
+          if (triggerFocus) {
+            triggerFocus.focus();
+            triggerFocus = null;
+          }
+        }
+
+        let focusTrapHandler = null;
+        function trapFocus(element) {
+          const focusables = Array.from(
+            element.querySelectorAll(
+              'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            )
+          ).filter((el) => !el.disabled && el.offsetParent !== null);
+
+          if (focusables.length === 0) {
+            element.focus();
+            return;
+          }
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if (focusTrapHandler) {
+            element.removeEventListener("keydown", focusTrapHandler);
+          }
+
+          focusTrapHandler = (e) => {
+            if (e.key !== "Tab") return;
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          };
+
+          element.addEventListener("keydown", focusTrapHandler);
+        }
+
+        function abrirModalDesdeHash() {
+          const slug = location.hash.replace(/^#/, "");
+          if (!slug) return;
+          const p = productores.find((x) => x.slug === slug);
+          if (p) abrirModal(p, null, false);
+        }
+
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) cerrarModal();
+        });
+        modalCerrar.addEventListener("click", () => cerrarModal());
+        document.addEventListener("keydown", (e) => {
+          if (
+            e.key === "Escape" &&
+            overlay.getAttribute("aria-hidden") === "false"
+          ) {
+            cerrarModal();
+          }
+        });
+        window.addEventListener("hashchange", abrirModalDesdeHash);
+        window.addEventListener("popstate", () => {
+          const slug = location.hash.replace(/^#/, "");
+          if (!slug) cerrarModal(false);
+          else abrirModalDesdeHash();
+        });
+
+        inputBusqueda.addEventListener("input", actualizar);
+        selectRubro.addEventListener("change", actualizar);
+        selectOrden.addEventListener("change", actualizar);
+
+        async function cargar() {
+          try {
+            const response = await fetch("./productores.json");
+            if (!response.ok) throw new Error("No se pudo cargar el listado");
+            productores = await response.json();
+            rubros = obtenerRubros(productores);
+            llenarSelectRubros();
+            const seed = getSeed();
+            ordenados = shuffle(productores, mulberry32(seed));
+            actualizar();
+            abrirModalDesdeHash();
+          } catch (err) {
+            resultadosInfo.textContent =
+              "Error al cargar el listado de productorxs.";
+            grid.innerHTML = `<p style="grid-column:1/-1;color:var(--g-muted)">${escapeHtml(
+              err.message
+            )}</p>`;
+          }
+        }
+
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker
+            .register("./sw-donde.js")
+            .catch(() => {});
+        }
+
+        cargar();
+      })();
+    </script>
+  </body>
+</html>
