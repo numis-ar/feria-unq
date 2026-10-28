@@ -135,7 +135,7 @@ export async function changePassword(API_URL, BANK_URL, INSTANCE_ID, ACCESS_TOKE
   }
 
   // 2. Revenue API password change
-  const accRes = await fetch(`${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/accounts/${accountId}`, {
+  const accRes = await fetch(`${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/accounts`, {
       method: 'GET',
       headers: {
           "Content-Type": "application/json",
