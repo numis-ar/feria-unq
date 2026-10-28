@@ -511,6 +511,15 @@ describe('Accessibility and keyboard navigation', () => {
     assert.ok(active === 'nav-account-btn', `Expected focus on nav-account-btn, got ${active}`);
   });
 
+  it('should open help modal when clicking help buttons on cards', async () => {
+    await login();
+    await page.locator('[data-help-key="stat_sold"]').click();
+    const helpModal = page.locator('#help-modal');
+    await helpModal.waitFor({ state: 'visible' });
+    const title = await page.locator('#help-modal-title').textContent();
+    assert.ok(title.includes('Vendido') || title.includes('Sold'));
+  });
+
   it('should have required landmarks and labels', async () => {
     await login();
     const landmarks = await page.evaluate(() => ({

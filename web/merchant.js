@@ -282,7 +282,17 @@ export function isOrderPayable(order, parseAmountFn = parseAmountStr, now = Date
 }
 
 export function filterOrders(orders, parseAmountFn = parseAmountStr, now = Date.now()) {
-  return orders.filter((o) => isOrderPayable(o, parseAmountFn, now));
+  return orders.filter((o) => {
+    const amountNum = parseAmountFn(o.amount);
+    if (amountNum <= 0) return false;
+    // Only hide unpaid orders that can no longer be paid (expired deadline).
+    // Paid/settled/refunded orders must remain visible for the merchant.
+    if (!o.paid) {
+      const deadlineMs = getDeadlineMs(o.pay_deadline);
+      if (deadlineMs && deadlineMs < now) return false;
+    }
+    return true;
+  });
 }
 
 export function generateRequestUid() {
