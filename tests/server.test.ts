@@ -461,6 +461,69 @@ describe('Backend tests', () => {
       assert.strictEqual(code, 4401);
     });
 
+    it('does not broadcast orders-changed for zero-price orders', async () => {
+      let orders: any[] = [
+        { order_id: 'a', amount: 'NUMIS:10', refund_amount: 'NUMIS:0', wire_transfer_status: 'wired' },
+      ];
+      let holdRequests = 0;
+
+      mockMerchantHandler = (req, res) => {
+        const url = req.url || '';
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        if (url.includes('paid=yes')) {
+          res.end(JSON.stringify({ orders }));
+        } else if (url.includes('timeout_ms')) {
+          holdRequests++;
+          res.end(JSON.stringify({ orders: [] }));
+        } else {
+          res.end(JSON.stringify({ orders }));
+        }
+      };
+      mockBankHandler = (req, res) => {
+        const url = req.url || '';
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        if (url.includes('/transactions')) {
+          if (url.includes('timeout_ms')) {
+            res.end(JSON.stringify({ transactions: [] }));
+          } else {
+            res.end(JSON.stringify({ transactions: [] }));
+          }
+        } else {
+          res.end(JSON.stringify({ name: 'WS Store', balance: { amount: 'NUMIS:1' } }));
+        }
+      };
+
+      const port = await listenBackend();
+      const client = makeWsClient(`ws://localhost:${port}/ws`);
+      await client.open();
+      client.sendRaw(JSON.stringify({ type: 'auth', instance: 'wsinst', merchantToken: 'mtok', bankToken: 'btok' }));
+      const ready = await client.nextMessage();
+      assert.deepStrictEqual(ready, { type: 'ready' });
+
+      const deadline = Date.now() + 5000;
+      while (holdRequests < 2 && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      assert.ok(holdRequests >= 2, 'watcher should have done its first iteration');
+
+      // Add a zero-price order: this must not trigger orders-changed
+      orders = orders.concat([{ order_id: 'z', amount: 'NUMIS:0', refund_amount: 'NUMIS:0', wire_transfer_status: 'pending' }]);
+
+      const seen: Set<string> = new Set();
+      const msgDeadline = Date.now() + 4000;
+      while (Date.now() < msgDeadline) {
+        const remaining = msgDeadline - Date.now();
+        if (remaining <= 0) break;
+        const msg = await Promise.race([
+          client.nextMessage(remaining),
+          new Promise<null>((r) => setTimeout(() => r(null), remaining)),
+        ]);
+        if (msg) seen.add(msg.type);
+      }
+      assert.ok(!seen.has('orders-changed'), 'zero-price order should not trigger orders-changed');
+      client.close();
+    });
+
     afterEach(async () => {
       if ((server as any).listening) {
         await new Promise<void>((resolve) => (server as any).close(() => resolve()));

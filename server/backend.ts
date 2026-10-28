@@ -872,6 +872,10 @@ async function runWatcher(w: Watcher) {
   await Promise.all([watchOrdersLoop(w), watchTransactionsLoop(w)]);
 }
 
+function orderHasAmount(order: any): boolean {
+  return amountToNumber(order.amount) > 0;
+}
+
 function ordersSignature(orders: any[]): string {
   return JSON.stringify(orders.map((o) => [
     o.order_id, o.payment_status ?? o.order_status, o.wire_transfer_status, !!o.wired, o.amount, o.refund_amount,
@@ -887,8 +891,8 @@ async function watchOrdersLoop(w: Watcher) {
         upstreamJson(getMerchantUrl(), `/instances/${enc}/private/orders?paid=yes&limit=-500`, w.merchantToken),
       ]);
       if (recentRes.status === 200 && paidRes.status === 200) {
-        const recent = recentRes.json?.orders ?? (Array.isArray(recentRes.json) ? recentRes.json : []);
-        const paid = paidRes.json?.orders ?? (Array.isArray(paidRes.json) ? paidRes.json : []);
+        const recent = (recentRes.json?.orders ?? (Array.isArray(recentRes.json) ? recentRes.json : [])).filter(orderHasAmount);
+        const paid = (paidRes.json?.orders ?? (Array.isArray(paidRes.json) ? paidRes.json : [])).filter(orderHasAmount);
         const sig = ordersSignature(recent) + '|' + ordersSignature(paid);
         if (w.ordersSig !== undefined && sig !== w.ordersSig) {
           broadcast(w, JSON.stringify({ type: 'orders-changed' }));

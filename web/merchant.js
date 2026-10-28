@@ -320,13 +320,25 @@ export function buildOrderRowHtml(order, options) {
   const rowClass = options.rowClass || "";
   const orderId = order.order_id || order.summary;
 
+  const deadlineMs = getDeadlineMs(order.pay_deadline);
+  const remainingSeconds = deadlineMs
+    ? Math.max(0, Math.ceil((deadlineMs - (options.now || Date.now())) / 1000))
+    : null;
+  const showCountdown = state === "unpaid" && remainingSeconds !== null && remainingSeconds > 0;
+  const countdownHtml = showCountdown
+    ? `<div class="order-countdown text-xs text-slate-600 mt-1" role="timer" aria-label="${escapeHtml(t("order_countdown_label"))}" data-deadline="${deadlineMs}">${tf("order_expires_in", { seconds: remainingSeconds })}</div>`
+    : "";
+
   return `
-    <tr class="${rowClass}">
+    <tr class="${rowClass}" data-order-id="${escapeHtml(orderId)}">
       <td class="px-6 py-4">
         <div class="font-medium text-slate-800">${escapeHtml(order.summary || order.order_id || t("order_fallback"))}</div>
         <div class="text-xs text-slate-400">${escapeHtml(timeStr)}</div>
       </td>
-      <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${t("order_state_" + state.replace(/-/g, "_"))}</span></td>
+      <td class="px-6 py-4">
+        <span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${t("order_state_" + state.replace(/-/g, "_"))}</span>
+        ${countdownHtml}
+      </td>
       <td class="px-6 py-4 text-right font-semibold text-slate-800">${formatMoney(amountNum)}</td>
     </tr>
   `;

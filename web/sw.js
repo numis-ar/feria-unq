@@ -56,6 +56,8 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
+// Default web-push notification text. The backend only sends empty "tick"
+// pushes for order/transaction changes; admin notifications carry a payload.
 self.addEventListener("push", (event) => {
   let title = "FairPay";
   let body = "Nueva actividad / New activity";

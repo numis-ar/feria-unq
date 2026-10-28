@@ -1830,6 +1830,24 @@
         buildTransactionRowHtml,
       } from "./merchant.js";
 
+      // Notification content configuration — edit here to change the text
+      // shown by toasts and system notifications for new orders, updates
+      // and transactions. Each function receives the relevant context.
+      const NOTIFICATIONS = {
+        newOrder: {
+          title: () => t("toast_new_order"),
+          body: (summary, state) => `${summary} → ${state}`,
+        },
+        updatedOrder: {
+          title: () => t("toast_updated_order"),
+          body: (summary, state) => `${summary} → ${state}`,
+        },
+        newTx: {
+          title: () => t("toast_new_tx"),
+          body: (subject, amount) => `${subject} $${formatMoney(amount)}`,
+        },
+      };
+
       function showToast(title, desc, type = "success") {
         playNotificationSound();
         const container = document.getElementById("toast-container");
@@ -1997,6 +2015,8 @@
           toast_state_unpaid: "Payment initiated",
           toast_state_settled: "settled",
           toast_state_refunded: "refunded",
+          order_expires_in: "expires in {seconds}s",
+          order_countdown_label: "Time remaining to pay",
           order_state_claimed: "Claimed",
           order_state_in_transit: "In Transit",
           order_state_settled: "Settled",
@@ -2169,6 +2189,8 @@
           toast_state_unpaid: "Pendiente",
           toast_state_settled: "Acreditado",
           toast_state_refunded: "reembolsado",
+          order_expires_in: "vence en {seconds} segundos",
+          order_countdown_label: "Tiempo restante para pagar",
           order_state_claimed: "Reclamado",
           order_state_in_transit: "Confirmado",
           order_state_settled: "Acreditado",
@@ -2628,6 +2650,10 @@
         const instanceAtLogout = INSTANCE_ID;
         teardownPushSubscription(instanceAtLogout);
         stopRealtime();
+        if (orderCountdownInterval) {
+          clearInterval(orderCountdownInterval);
+          orderCountdownInterval = null;
+        }
         localStorage.removeItem("taler_username");
         localStorage.removeItem("taler_password");
         INSTANCE_ID = "";
@@ -2821,13 +2847,12 @@
 
         if (changedOrders.length > 0) {
           const first = changedOrders[0];
-          const title = first.isNew
-            ? t("toast_new_order")
-            : t("toast_updated_order");
-          showToast(title, `${first.summary} &rarr; ${first.state}`);
+          const kind = first.isNew ? "newOrder" : "updatedOrder";
+          const notify = NOTIFICATIONS[kind];
+          showToast(notify.title(), notify.body(first.summary, first.state));
           showSystemNotification(
-            title,
-            `${first.summary} → ${first.state}`,
+            notify.title(),
+            notify.body(first.summary, first.state),
             `order-${first.summary}`,
           );
         }
@@ -2835,6 +2860,53 @@
         tbody.innerHTML = htmlBuffer;
         tbody.setAttribute("aria-busy", "false");
         ordersFirstFetch = false;
+        startOrderCountdowns();
+      }
+
+      let orderCountdownInterval = null;
+
+      function startOrderCountdowns() {
+        if (orderCountdownInterval) {
+          clearInterval(orderCountdownInterval);
+          orderCountdownInterval = null;
+        }
+
+        const updateCountdowns = () => {
+          const countdowns = document.querySelectorAll(
+            ".order-countdown[data-deadline]",
+          );
+          if (countdowns.length === 0) {
+            if (orderCountdownInterval) {
+              clearInterval(orderCountdownInterval);
+              orderCountdownInterval = null;
+            }
+            return;
+          }
+
+          const now = Date.now();
+          countdowns.forEach((el) => {
+            const deadlineMs = parseInt(el.getAttribute("data-deadline"), 10);
+            const row = el.closest("tr");
+            const remaining = Math.max(
+              0,
+              Math.ceil((deadlineMs - now) / 1000),
+            );
+
+            if (remaining <= 0) {
+              el.textContent = tf("order_expires_in", { seconds: 0 });
+              if (row) {
+                row.style.transition = "opacity 0.3s ease";
+                row.style.opacity = "0";
+                setTimeout(() => row.remove(), 300);
+              }
+            } else {
+              el.textContent = tf("order_expires_in", { seconds: remaining });
+            }
+          });
+        };
+
+        updateCountdowns();
+        orderCountdownInterval = setInterval(updateCountdowns, 1000);
       }
 
       async function startPollingOrders() {
@@ -2954,14 +3026,15 @@
 
         if (newTxs.length > 0) {
           const first = newTxs[0];
+          const txNotify = NOTIFICATIONS.newTx;
           showToast(
-            t("toast_new_tx"),
-            `${first.subject} $${formatMoney(first.amount)}`,
+            txNotify.title(),
+            txNotify.body(first.subject, first.amount),
             first.isCredit ? "success" : "info",
           );
           showSystemNotification(
-            t("toast_new_tx"),
-            `${first.subject} $${formatMoney(first.amount)}`,
+            txNotify.title(),
+            txNotify.body(first.subject, first.amount),
             `tx-${first.subject}`,
           );
         }

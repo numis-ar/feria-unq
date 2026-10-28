@@ -375,6 +375,28 @@ describe('Frontend tests', () => {
       assert.match(html, /12\.50/);
       assert.match(html, /settled/);
     });
+
+    it('should include countdown for unpaid orders with a pay deadline', () => {
+      const now = 1000000;
+      const html = buildOrderRowHtml(
+        { summary: 'Pending', amount: 'NUMIS:12.50', paid: false, pay_deadline: { t_ms: now + 5000 } },
+        { t: (k) => k, tf: (k, v) => `${k}:${v.seconds}`, formatMoney: (n) => n.toFixed(2), timeStr: '10:00', rowClass: 'hover:bg-slate-50', now }
+      );
+      assert.match(html, /order-countdown/);
+      assert.match(html, /role="timer"/);
+      assert.match(html, /aria-label="order_countdown_label"/);
+      assert.match(html, /data-deadline="1005000"/);
+      assert.match(html, /order_expires_in:5/);
+    });
+
+    it('should not include countdown for paid orders', () => {
+      const now = 1000000;
+      const html = buildOrderRowHtml(
+        { summary: 'Paid', amount: 'NUMIS:12.50', paid: true, wired: false, pay_deadline: { t_ms: now + 5000 } },
+        { t: (k) => k, tf: (k, v) => k, formatMoney: (n) => n.toFixed(2), timeStr: '10:00', rowClass: 'hover:bg-slate-50', now }
+      );
+      assert.doesNotMatch(html, /order-countdown/);
+    });
   });
 
   describe('buildTransactionRowHtml', () => {
