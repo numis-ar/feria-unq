@@ -116,7 +116,58 @@ export async function closeAccount(INSTANCE_ID, BANK_ACCESS_TOKEN) {
 }
 
 export async function changePassword(API_URL, BANK_URL, INSTANCE_ID, ACCESS_TOKEN, BANK_ACCESS_TOKEN, oldP, newP) {
-  // 1. Merchant API password change
+  // 1. Bank API password change
+  const bankRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/auth`, {
+      method: 'PATCH',
+      headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${BANK_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+          old_password: oldP,
+          new_password: newP
+      })
+  });
+  
+  if (!bankRes.ok) {
+      const errText = await bankRes.text();
+      throw new Error(`Bank API failed: ${bankRes.status} ${errText}`);
+  }
+
+  // 2. Revenue API password change
+  const accRes = await fetch(`${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/accounts/${accountId}`);
+
+  if (!accRes.ok) {
+      const errText = await accRes.text();
+      throw new Error(`Getting revenue info failed: ${accRes.status} ${errText}`);
+  }
+  
+  const revJson = await accRes.json();
+  if (!revJson.accounts || !revJson.accounts.length) {
+      throw new Error(`This merchant doesn't have bank accounts`);
+  }
+  const accountId = revJson.accounts[0].h_wire;
+  const revRes = await fetch(`${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/accounts/${accountId}`, {
+      method: 'PATCH',
+      headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+          credit_facade_credentials: {
+              type: "basic",
+              username: encodeURIComponent(INSTANCE_ID),
+              password: newP
+	  }
+      })
+  });
+  
+  if (!revRes.ok) {
+      const errText = await merchRes.text();
+      throw new Error(`Revenue API failed: ${revRes.status} ${errText}`);
+  }
+  
+  // 3. Merchant API password change
   const merchRes = await fetch(`${API_URL}/instances/${encodeURIComponent(INSTANCE_ID)}/private/auth`, {
       method: 'POST',
       headers: {
@@ -133,24 +184,6 @@ export async function changePassword(API_URL, BANK_URL, INSTANCE_ID, ACCESS_TOKE
   if (!merchRes.ok) {
       const errText = await merchRes.text();
       throw new Error(`Merchant API failed: ${merchRes.status} ${errText}`);
-  }
-  
-  // 2. Bank API password change
-  const bankRes = await fetch(`${BANK_URL}/accounts/${encodeURIComponent(INSTANCE_ID)}/auth`, {
-      method: 'PATCH',
-      headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${BANK_ACCESS_TOKEN}`
-      },
-      body: JSON.stringify({
-          old_password: oldP,
-          new_password: newP
-      })
-  });
-  
-  if (!bankRes.ok) {
-      const errText = await bankRes.text();
-      throw new Error(`Bank API failed: ${bankRes.status} ${errText}`);
   }
 }
 
