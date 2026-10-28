@@ -511,13 +511,79 @@ describe('Accessibility and keyboard navigation', () => {
     assert.ok(active === 'nav-account-btn', `Expected focus on nav-account-btn, got ${active}`);
   });
 
-  it('should open help modal when clicking help buttons on cards', async () => {
+  it('should open help modal for every dashboard help button', async () => {
     await login();
-    await page.locator('[data-help-key="stat_sold"]').click();
-    const helpModal = page.locator('#help-modal');
-    await helpModal.waitFor({ state: 'visible' });
-    const title = await page.locator('#help-modal-title').textContent();
-    assert.ok(title.includes('Vendido') || title.includes('Sold'));
+    const keys = ['stat_sold', 'stat_intransit', 'stat_settled', 'orders_title'];
+    for (const key of keys) {
+      const btn = page.locator(`[data-help-key="${key}"]`);
+      await btn.waitFor({ state: 'visible' });
+      await btn.click();
+      const helpModal = page.locator('#help-modal');
+      await helpModal.waitFor({ state: 'visible' });
+      const title = await page.locator('#help-modal-title').textContent();
+      assert.ok(title && title.length > 0 && title !== `help_${key}_title`, `Missing help title for ${key}`);
+      await page.locator('#btn-help-ok').click();
+      await helpModal.waitFor({ state: 'hidden' });
+    }
+  });
+
+  it('should open help modal for every account help button without triggering the card action', async () => {
+    await login();
+    await page.locator('#nav-account-btn').click();
+    await page.locator('#account:not(.hidden)').waitFor({ state: 'visible' });
+
+    const cases = [
+      { key: 'bank_avail', unwantedModal: '#withdraw-modal' },
+      { key: 'bank_transfer', unwantedModal: '#transfer-modal' },
+      { key: 'tx_title', unwantedModal: null },
+      { key: 'btn_close_account', unwantedModal: '#close-account-modal' },
+    ];
+    for (const { key, unwantedModal } of cases) {
+      const btn = page.locator(`[data-help-key="${key}"]`);
+      await btn.waitFor({ state: 'visible' });
+      await btn.click();
+      const helpModal = page.locator('#help-modal');
+      await helpModal.waitFor({ state: 'visible' });
+      const title = await page.locator('#help-modal-title').textContent();
+      assert.ok(title && title.length > 0 && title !== `help_${key}_title`, `Missing help title for ${key}`);
+      if (unwantedModal) {
+        await page.locator(unwantedModal).waitFor({ state: 'hidden' });
+      }
+      await page.locator('#btn-help-ok').click();
+      await helpModal.waitFor({ state: 'hidden' });
+    }
+  });
+
+  it('should keep table help buttons inside their headers', async () => {
+    await login();
+    const tableHeaders = [
+      { helpKey: 'orders_title', ancestorLevel: 1 },
+      { helpKey: 'tx_title', ancestorLevel: 1 },
+    ];
+    for (const { helpKey } of tableHeaders) {
+      const ok = await page.evaluate((key) => {
+        const btn = document.querySelector(`[data-help-key="${key}"]`);
+        const header = btn?.closest('.relative.px-6.py-5');
+        if (!btn || !header) return false;
+        const br = btn.getBoundingClientRect();
+        const hr = header.getBoundingClientRect();
+        return (
+          br.top >= hr.top - 1 &&
+          br.left >= hr.left - 1 &&
+          br.right <= hr.right + 1 &&
+          br.bottom <= hr.bottom + 1
+        );
+      }, helpKey);
+      assert.ok(ok, `Help button ${helpKey} is not inside its table header`);
+    }
+  });
+
+  it('should show paid orders in the orders table', async () => {
+    await login();
+    const orderRow = page.locator('#orders-tbody tr:has-text("Coffee")');
+    await orderRow.waitFor({ state: 'visible' });
+    const text = await orderRow.textContent();
+    assert.ok(text.includes('Coffee'));
   });
 
   it('should have required landmarks and labels', async () => {
