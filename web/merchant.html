@@ -6,12 +6,8 @@
     <meta name="theme-color" content="#064d2d" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title data-i18n="header_title">FairPay Merchant</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;900&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="stylesheet" href="./fonts/archivo.css" />
+    <script src="./qrcode-generator.js"></script>
     <script src="./tailwind.js"></script>
     <style>
       :root {
@@ -1586,6 +1582,14 @@
               </tbody>
             </table>
           </div>
+        </div>
+        <div class="text-right">
+          <a
+            href="./puesto-test"
+            target="_blank"
+            class="text-indigo-600 hover:text-indigo-700 text-sm font-semibold"
+            >Ver puesto de demostración</a
+          >
         </div>
       </section>
 
@@ -3568,6 +3572,30 @@
           const qrSpinnerModal = document.getElementById("qr-spinner-modal");
           const qrError = document.getElementById("qr-modal-error");
 
+          function generateQrDataUrl(text, size = 300) {
+            const q = window.qrcode(0, "M");
+            q.addData(text);
+            q.make();
+            const n = q.getModuleCount();
+            const cellSize = Math.floor(size / n);
+            const actualSize = cellSize * n;
+            const canvas = document.createElement("canvas");
+            canvas.width = actualSize;
+            canvas.height = actualSize;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, actualSize, actualSize);
+            ctx.fillStyle = "#161826";
+            for (let r = 0; r < n; r++) {
+              for (let c = 0; c < n; c++) {
+                if (q.isDark(r, c)) {
+                  ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                }
+              }
+            }
+            return canvas.toDataURL("image/png");
+          }
+
           setButtonLoading(btn, true, t("updating"));
 
           try {
@@ -3618,7 +3646,7 @@
             openDialog("qr-modal");
             updateWithdrawStepper("withdraw-stepper-2", 2);
 
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(talerWithdrawUriWithConfirm)}`;
+            qrImg.src = generateQrDataUrl(talerWithdrawUriWithConfirm);
             const sameDeviceBtn = document.getElementById("qr-same-device-btn");
             if (sameDeviceBtn) {
               sameDeviceBtn.href = talerWithdrawUriWithConfirm;

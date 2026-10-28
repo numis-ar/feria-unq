@@ -94,6 +94,12 @@ const server = http.createServer(async (req, res) => {
     safeSuffix = path.sep + 'index.html';
   }
 
+  // Friendly puesto IDs: /puesto-<id> serves puesto.html so the JS can read
+  // the ID from the pathname and look it up in its internal map.
+  if (/^\/puesto-[^/]+$/.test(safeSuffix)) {
+    safeSuffix = path.sep + 'puesto.html';
+  }
+
   const filePath = path.join(PUBLIC_DIR, safeSuffix);
 
   let stats;

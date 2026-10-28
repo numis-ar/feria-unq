@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#064d2d" />
   <title>Puesto NUMIS · Escaneá y pagá</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./fonts/archivo.css" />
   <script src="./qrcode-generator.js"></script>
   <style>
     :root {
@@ -30,7 +28,7 @@
     }
 
     body {
-      background: #1a1a1a url('../puesto-feria.png') center center / cover no-repeat;
+      background: #1a1a1a url('./puesto-feria.png') center center / cover no-repeat;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -328,9 +326,22 @@
 
   <script>
     (function () {
+      const PUESTO_MAP = {
+        test: 'taler://pay-template/merchant.taler.ar/instances/test/UNQ'
+      };
+
       function getQrValue() {
         const params = new URLSearchParams(window.location.search);
-        return params.get('qr');
+        const qrParam = params.get('qr');
+        if (qrParam) return qrParam;
+
+        const match = window.location.pathname.match(/\/puesto-([^/]+)\/?$/);
+        if (match) {
+          const id = decodeURIComponent(match[1]);
+          return PUESTO_MAP[id] || null;
+        }
+
+        return null;
       }
 
       function renderQR(url) {
