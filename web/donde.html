@@ -280,85 +280,167 @@
       }
       .modal {
         position: relative;
-        width: min(100%, 560px);
+        width: min(100%, 520px);
         max-height: calc(100vh - 40px);
         overflow-y: auto;
         background: var(--color-bg);
         border-radius: var(--radius-md);
-        padding: 28px;
+        padding: 32px 28px 28px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
       }
-      .modal__close {
+      .modal__top-actions {
         position: absolute;
         top: 12px;
         right: 12px;
-        width: 40px;
-        height: 40px;
+        display: flex;
+        gap: 8px;
+      }
+      .modal__close,
+      .modal__share {
+        width: 44px;
+        height: 44px;
         display: grid;
         place-items: center;
         border: none;
         border-radius: 50%;
         background: var(--color-divider);
         color: var(--color-text);
-        font-size: 22px;
         cursor: pointer;
       }
       .modal__close:hover,
-      .modal__close:focus-visible {
+      .modal__close:focus-visible,
+      .modal__share:hover,
+      .modal__share:focus-visible {
         background: var(--naranja);
         color: #fff;
         outline: 3px solid var(--verde);
         outline-offset: 2px;
       }
+      .modal__close svg,
+      .modal__share svg {
+        width: 22px;
+        height: 22px;
+      }
       .modal__header {
         display: flex;
-        gap: 18px;
-        align-items: flex-start;
-        margin-bottom: 20px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 14px;
+        margin-bottom: 22px;
+        padding-top: 16px;
       }
       .modal__image {
-        width: 110px;
-        height: 110px;
+        width: 140px;
+        height: 140px;
         object-fit: cover;
-        border-radius: var(--radius-md);
+        border-radius: 50%;
+        border: 4px solid var(--naranja);
         background: var(--menta);
-        flex: none;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
       }
       .modal__title {
         margin: 0;
-        font-size: 28px;
+        font-size: 32px;
         color: var(--verde);
+        letter-spacing: -0.03em;
+      }
+      .modal__subtitle {
+        margin: 4px 0 0;
+        font-size: 16px;
+        color: var(--g-muted);
+        font-weight: 500;
       }
       .modal__tag {
         display: inline-flex;
-        margin-top: 8px;
-        padding: 4px 10px;
+        margin-top: 4px;
+        padding: 5px 12px;
+        background: var(--verde);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border-radius: 999px;
+      }
+      .modal__description {
+        margin: 0 0 22px;
+        font-size: 16px;
+        line-height: 1.55;
+        color: var(--color-text);
+        text-align: center;
+        text-wrap: pretty;
+      }
+      .contact-list {
+        list-style: none;
+        margin: 0 0 22px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .contact-list__item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-divider);
+        border-radius: var(--radius-md);
+      }
+      .contact-list__icon {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        flex: none;
         background: var(--menta);
         color: var(--verde-hondo);
+        border-radius: 50%;
+      }
+      .contact-list__icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .contact-list__content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .contact-list__label {
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.04em;
         text-transform: uppercase;
-        border-radius: var(--radius-md);
-      }
-      .modal__section {
-        margin-top: 18px;
-      }
-      .modal__section h3 {
-        margin: 0 0 8px;
-        font-size: 14px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
         color: var(--g-muted);
       }
-      .modal__section p {
-        margin: 0;
+      .contact-list__value {
+        font-size: 15px;
         color: var(--color-text);
-        line-height: 1.5;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+      .contact-list__value a {
+        color: var(--verde);
+        text-decoration: none;
+      }
+      .contact-list__value a:hover,
+      .contact-list__value a:focus-visible {
+        text-decoration: underline;
+      }
+      .modal__section-title {
+        margin: 22px 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--g-muted);
+        text-align: center;
       }
       .social-list {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         gap: 10px;
         list-style: none;
         margin: 0;
@@ -367,24 +449,29 @@
       .social-list a {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 12px;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
         background: var(--color-surface);
-        border: 1px solid var(--color-divider);
+        border: 2px solid var(--verde);
         border-radius: var(--radius-md);
         text-decoration: none;
-        font-size: 13px;
+        font-size: 14px;
+        font-weight: 700;
         color: var(--verde) !important;
+        box-shadow: 3px 3px 0 var(--naranja);
+        transition: transform 0.12s, box-shadow 0.12s;
       }
       .social-list a:hover,
       .social-list a:focus-visible {
-        background: var(--menta);
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0 var(--naranja);
         outline: 3px solid var(--naranja);
         outline-offset: 2px;
       }
       .social-list svg {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         flex: none;
       }
 
@@ -405,18 +492,21 @@
           font-size: 13px;
         }
         .modal {
-          padding: 20px;
+          padding: 28px 20px 24px;
         }
         .modal__header {
-          flex-direction: column;
           gap: 12px;
+          padding-top: 24px;
         }
         .modal__image {
-          width: 90px;
-          height: 90px;
+          width: 120px;
+          height: 120px;
         }
         .modal__title {
-          font-size: 24px;
+          font-size: 26px;
+        }
+        .modal__description {
+          font-size: 15px;
         }
       }
     </style>
@@ -465,7 +555,7 @@
           >Guía de pagos</a
         >
         <a
-          href="./donde.html"
+          href="/productorxs"
           aria-current="page"
           style="color: #fff; text-decoration: none; font-size: 14px"
           >Productorxs</a
@@ -653,14 +743,51 @@
       aria-hidden="true"
     >
       <div class="modal" role="document" tabindex="-1" id="modal">
-        <button
-          type="button"
-          class="modal__close"
-          id="modal-cerrar"
-          aria-label="Cerrar detalles"
-        >
-          ×
-        </button>
+        <div class="modal__top-actions">
+          <button
+            type="button"
+            class="modal__share"
+            id="modal-compartir"
+            aria-label="Compartir este perfil"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="modal__close"
+            id="modal-cerrar"
+            aria-label="Cerrar detalles"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
         <div id="modal-contenido">
           <!-- El contenido se carga con JavaScript -->
         </div>
@@ -680,13 +807,30 @@
         const overlay = document.getElementById("modal-overlay");
         const modal = document.getElementById("modal");
         const modalCerrar = document.getElementById("modal-cerrar");
+        const modalCompartir = document.getElementById("modal-compartir");
         const modalContenido = document.getElementById("modal-contenido");
+
+        const OG_ORIGINAL = {
+          title:
+            document.querySelector('meta[property="og:title"]')?.content ||
+            document.title,
+          description:
+            document.querySelector('meta[property="og:description"]')
+              ?.content || "",
+          url:
+            document.querySelector('meta[property="og:url"]')?.content ||
+            location.href,
+          image:
+            document.querySelector('meta[property="og:image"]')?.content ||
+            "",
+        };
 
         // Flags globales de visibilidad de campos.
         // Cambiar cualquier valor a false oculta ese dato en toda la app,
         // como si no estuviera presente en el JSON.
         const CAMPOS_VISIBLES = {
           descripcion: true,
+          rubro: true,
           nombreApellido: true,
           organizacion: true,
           email: true,
@@ -746,6 +890,24 @@
             .replace(/[\u0300-\u036f]/g, "");
         }
 
+        // Firma fonética simplificada para español rioplatense.
+        // Permite encontrar coincidencias aunque el usuario escriba
+        // b/v, s/c (ante e/i), y/i, z/s, j/g, ll/y, qu/k, etc.
+        function firmaFonetica(texto) {
+          let t = normalizar(texto);
+          t = t.replace(/h/g, "");
+          t = t.replace(/ll/g, "y");
+          t = t.replace(/qu/g, "k");
+          t = t.replace(/c/g, "s");
+          t = t.replace(/z/g, "s");
+          t = t.replace(/v/g, "b");
+          t = t.replace(/y/g, "i");
+          t = t.replace(/j/g, "g");
+          t = t.replace(/gue/g, "ge");
+          t = t.replace(/gui/g, "gi");
+          return t;
+        }
+
         function obtenerRubros(lista) {
           const conjunto = new Set(lista.map((p) => p.rubro).filter(Boolean));
           return Array.from(conjunto).sort((a, b) => a.localeCompare(b));
@@ -790,14 +952,22 @@
           const palabras = texto.split(/\s+/).filter(Boolean);
           let mejor = 0;
           for (const palabra of palabras) {
+            if (palabra === termino) {
+              mejor = Math.max(mejor, 2);
+              continue;
+            }
             if (palabra.includes(termino)) {
-              mejor = Math.max(mejor, 1 + (palabra === termino ? 0.5 : 0));
+              mejor = Math.max(mejor, 1.2);
               continue;
             }
             if (termino.length >= 3 && palabra.length >= 3) {
-              const ventana = palabra.slice(0, termino.length + 1);
-              const dist = levenshtein(termino, ventana);
-              if (dist <= 1) mejor = Math.max(mejor, 0.6 - dist * 0.2);
+              const dist = levenshtein(termino, palabra);
+              const maxDist = Math.max(1, Math.floor(termino.length / 3));
+              if (dist <= maxDist) {
+                const ratio =
+                  1 - dist / Math.max(termino.length, palabra.length);
+                mejor = Math.max(mejor, ratio * 0.8);
+              }
             }
           }
           return mejor;
@@ -814,12 +984,22 @@
           };
           let score = 0;
           for (const termino of terminos) {
+            const terminoFon = firmaFonetica(termino);
             for (const [campo, peso] of Object.entries(campos)) {
               const valor = normalizar(p[campo]);
-              const fs = fuzzyScore(termino, valor);
+              const valorFon = firmaFonetica(valor);
+              const fs = Math.max(
+                fuzzyScore(termino, valor),
+                fuzzyScore(terminoFon, valorFon)
+              );
               if (fs > 0) {
                 score += peso * fs;
-                if (valor.startsWith(termino)) score += peso * 0.3;
+                if (
+                  valor.startsWith(termino) ||
+                  valorFon.startsWith(terminoFon)
+                ) {
+                  score += peso * 0.3;
+                }
               }
             }
           }
@@ -978,14 +1158,145 @@
           return items;
         }
 
-        function datoModal(label, campo, valor) {
-          if (!campoVisible(campo) || !valor) return "";
+        function iconoContacto(tipo) {
+          const iconos = {
+            organizacion: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18M5 21V10l7-4 7 4v11M8 21v-3a2 2 0 0 1 4 0v3"/></svg>`,
+            email: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
+            ubicacion: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+          };
+          return iconos[tipo] || "";
+        }
+
+        function listaContacto(p) {
+          const items = [];
+          if (campoVisible("organizacion") && p.organizacion) {
+            items.push({
+              tipo: "organizacion",
+              label: "Organización",
+              valor: escapeHtml(p.organizacion),
+              href: null,
+            });
+          }
+          if (campoVisible("email") && p.email) {
+            items.push({
+              tipo: "email",
+              label: "Correo electrónico",
+              valor: escapeHtml(p.email),
+              href: `mailto:${encodeURIComponent(p.email)}`,
+            });
+          }
+          if (campoVisible("ubicacion") && p.ubicacion) {
+            items.push({
+              tipo: "ubicacion",
+              label: "Ubicación del puesto",
+              valor: escapeHtml(p.ubicacion),
+              href: null,
+            });
+          }
+          if (items.length === 0) return "";
           return `
-            <div class="modal__section">
-              <h3>${escapeHtml(label)}</h3>
-              <p>${escapeHtml(valor)}</p>
-            </div>
+            <h3 class="modal__section-title">Datos de contacto</h3>
+            <ul class="contact-list">
+              ${items
+                .map(
+                  (item) => `
+                <li class="contact-list__item">
+                  <span class="contact-list__icon">${iconoContacto(
+                    item.tipo
+                  )}</span>
+                  <div class="contact-list__content">
+                    <span class="contact-list__label">${escapeHtml(
+                      item.label
+                    )}</span>
+                    <span class="contact-list__value">${
+                      item.href
+                        ? `<a href="${item.href}">${item.valor}</a>`
+                        : item.valor
+                    }</span>
+                  </div>
+                </li>
+              `
+                )
+                .join("")}
+            </ul>
           `;
+        }
+
+        function actualizarOG(p) {
+          const url = `${location.origin}${location.pathname}#${p.slug}`;
+          const imagen = p.imagen
+            ? new URL(p.imagen, location.href).href
+            : OG_ORIGINAL.image;
+          document.title = `${p.nombreEmprendimiento} · Feria UNQ`;
+          setMeta("og:title", p.nombreEmprendimiento);
+          setMeta("og:description", p.descripcion || OG_ORIGINAL.description);
+          setMeta("og:url", url);
+          setMeta("og:image", imagen);
+        }
+
+        function restaurarOG() {
+          document.title = OG_ORIGINAL.title;
+          setMeta("og:title", OG_ORIGINAL.title);
+          setMeta("og:description", OG_ORIGINAL.description);
+          setMeta("og:url", OG_ORIGINAL.url);
+          setMeta("og:image", OG_ORIGINAL.image);
+        }
+
+        function setMeta(prop, value) {
+          const meta = document.querySelector(`meta[property="${prop}"]`);
+          if (meta && value) meta.setAttribute("content", value);
+        }
+
+        async function compartir(p) {
+          const url = `${location.origin}${location.pathname}#${p.slug}`;
+          const shareData = {
+            title: p.nombreEmprendimiento,
+            text: p.descripcion || "",
+            url,
+          };
+          if (navigator.share) {
+            try {
+              await navigator.share(shareData);
+            } catch (err) {
+              // El usuario canceló o falló: no hacer nada.
+            }
+          } else if (navigator.clipboard) {
+            try {
+              await navigator.clipboard.writeText(url);
+              mostrarToast("Link copiado al portapapeles");
+            } catch {
+              mostrarToast("No se pudo copiar el link");
+            }
+          } else {
+            mostrarToast("Tu navegador no permite compartir desde aquí");
+          }
+        }
+
+        function mostrarToast(mensaje) {
+          const toast = document.createElement("div");
+          toast.setAttribute("role", "status");
+          toast.setAttribute("aria-live", "polite");
+          toast.className = "toast";
+          toast.textContent = mensaje;
+          toast.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            padding: 12px 20px;
+            background: var(--verde);
+            color: #fff;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+          `;
+          document.body.appendChild(toast);
+          setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.transition = "opacity 0.3s";
+            setTimeout(() => toast.remove(), 300);
+          }, 2500);
         }
 
         function abrirModal(p, trigger, updateUrl = true) {
@@ -993,34 +1304,46 @@
           if (updateUrl && p.slug) {
             history.pushState({ slug: p.slug }, "", `#${p.slug}`);
           }
+          actualizarOG(p);
+          modalCompartir.dataset.slug = p.slug;
 
           const img = escapeHtml(
             p.imagen || "./screenshots/productor-placeholder.svg"
           );
           const redes = redesSociales(p);
+          const contactoHtml = listaContacto(p);
 
           let redesHtml = "";
           if (redes.length > 0) {
             redesHtml = `
-              <div class="modal__section">
-                <h3>Redes sociales y contacto</h3>
-                <ul class="social-list">
-                  ${redes
-                    .map(
-                      (r) => `
-                    <li>
-                      <a href="${escapeHtml(r.href)}" target="_blank" rel="noopener noreferrer">
-                        ${r.icono}
-                        <span>${escapeHtml(r.nombre)}</span>
-                      </a>
-                    </li>
-                  `
-                    )
-                    .join("")}
-                </ul>
-              </div>
+              <h3 class="modal__section-title">Redes sociales</h3>
+              <ul class="social-list">
+                ${redes
+                  .map(
+                    (r) => `
+                  <li>
+                    <a href="${escapeHtml(r.href)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(
+                      r.nombre
+                    )} de ${escapeHtml(p.nombreEmprendimiento)}">
+                      ${r.icono}
+                      <span>${escapeHtml(r.nombre)}</span>
+                    </a>
+                  </li>
+                `
+                  )
+                  .join("")}
+              </ul>
             `;
           }
+
+          const subtitulo =
+            campoVisible("nombreApellido") && p.nombreApellido
+              ? `<p class="modal__subtitle">${escapeHtml(p.nombreApellido)}</p>`
+              : "";
+          const descripcion =
+            campoVisible("descripcion") && p.descripcion
+              ? `<p class="modal__description">${escapeHtml(p.descripcion)}</p>`
+              : "";
 
           modalContenido.innerHTML = `
             <div class="modal__header">
@@ -1029,14 +1352,12 @@
                 <h2 class="modal__title" id="modal-titulo">${escapeHtml(
                   p.nombreEmprendimiento
                 )}</h2>
+                ${subtitulo}
                 <span class="modal__tag">${escapeHtml(p.rubro)}</span>
               </div>
             </div>
-            ${datoModal("Descripción", "descripcion", p.descripcion)}
-            ${datoModal("Nombre y apellido", "nombreApellido", p.nombreApellido)}
-            ${datoModal("Organización", "organizacion", p.organizacion)}
-            ${datoModal("Correo electrónico", "email", p.email)}
-            ${datoModal("Ubicación del puesto", "ubicacion", p.ubicacion)}
+            ${descripcion}
+            ${contactoHtml}
             ${redesHtml}
           `;
 
@@ -1050,9 +1371,11 @@
           if (updateUrl) {
             history.pushState(null, "", location.pathname + location.search);
           }
+          restaurarOG();
           overlay.setAttribute("aria-hidden", "true");
           document.body.classList.remove("modal-active");
           modalContenido.innerHTML = "";
+          modalCompartir.dataset.slug = "";
           if (triggerFocus) {
             triggerFocus.focus();
             triggerFocus = null;
@@ -1104,6 +1427,11 @@
           if (e.target === overlay) cerrarModal();
         });
         modalCerrar.addEventListener("click", () => cerrarModal());
+        modalCompartir.addEventListener("click", () => {
+          const slug = modalCompartir.dataset.slug;
+          const p = productores.find((x) => x.slug === slug);
+          if (p) compartir(p);
+        });
         document.addEventListener("keydown", (e) => {
           if (
             e.key === "Escape" &&
