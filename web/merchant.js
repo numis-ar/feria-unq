@@ -296,12 +296,20 @@ export function filterOrders(orders, parseAmountFn = parseAmountStr, now = Date.
 }
 
 export function generateRequestUid() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID().replace(/-/g, "").toUpperCase();
-  }
+  // Crockford's Base32 alphabet (no I, L, O, U).
   const charset = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  const len = 52;
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    const rnd = new Uint8Array(len);
+    crypto.getRandomValues(rnd);
+    let uid = "";
+    for (let i = 0; i < len; i++) {
+      uid += charset[rnd[i] % charset.length];
+    }
+    return uid;
+  }
   let uid = "";
-  for (let i = 0; i < 52; i++) {
+  for (let i = 0; i < len; i++) {
     uid += charset[Math.floor(Math.random() * charset.length)];
   }
   return uid;

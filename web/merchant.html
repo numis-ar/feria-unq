@@ -3619,9 +3619,10 @@
             updateWithdrawStepper("withdraw-stepper-2", 2);
 
             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(talerWithdrawUriWithConfirm)}`;
-            const talerLink = document.getElementById("qr-taler-link");
-            talerLink.href = talerWithdrawUriWithConfirm;
             const sameDeviceBtn = document.getElementById("qr-same-device-btn");
+            if (sameDeviceBtn) {
+              sameDeviceBtn.href = talerWithdrawUriWithConfirm;
+            }
             document
               .getElementById("qr-modal-footer")
               .classList.remove("hidden");

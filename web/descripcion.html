@@ -1,9 +1,14 @@
 <!doctype html>
 
-<html>
+<html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>Guía de pagos digitales · Feria UNQ</title>
+    <meta
+      name="description"
+      content="Guía paso a paso para usar dinero digital con la billetera Taler en la Feria de Economía Popular, Social y Solidaria de la UNQ."
+    />
 
     <script src="./qr-code.js"></script>
     <style>
@@ -12,6 +17,22 @@
       }
       body {
         margin: 0;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 8px;
+        z-index: 100;
+        padding: 8px 12px;
+        background: var(--verde);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        border-radius: var(--radius-md);
+        transition: top 0.15s;
+      }
+      .skip-link:focus {
+        top: 8px;
       }
       a {
         color: var(--color-accent);
@@ -288,8 +309,147 @@
         border-color: var(--color-accent);
       }
     </style>
+    <style>
+      [data-shot-strip] img {
+        border: 1px solid var(--color-divider);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      }
+      [data-shot-strip] figure {
+        cursor: zoom-in;
+      }
+      [data-shot-strip] figure:focus-visible {
+        outline: 3px solid var(--naranja);
+        outline-offset: 4px;
+        border-radius: 16px;
+      }
+
+      .screenshot-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.92);
+        backdrop-filter: blur(4px);
+      }
+      .screenshot-modal[aria-hidden="false"] {
+        display: flex;
+      }
+      .screenshot-modal__content {
+        position: relative;
+        width: min(96vw, 960px);
+        height: min(92vh, 900px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+      .screenshot-modal__image {
+        max-width: 100%;
+        max-height: calc(100% - 56px);
+        object-fit: contain;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      .screenshot-modal__caption {
+        color: #fff;
+        font-size: 15px;
+        text-align: center;
+        max-width: 100%;
+        padding: 0 12px;
+        line-height: 1.4;
+      }
+      .screenshot-modal__btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+        font-size: 22px;
+        cursor: pointer;
+        transition: background 0.15s;
+        z-index: 2;
+      }
+      .screenshot-modal__btn:hover,
+      .screenshot-modal__btn:focus-visible {
+        background: rgba(255, 255, 255, 0.32);
+        outline: 3px solid var(--naranja);
+        outline-offset: 2px;
+      }
+      .screenshot-modal__btn--prev {
+        left: 12px;
+      }
+      .screenshot-modal__btn--next {
+        right: 12px;
+      }
+      .screenshot-modal__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+        font-size: 26px;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s;
+        z-index: 2;
+      }
+      .screenshot-modal__close:hover,
+      .screenshot-modal__close:focus-visible {
+        background: rgba(255, 255, 255, 0.32);
+        outline: 3px solid var(--naranja);
+        outline-offset: 2px;
+      }
+      .screenshot-modal__counter {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        z-index: 2;
+      }
+      @media (max-width: 640px) {
+        .screenshot-modal__btn {
+          width: 40px;
+          height: 40px;
+          font-size: 18px;
+        }
+        .screenshot-modal__btn--prev {
+          left: 6px;
+        }
+        .screenshot-modal__btn--next {
+          right: 6px;
+        }
+        .screenshot-modal__close {
+          top: 8px;
+          right: 8px;
+          width: 40px;
+          height: 40px;
+        }
+      }
+    </style>
   </head>
   <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido principal</a>
     <div
       data-guide=""
       data-paper="false"
@@ -304,6 +464,7 @@
       "
     >
       <nav
+        aria-label="Navegación principal"
         data-noprint=""
         style="
           position: sticky;
@@ -349,7 +510,7 @@
         >
         <!-- button class="btn btn-primary" onClick="">Imprimir guía</button -->
       </nav>
-      <main style="max-width: 1040px; margin: 0 auto; padding: 0 20px 64px">
+      <main id="contenido" style="max-width: 1040px; margin: 0 auto; padding: 0 20px 64px">
         <header
           data-sheet=""
           id="inicio"
@@ -545,7 +706,7 @@
                   <span
                     >También puede leer este documento desde su computadora en
                     la web <b>unq.numis.ar/descripcion</b> o desde su teléfono
-                    escaneando el QR. La web incluye mas ejemplos y videos
+                    escaneando el QR. La web incluye más ejemplos y videos
                     explicativos.</span
                   >
                 </p>
@@ -928,7 +1089,7 @@
                   "
                 >
                   <img
-                    alt="Tienda de aplicaciones"
+                    alt="Apple App Store - Instalar Taler Wallet"
                     src="./screenshots/consumidor-paso1-02-ios-pagina-de-descarga.png"
                     style="
                       width: 150px;
@@ -1343,7 +1504,7 @@
                   "
                 >
                   <img
-                    alt="Aceptar transferencia"
+                    alt="Aceptar términos por primera vez"
                     src="./screenshots/consumidor-paso2-02-primera-vez.jpg"
                     style="
                       width: 150px;
@@ -1393,7 +1554,7 @@
                   "
                 >
                   <img
-                    alt="Aceptar transferencia"
+                    alt="Aceptar términos y condiciones"
                     src="./screenshots/consumidor-paso2-02-aceptar-terminos.jpg"
                     style="
                       width: 150px;
@@ -1443,7 +1604,7 @@
                   "
                 >
                   <img
-                    alt="Aceptar transferencia"
+                    alt="Confirmar operación de recarga"
                     src="./screenshots/consumidor-paso2-03-confirmar-operacion.jpg"
                     style="
                       width: 150px;
@@ -1492,7 +1653,7 @@
                   "
                 >
                   <img
-                    alt="Aceptar transferencia"
+                    alt="Operación de recarga completa"
                     src="./screenshots/consumidor-paso2-03-operacion-completa.jpg"
                     style="
                       width: 150px;
@@ -1542,7 +1703,7 @@
                   "
                 >
                   <img
-                    alt="Aceptar transferencia"
+                    alt="Balance actualizado después de la recarga"
                     src="./screenshots/consumidor-paso2-03-balance-actualizado.jpg"
                     style="
                       width: 150px;
@@ -1830,7 +1991,7 @@
                   "
                 >
                   <img
-                    alt="Escanear el QR del puesto"
+                    alt="Tocar el logo para abrir la billetera"
                     src="./screenshots/consumidor-paso3-01-tocar-el-logo.jpg"
                     style="
                       width: 150px;
@@ -2015,7 +2176,7 @@
                         font-weight: 500;
                       "
                       >3</span
-                    ><span>Revisar y pagar</span>
+                    ><span>Operación completa</span>
                   </figcaption>
                 </figure>
                 <figure
@@ -2030,7 +2191,7 @@
                   "
                 >
                   <img
-                    alt="Revisar y pagar"
+                    alt="Operación de pago completa"
                     src="./screenshots/consumidor-paso3-03-operacion-completa.jpg"
                     style="
                       width: 150px;
@@ -2080,7 +2241,7 @@
                   "
                 >
                   <img
-                    alt="Revisar y pagar"
+                    alt="Balance actualizado después del pago"
                     src="./screenshots/consumidor-paso3-03-balance-actualizado.jpg"
                     style="
                       width: 150px;
@@ -2115,7 +2276,7 @@
                         font-weight: 500;
                       "
                       >3</span
-                    ><span>Revisar y pagar</span>
+                    ><span>Balance actualizado</span>
                   </figcaption>
                 </figure>
               </div>
@@ -3908,5 +4069,196 @@
         </section>
       </main>
     </div>
+
+    <div
+      class="screenshot-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Vista ampliada de la captura"
+      aria-hidden="true"
+    >
+      <div class="screenshot-modal__content">
+        <button
+          class="screenshot-modal__close"
+          aria-label="Cerrar vista ampliada"
+          type="button"
+        >
+          ×
+        </button>
+        <button
+          class="screenshot-modal__btn screenshot-modal__btn--prev"
+          aria-label="Captura anterior"
+          type="button"
+        >
+          ‹
+        </button>
+        <button
+          class="screenshot-modal__btn screenshot-modal__btn--next"
+          aria-label="Captura siguiente"
+          type="button"
+        >
+          ›
+        </button>
+        <span class="screenshot-modal__counter" aria-live="polite"></span>
+        <img class="screenshot-modal__image" src="" alt="" />
+        <p class="screenshot-modal__caption"></p>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        const modal = document.querySelector(".screenshot-modal");
+        const closeBtn = modal.querySelector(".screenshot-modal__close");
+        const prevBtn = modal.querySelector(".screenshot-modal__btn--prev");
+        const nextBtn = modal.querySelector(".screenshot-modal__btn--next");
+        const counter = modal.querySelector(".screenshot-modal__counter");
+        const img = modal.querySelector(".screenshot-modal__image");
+        const caption = modal.querySelector(".screenshot-modal__caption");
+        const content = modal.querySelector(".screenshot-modal__content");
+
+        let currentGroup = [];
+        let currentIndex = 0;
+        let lastFocused = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        function getCaption(figure) {
+          const figcaption = figure.querySelector("figcaption");
+          if (!figcaption) return "";
+          const textSpan = figcaption.querySelector("span:last-child");
+          return textSpan
+            ? textSpan.textContent.trim()
+            : figcaption.textContent.trim();
+        }
+
+        function update() {
+          const figure = currentGroup[currentIndex];
+          const thumb = figure.querySelector("img");
+          img.src = thumb.src;
+          img.alt = thumb.alt;
+          caption.textContent = getCaption(figure);
+          counter.textContent = currentIndex + 1 + " / " + currentGroup.length;
+        }
+
+        function open(group, index) {
+          currentGroup = group;
+          currentIndex = index;
+          lastFocused = document.activeElement;
+          update();
+          modal.setAttribute("aria-hidden", "false");
+          document.body.style.overflow = "hidden";
+          closeBtn.focus();
+        }
+
+        function close() {
+          modal.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+          if (lastFocused && lastFocused.focus) {
+            lastFocused.focus();
+          }
+        }
+
+        function showPrev() {
+          currentIndex =
+            (currentIndex - 1 + currentGroup.length) % currentGroup.length;
+          update();
+        }
+
+        function showNext() {
+          currentIndex = (currentIndex + 1) % currentGroup.length;
+          update();
+        }
+
+        document.querySelectorAll("[data-shot-strip]").forEach(function (strip) {
+          const figures = Array.from(strip.querySelectorAll("figure"));
+          figures.forEach(function (figure, index) {
+            figure.setAttribute("tabindex", "0");
+            figure.setAttribute("role", "button");
+            figure.setAttribute(
+              "aria-label",
+              "Ampliar captura: " + getCaption(figure)
+            );
+
+            figure.addEventListener("click", function () {
+              open(figures, index);
+            });
+            figure.addEventListener("keydown", function (e) {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                open(figures, index);
+              }
+            });
+          });
+        });
+
+        closeBtn.addEventListener("click", close);
+        prevBtn.addEventListener("click", showPrev);
+        nextBtn.addEventListener("click", showNext);
+
+        modal.addEventListener("click", function (e) {
+          if (e.target === modal) close();
+        });
+
+        document.addEventListener("keydown", function (e) {
+          if (modal.getAttribute("aria-hidden") === "true") return;
+          if (e.key === "Escape") {
+            e.preventDefault();
+            close();
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            showPrev();
+          } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            showNext();
+          }
+        });
+
+        modal.addEventListener("keydown", function (e) {
+          if (
+            e.key !== "Tab" ||
+            modal.getAttribute("aria-hidden") === "true"
+          )
+            return;
+          const focusables = modal.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        });
+
+        content.addEventListener(
+          "touchstart",
+          function (e) {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+          },
+          { passive: true }
+        );
+
+        content.addEventListener(
+          "touchend",
+          function (e) {
+            const endX = e.changedTouches[0].screenX;
+            const endY = e.changedTouches[0].screenY;
+            const diffX = touchStartX - endX;
+            const diffY = touchStartY - endY;
+            if (Math.abs(diffX) < Math.abs(diffY) || Math.abs(diffX) < 40)
+              return;
+            if (diffX > 0) showNext();
+            else showPrev();
+          },
+          { passive: true }
+        );
+      })();
+    </script>
   </body>
 </html>
