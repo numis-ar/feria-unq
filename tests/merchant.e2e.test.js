@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+import axeCore from 'axe-core';
 
 function createMockServer(balanceAmount) {
   return http.createServer((req, res) => {
@@ -126,6 +127,16 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
         res.end();
         return;
       }
+      if (cleanUrl.includes('/private/accounts')) {
+        if (req.method === 'PATCH') {
+          res.writeHead(204);
+          res.end();
+        } else {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ accounts: [{ h_wire: 'wire-1' }] }));
+        }
+        return;
+      }
 
       if (cleanUrl === '/') cleanUrl = '/merchant.html';
       let filePath = path.join(process.cwd(), 'web', cleanUrl.replace(/^\/+/, ''));
@@ -231,7 +242,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await page.locator('#auth-modal').waitFor({ state: 'hidden' });
 
     await page.click('#nav-account-btn');
-    await page.click('#btn-open-close-account');
+    await page.click('#card-close-account');
     
     const closeModal = page.locator('#close-account-modal');
     await closeModal.waitFor({ state: 'visible' });
@@ -264,6 +275,9 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     assert.ok(summaryText.includes('Target Merchant Store'));
 
     await page.fill('#transfer-amount', '15');
+    await page.click('#btn-transfer-next');
+
+    await page.locator('#transfer-step-3').waitFor({ state: 'visible' });
     await page.click('#btn-transfer-confirm');
 
     const toast = page.locator('#toast-container > div');
@@ -349,7 +363,7 @@ describe('Merchant UI with zero balance', () => {
 
   it('should block close account and show no funds toast', async () => {
     await loginAndNavigateToAccount();
-    await page.click('#btn-open-close-account');
+    await page.click('#card-close-account');
     await page.locator('#close-account-modal').waitFor({ state: 'hidden' });
     const toast = page.locator('#toast-container > div');
     await toast.waitFor({ state: 'visible' });
@@ -424,5 +438,93 @@ describe('Merchant UI input validation against available balance', () => {
     await errorEl.waitFor({ state: 'visible' });
     const text = await errorEl.textContent();
     assert.ok(text.includes('Saldo insuficiente') || text.includes('Balance is not enough'));
+  });
+});
+
+async function runAxe(page) {
+  await page.addScriptTag({ content: axeCore.source });
+  return page.evaluate(() => axe.run(document.body, {
+    rules: {
+      // Tailwind CDN is a dev-only warning, not a real accessibility issue
+      'meta-viewport': { enabled: false }
+    }
+  }));
+}
+
+describe('Accessibility and keyboard navigation', () => {
+  let browser;
+  let page;
+  let staticServer;
+  let baseUrl;
+
+  before(async () => {
+    staticServer = createMockServer(100);
+    await new Promise(resolve => staticServer.listen(0, resolve));
+    const addr = staticServer.address();
+    baseUrl = `http://localhost:${addr.port}`;
+    browser = await launchBrowser();
+  });
+
+  after(async () => {
+    await browser.close();
+    await new Promise(resolve => staticServer.close(resolve));
+  });
+
+  beforeEach(async () => {
+    page = await browser.newPage();
+    page.setDefaultTimeout(5000);
+    page.on('dialog', dialog => dialog.accept());
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    await page.addInitScript(() => {
+      window.API_URL = '/api/merchant';
+      window.BANK_URL = '/api/bank';
+    });
+  });
+
+  afterEach(async () => {
+    await page.close();
+  });
+
+  async function login() {
+    await page.goto(`${baseUrl}/merchant.html`);
+    await page.fill('#auth-user', 'default');
+    await page.fill('#auth-pass', 'secret1234');
+    await page.click('#btn-login');
+    await page.locator('#auth-modal').waitFor({ state: 'hidden' });
+    await page.locator('#stat-sold', { hasText: '10.00' }).waitFor({ state: 'visible' });
+  }
+
+  it('should have no axe-core violations after login', async () => {
+    await login();
+    const results = await runAxe(page);
+    assert.strictEqual(results.violations.length, 0, JSON.stringify(results.violations, null, 2));
+  });
+
+  it('should navigate sections with keyboard', async () => {
+    await login();
+    // Focus the account navigation button and activate it with Enter
+    await page.locator('#nav-account-btn').focus();
+    await page.keyboard.press('Enter');
+
+    await page.locator('#account:not(.hidden)').waitFor({ state: 'visible' });
+    const active = await page.evaluate(() => document.activeElement?.id);
+    assert.ok(active === 'nav-account-btn', `Expected focus on nav-account-btn, got ${active}`);
+  });
+
+  it('should have required landmarks and labels', async () => {
+    await login();
+    const landmarks = await page.evaluate(() => ({
+      main: !!document.querySelector('main'),
+      header: !!document.querySelector('header'),
+      navigation: !!document.querySelector('nav#sidebar'),
+      bottomDock: !!document.querySelector('#bottom-dock[role="navigation"]'),
+      authModalLabel: document.getElementById('auth-modal')?.getAttribute('aria-labelledby'),
+      ordersTableScope: !!document.querySelector('#orders-table th[scope="col"]'),
+    }));
+    assert.ok(landmarks.main, 'main landmark missing');
+    assert.ok(landmarks.header, 'header landmark missing');
+    assert.ok(landmarks.navigation, 'sidebar navigation landmark missing');
+    assert.ok(landmarks.bottomDock, 'bottom dock navigation landmark missing');
+    assert.strictEqual(landmarks.authModalLabel, 'auth-modal-title');
   });
 });

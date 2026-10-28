@@ -193,3 +193,192 @@ export async function changePassword(API_URL, BANK_URL, INSTANCE_ID, ACCESS_TOKE
   }
 }
 
+// ---------------------------------------------------------------------------
+// Pure / testable helpers extracted from merchant.html
+// ---------------------------------------------------------------------------
+
+export function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export function extractAccountFromPayto(paytoUri) {
+  if (!paytoUri) return "";
+  try {
+    const url = new URL(paytoUri.replace("payto://", "http://"));
+    const parts = url.pathname.split("/").filter(Boolean);
+    return parts[parts.length - 1] || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+export function getTimestampMs(ts) {
+  if (!ts) return null;
+  if (typeof ts === "object") {
+    if (ts.t_ms) return ts.t_ms;
+    if (ts.t_s) return ts.t_s * 1000;
+    return null;
+  }
+  if (typeof ts === "number") {
+    return ts > 1e10 ? ts : ts * 1000;
+  }
+  if (typeof ts === "string") {
+    const n = Number(ts);
+    if (Number.isNaN(n)) return Date.parse(ts) || null;
+    return n > 1e10 ? n : n * 1000;
+  }
+  return null;
+}
+
+export function formatDate(tsMs, locale = "es") {
+  if (!tsMs) return "";
+  return new Date(tsMs).toLocaleDateString(locale);
+}
+
+export function formatTime(tsMs, locale = "es") {
+  if (!tsMs) return "";
+  return new Date(tsMs).toLocaleTimeString(locale);
+}
+
+export function getOrderState(order, parseAmountFn = parseAmountStr) {
+  const amountNum = parseAmountFn(order.amount);
+  const refundNum = parseAmountFn(order.refund_amount);
+  let state = "claimed";
+  let stateClass = "bg-slate-100 text-slate-600";
+
+  if (order.paid) {
+    if (refundNum > 0) {
+      state = "refunded";
+      stateClass = "bg-red-100 text-red-700";
+    } else if (!order.wired) {
+      state = "in-transit";
+      stateClass = "bg-blue-100 text-blue-700";
+    } else {
+      state = "settled";
+      stateClass = "bg-green-100 text-green-700";
+    }
+  } else {
+    state = order.payment_status || order.order_status || "unpaid";
+  }
+
+  return { state, stateClass, amountNum, refundNum };
+}
+
+export function getDeadlineMs(deadline) {
+  return getTimestampMs(deadline);
+}
+
+export function isOrderPayable(order, parseAmountFn = parseAmountStr, now = Date.now()) {
+  const amountNum = parseAmountFn(order.amount);
+  if (amountNum <= 0) return false;
+  const deadlineMs = getDeadlineMs(order.pay_deadline);
+  if (deadlineMs && deadlineMs < now) return false;
+  return true;
+}
+
+export function filterOrders(orders, parseAmountFn = parseAmountStr, now = Date.now()) {
+  return orders.filter((o) => isOrderPayable(o, parseAmountFn, now));
+}
+
+export function generateRequestUid() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID().replace(/-/g, "").toUpperCase();
+  }
+  const charset = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  let uid = "";
+  for (let i = 0; i < 52; i++) {
+    uid += charset[Math.floor(Math.random() * charset.length)];
+  }
+  return uid;
+}
+
+export function buildOrderRowHtml(order, options) {
+  const {
+    state,
+    stateClass,
+    amountNum,
+  } = getOrderState(order, options.parseAmountFn || parseAmountStr);
+  const t = options.t || ((k) => k);
+  const tf = options.tf || ((k, v) => t(k));
+  const formatMoney = options.formatMoney || ((n) => n.toFixed(2));
+  const timeStr = options.timeStr || "";
+  const rowClass = options.rowClass || "";
+  const orderId = order.order_id || order.summary;
+
+  return `
+    <tr class="${rowClass}">
+      <td class="px-6 py-4">
+        <div class="font-medium text-slate-800">${escapeHtml(order.summary || order.order_id || t("order_fallback"))}</div>
+        <div class="text-xs text-slate-400">${escapeHtml(timeStr)}</div>
+      </td>
+      <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${stateClass}">${t("order_state_" + state.replace(/-/g, "_"))}</span></td>
+      <td class="px-6 py-4 text-right font-semibold text-slate-800">${formatMoney(amountNum)}</td>
+    </tr>
+  `;
+}
+
+export function buildTransactionRowHtml(tx, options) {
+  const t = options.t || ((k) => k);
+  const tf = options.tf || ((k, v) => t(k));
+  const formatMoney = options.formatMoney || ((n) => n.toFixed(2));
+  const timeStr = options.timeStr || "";
+  const rowClass = options.rowClass || "";
+  const amountNum = (options.parseAmountFn || parseAmountStr)(tx.amount);
+
+  let colorClass = "text-slate-800";
+  let subject = tx.subject || t("tx_fallback");
+  let isCredit = false;
+  let iconSvg = "";
+  let label = subject;
+  let isSpecial = false;
+
+  if (tx.direction === "credit") {
+    colorClass = "text-green-600";
+    isCredit = true;
+    const account = extractAccountFromPayto(tx.debtor_payto_uri);
+    if (account === "exchange") {
+      isSpecial = true;
+      subject = t("val_sales");
+      iconSvg = `<svg class="w-5 h-5 text-green-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>`;
+    } else {
+      label = tf("transfer_from", { account: account || t("unknown_account") });
+      iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
+    }
+  } else if (tx.direction === "debit") {
+    colorClass = "text-red-600";
+    isCredit = false;
+    const account = extractAccountFromPayto(tx.creditor_payto_uri);
+    if (account === "exchange") {
+      isSpecial = true;
+      subject = t("val_withdraw");
+      iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`;
+    } else if (account === "closing_account") {
+      isSpecial = true;
+      subject = t("val_closing");
+      iconSvg = `<svg class="w-5 h-5 text-red-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+    } else {
+      label = tf("transfer_to", { account: account || t("unknown_account") });
+      iconSvg = `<svg class="w-5 h-5 text-slate-500 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>`;
+    }
+  }
+
+  return {
+    html: `
+      <tr class="${rowClass}">
+        <td class="px-6 py-4">
+          <div class="font-medium text-slate-800">${iconSvg} ${escapeHtml(isSpecial ? subject : label)}</div>
+          <div class="text-xs text-slate-400">${escapeHtml(timeStr)}</div>
+        </td>
+        <td class="px-6 py-4 text-right font-semibold ${colorClass}">${formatMoney(amountNum)}</td>
+      </tr>
+    `,
+    isCredit,
+    subject: isSpecial ? subject : label,
+    amount: amountNum,
+  };
+}

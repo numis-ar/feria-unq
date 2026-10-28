@@ -1,15 +1,26 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import nock from 'nock';
-import { 
-  parseAmountStr, 
-  getCurrency, 
-  formatMoney, 
+import {
+  parseAmountStr,
+  getCurrency,
+  formatMoney,
   validatePassword,
   loginToTaler,
   getAccountName,
   changePassword,
-  closeAccount
+  closeAccount,
+  escapeHtml,
+  extractAccountFromPayto,
+  getTimestampMs,
+  formatDate,
+  formatTime,
+  getOrderState,
+  isOrderPayable,
+  filterOrders,
+  generateRequestUid,
+  buildOrderRowHtml,
+  buildTransactionRowHtml,
 } from '../web/merchant.js';
 
 describe('Frontend tests', () => {
@@ -177,12 +188,20 @@ describe('Frontend tests', () => {
 
   describe('API Calls (changePassword)', () => {
     it('should handle successful password change', async () => {
-      nock('https://merchant.local')
-        .post('/instances/testuser/private/auth')
-        .reply(204);
-
       nock('https://bank.local')
         .patch('/accounts/testuser/auth')
+        .reply(204);
+
+      nock('https://merchant.local')
+        .get('/instances/testuser/private/accounts')
+        .reply(200, { accounts: [{ h_wire: 'wire-1' }] });
+
+      nock('https://merchant.local')
+        .patch('/instances/testuser/private/accounts/wire-1')
+        .reply(204);
+
+      nock('https://merchant.local')
+        .post('/instances/testuser/private/auth')
         .reply(204);
 
       await changePassword('https://merchant.local', 'https://bank.local', 'testuser', 'mTok', 'bTok', 'oldP', 'newP');
@@ -190,6 +209,18 @@ describe('Frontend tests', () => {
     });
 
     it('should throw if merchant api fails', async () => {
+      nock('https://bank.local')
+        .patch('/accounts/testuser/auth')
+        .reply(204);
+
+      nock('https://merchant.local')
+        .get('/instances/testuser/private/accounts')
+        .reply(200, { accounts: [{ h_wire: 'wire-1' }] });
+
+      nock('https://merchant.local')
+        .patch('/instances/testuser/private/accounts/wire-1')
+        .reply(204);
+
       nock('https://merchant.local')
         .post('/instances/testuser/private/auth')
         .reply(401, 'Unauthorized');
@@ -217,6 +248,156 @@ describe('Frontend tests', () => {
       } catch(e) {
         assert.strictEqual(e.message, 'Bank API failed: 403 Forbidden');
       }
+    });
+  });
+
+  describe('escapeHtml', () => {
+    it('should escape HTML special characters', () => {
+      assert.strictEqual(escapeHtml('<script>alert("x")</script>'), '&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
+      assert.strictEqual(escapeHtml("it's"), 'it&#039;s');
+    });
+  });
+
+  describe('extractAccountFromPayto', () => {
+    it('should extract account from payto uri', () => {
+      assert.strictEqual(extractAccountFromPayto('payto://x-taler-bank/bank.taler.ar/alice'), 'alice');
+      assert.strictEqual(extractAccountFromPayto('payto://x-taler-bank/bank.taler.ar/closing_account'), 'closing_account');
+    });
+
+    it('should return empty string on invalid uri', () => {
+      assert.strictEqual(extractAccountFromPayto(''), '');
+      assert.strictEqual(extractAccountFromPayto('not-a-uri'), '');
+    });
+  });
+
+  describe('getTimestampMs', () => {
+    it('should convert t_s to ms', () => {
+      assert.strictEqual(getTimestampMs({ t_s: 1 }), 1000);
+    });
+
+    it('should return t_ms as-is', () => {
+      assert.strictEqual(getTimestampMs({ t_ms: 1234567890123 }), 1234567890123);
+    });
+
+    it('should convert numeric seconds to ms', () => {
+      assert.strictEqual(getTimestampMs(1), 1000);
+    });
+
+    it('should keep numeric ms as-is', () => {
+      assert.strictEqual(getTimestampMs(1234567890123), 1234567890123);
+    });
+
+    it('should parse ISO strings', () => {
+      assert.strictEqual(getTimestampMs('2024-01-01T00:00:00.000Z'), new Date('2024-01-01T00:00:00.000Z').getTime());
+    });
+  });
+
+  describe('formatDate / formatTime', () => {
+    it('should format date in requested locale', () => {
+      const ms = new Date('2024-12-25T15:30:00.000Z').getTime();
+      assert.match(formatDate(ms, 'es'), /25/);
+      assert.match(formatTime(ms, 'es'), /15|3/);
+    });
+
+    it('should return empty string for missing timestamp', () => {
+      assert.strictEqual(formatDate(null), '');
+      assert.strictEqual(formatTime(null), '');
+    });
+  });
+
+  describe('getOrderState', () => {
+    it('should return settled for paid wired order', () => {
+      const result = getOrderState({ paid: true, wired: true, amount: 'NUMIS:10' });
+      assert.strictEqual(result.state, 'settled');
+      assert.strictEqual(result.amountNum, 10);
+    });
+
+    it('should return refunded when refund amount > 0', () => {
+      const result = getOrderState({ paid: true, wired: true, amount: 'NUMIS:10', refund_amount: 'NUMIS:5' });
+      assert.strictEqual(result.state, 'refunded');
+    });
+
+    it('should return in-transit for paid unwired order', () => {
+      const result = getOrderState({ paid: true, wired: false, amount: 'NUMIS:10' });
+      assert.strictEqual(result.state, 'in-transit');
+    });
+
+    it('should return unpaid for unpaid order', () => {
+      const result = getOrderState({ paid: false, amount: 'NUMIS:10' });
+      assert.strictEqual(result.state, 'unpaid');
+    });
+  });
+
+  describe('isOrderPayable / filterOrders', () => {
+    it('should reject orders with zero amount', () => {
+      assert.strictEqual(isOrderPayable({ amount: 'NUMIS:0' }), false);
+      assert.strictEqual(isOrderPayable({ amount: 'NUMIS:0.00' }), false);
+    });
+
+    it('should reject orders with expired pay_deadline', () => {
+      const now = 1000000;
+      assert.strictEqual(isOrderPayable({ amount: 'NUMIS:10', pay_deadline: { t_ms: now - 1 } }, parseAmountStr, now), false);
+    });
+
+    it('should accept payable orders', () => {
+      const now = 1000000;
+      assert.strictEqual(isOrderPayable({ amount: 'NUMIS:10', pay_deadline: { t_ms: now + 1 } }, parseAmountStr, now), true);
+      assert.strictEqual(isOrderPayable({ amount: 'NUMIS:10' }, parseAmountStr, now), true);
+    });
+
+    it('should filter a list of orders', () => {
+      const now = 1000000;
+      const orders = [
+        { amount: 'NUMIS:10', pay_deadline: { t_ms: now + 1 } },
+        { amount: 'NUMIS:0' },
+        { amount: 'NUMIS:5', pay_deadline: { t_ms: now - 1 } },
+      ];
+      const filtered = filterOrders(orders, parseAmountStr, now);
+      assert.strictEqual(filtered.length, 1);
+      assert.strictEqual(filtered[0].amount, 'NUMIS:10');
+    });
+  });
+
+  describe('generateRequestUid', () => {
+    it('should generate a 32-char uppercase uid', () => {
+      const uid = generateRequestUid();
+      assert.match(uid, /^[0-9A-Z]{32}$/);
+    });
+  });
+
+  describe('buildOrderRowHtml', () => {
+    it('should include escaped summary and amount', () => {
+      const html = buildOrderRowHtml(
+        { summary: '<b>Order</b>', amount: 'NUMIS:12.50', paid: true, wired: true },
+        { t: (k) => k, tf: (k, v) => k, formatMoney: (n) => n.toFixed(2), timeStr: '10:00', rowClass: 'hover:bg-slate-50' }
+      );
+      assert.match(html, /&lt;b&gt;Order&lt;\/b&gt;/);
+      assert.match(html, /12\.50/);
+      assert.match(html, /settled/);
+    });
+  });
+
+  describe('buildTransactionRowHtml', () => {
+    const t = (k) => ({ val_sales: 'sales', val_withdraw: 'withdraw', val_closing: 'closing', tx_fallback: 'Transfer', unknown_account: 'unknown' }[k] || k);
+
+    it('should identify sales credit', () => {
+      const result = buildTransactionRowHtml(
+        { direction: 'credit', amount: 'NUMIS:20', debtor_payto_uri: 'payto://x-taler-bank/bank.taler.ar/exchange' },
+        { t, tf: (k, v) => k, formatMoney: (n) => n.toFixed(2), timeStr: '10:00' }
+      );
+      assert.match(result.html, /text-green-600/);
+      assert.strictEqual(result.isCredit, true);
+      assert.strictEqual(result.subject, 'sales');
+    });
+
+    it('should identify withdraw debit', () => {
+      const result = buildTransactionRowHtml(
+        { direction: 'debit', amount: 'NUMIS:15', creditor_payto_uri: 'payto://x-taler-bank/bank.taler.ar/exchange' },
+        { t, tf: (k, v) => k, formatMoney: (n) => n.toFixed(2), timeStr: '10:00' }
+      );
+      assert.match(result.html, /text-red-600/);
+      assert.strictEqual(result.isCredit, false);
+      assert.strictEqual(result.subject, 'withdraw');
     });
   });
 });
