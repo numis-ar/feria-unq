@@ -228,7 +228,9 @@ const server = http.createServer(async (req, res) => {
 
   // Friendly puesto IDs: /puesto-<id> serves puesto.html so the JS can read
   // the ID from the pathname and look it up in its internal map.
-  if (/^\/puesto-[^/]+$/.test(safeSuffix)) {
+  // The ID must not contain a dot so static files like puesto-feria.png
+  // are served normally.
+  if (/^\/puesto-[^/.]+$/.test(safeSuffix)) {
     safeSuffix = path.sep + 'puesto.html';
   }
 
