@@ -49,8 +49,10 @@ Este documento resume las decisiones tomadas para la página de ubicación y lis
 
 ## 7. Service Worker
 
-- `web/sw-donde.js` cachea solo assets estáticos (fuentes, mapa, placeholder).
-- **Nunca cachea** `donde.html`, `productores.json` ni `/share/*`.
+- Se usa un único service worker (`web/sw.js`) registrado desde todas las páginas.
+- Cachea solo assets estáticos (JS, CSS, fuentes, imágenes, manifiesto).
+- **Nunca cachea** páginas `.html`, rutas `/api/*`, `/get-money`, `productores.json` ni `/share/*`.
+- Estrategia *network-first* con timeout de 200 ms: si la red responde antes se usa la versión fresca; si tarda más se sirve el cache y se actualiza en background.
 - El registro usa `updateViaCache: "none"` para evitar que el navegador use el cache HTTP al buscar actualizaciones del SW.
 - El JSON se carga con `fetch(..., { cache: "no-store" })` para ver cambios de contenido inmediatamente.
 

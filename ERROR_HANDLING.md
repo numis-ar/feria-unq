@@ -304,7 +304,7 @@ propaga a sus propias métricas.
 
 ## Service workers
 
-Los service workers (`web/sw.js`, `web/sw-donde.js`) solo cachean requests
+El service worker (`web/sw.js`) solo cachea requests
 `GET`. Los `POST` se pasan a la red sin intentar escribir en `Cache`, evitando
 el error:
 
