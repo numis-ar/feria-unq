@@ -3,6 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
+import {
+  initUxMetrics,
+  handleUxMetricsPost,
+  handleUxMetricsGet,
+} from './ux-metrics.js';
 
 const PORT = process.env.PORT || 3001;
 const LISTEN_PID = process.env.LISTEN_PID;
@@ -55,6 +60,8 @@ try {
 } catch (err) {
   console.error('Failed to preload productores.json or donde.html:', err.message);
 }
+
+initUxMetrics();
 
 function findProducer(slug) {
   return productores.find((p) => p.slug === slug);
@@ -174,8 +181,27 @@ function safePathname(reqUrl) {
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.writeHead(204);
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    });
     res.end();
+    return;
+  }
+
+  const url = new URL(req.url, 'http://localhost');
+
+  if (url.pathname === '/ux-metrics') {
+    if (req.method === 'POST') {
+      await handleUxMetricsPost(req, res);
+      return;
+    }
+    if (req.method === 'GET') {
+      handleUxMetricsGet(req, res);
+      return;
+    }
+    sendError(res, 405, 'Method Not Allowed');
     return;
   }
 
@@ -183,8 +209,6 @@ const server = http.createServer(async (req, res) => {
     sendError(res, 405, 'Method Not Allowed');
     return;
   }
-
-  const url = new URL(req.url, 'http://localhost');
 
   if (url.pathname === '/donde.html') {
     await serveDondeHtml(res, req.url);

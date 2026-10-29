@@ -393,6 +393,8 @@
         background: var(--numis-mint);
       }
     </style>
+    <script src="./ux-error-catalog.js"></script>
+    <script src="./ux-metrics.js"></script>
   </head>
 
   <body
@@ -2306,7 +2308,8 @@
       }
 
       function showNoFundsToast() {
-        showToast(t("no_funds_title"), t("no_funds_desc"), "error");
+        window.UXErrorCatalog &&
+          window.UXErrorCatalog.show("no-funds", "BALANCE_ZERO");
       }
 
       function validateAmountInput(input, errorEl, available) {
@@ -2745,7 +2748,8 @@
           }
           return true;
         } catch (err) {
-          showToast(t("login_failed"), err.message, "error");
+          window.UXErrorCatalog &&
+            window.UXErrorCatalog.show("login", "MERCHANT_AUTH_401", err.message);
           localStorage.removeItem("taler_password");
           return false;
         } finally {
@@ -2942,7 +2946,8 @@
             if (!resOrders.ok) {
               if (resOrders.status === 401 || resOrders.status === 403) {
                 isPolling = false;
-                showToast(t("session_expired"), "", "error");
+                window.UXErrorCatalog &&
+                  window.UXErrorCatalog.show("session", "EXPIRED");
                 performLogout();
                 return;
               }
@@ -3150,7 +3155,8 @@
         );
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
-            showToast(t("session_expired"), "", "error");
+            window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("session", "EXPIRED");
             performLogout();
           }
           throw new Error(`/api/state error: ${res.status}`);
@@ -3426,7 +3432,12 @@
             closeDialog("qr-modal");
             currentWithdrawalId = null;
           } catch (e) {
-            document.getElementById("qr-modal-error").textContent = e.message;
+            const entry =
+              window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("withdraw", "CONFIRM_FAILED", e.message);
+            document.getElementById("qr-modal-error").textContent = entry
+              ? entry.description
+              : e.message;
             document
               .getElementById("qr-modal-error")
               .classList.remove("hidden");
@@ -3671,7 +3682,12 @@
             pollWithdrawalState();
           } catch (e) {
             input.setAttribute("aria-invalid", "true");
-            errorEl.textContent = e.message || t("err_withdraw_generic");
+            const entry =
+              window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("withdraw", "FETCH_500", e.message);
+            errorEl.textContent = entry
+              ? entry.description
+              : e.message || t("err_withdraw_generic");
             errorEl.classList.remove("hidden");
           } finally {
             setButtonLoading(btn, false);
@@ -3727,7 +3743,10 @@
               performLogout();
             }, 2000);
           } catch (e) {
-            errorEl.textContent = e.message;
+            const entry =
+              window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("close-account", "FETCH_500", e.message);
+            errorEl.textContent = entry ? entry.description : e.message;
             errorEl.classList.remove("hidden");
           } finally {
             setButtonLoading(btn, false);
@@ -3914,7 +3933,10 @@
               );
             }
           } catch (e) {
-            formErr.textContent = e.message;
+            const entry =
+              window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("change-password", "FETCH_500", e.message);
+            formErr.textContent = entry ? entry.description : e.message;
             formErr.classList.remove("hidden");
             oldPassEl.setAttribute("aria-invalid", "true");
           } finally {
@@ -4091,7 +4113,13 @@
             goToTransferStep(2);
           } catch (e) {
             targetInput.setAttribute("aria-invalid", "true");
-            errEl.textContent = e.message;
+            const rootCode = /not found|no encontrada|restringida|restricted/i.test(e.message)
+              ? "FETCH_404"
+              : "FETCH_500";
+            const entry =
+              window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("transfer", rootCode, e.message);
+            errEl.textContent = entry ? entry.description : e.message;
             errEl.classList.remove("hidden");
           } finally {
             setButtonLoading(btn, false);
@@ -4181,7 +4209,12 @@
           } catch (e) {
             goToTransferStep(2);
             amountInput.setAttribute("aria-invalid", "true");
-            errEl.textContent = e.message || t("err_transfer_generic");
+            const entry =
+              window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("transfer", "FETCH_500", e.message);
+            errEl.textContent = entry
+              ? entry.description
+              : e.message || t("err_transfer_generic");
             errEl.classList.remove("hidden");
           } finally {
             setButtonLoading(btn, false);

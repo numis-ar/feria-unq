@@ -1,3 +1,5 @@
 /node_modules
 /.vapid.json
 /.push-subscriptions.json
+/.ux-metrics.sqlite
+/.ux-metrics-tmp.sqlite

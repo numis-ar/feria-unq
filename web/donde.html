@@ -521,6 +521,8 @@
         }
       }
     </style>
+    <script src="./ux-error-catalog.js"></script>
+    <script src="./ux-metrics.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido principal</a>
@@ -1276,10 +1278,12 @@
               await navigator.clipboard.writeText(url);
               mostrarToast("Link copiado al portapapeles");
             } catch {
-              mostrarToast("No se pudo copiar el link");
+              window.UXErrorCatalog &&
+                window.UXErrorCatalog.show("share", "CLIPBOARD");
             }
           } else {
-            mostrarToast("Tu navegador no permite compartir desde aquí");
+            window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("share", "NOT_SUPPORTED");
           }
         }
 
@@ -1476,10 +1480,12 @@
             actualizar();
             abrirModalDesdeUrl();
           } catch (err) {
-            resultadosInfo.textContent =
-              "Error al cargar el listado de productorxs.";
+            const entry =
+              window.UXErrorCatalog &&
+              window.UXErrorCatalog.show("load-productores", "FETCH_500", err.message);
+            resultadosInfo.textContent = entry ? entry.title : "Error al cargar el listado de productorxs.";
             grid.innerHTML = `<p style="grid-column:1/-1;color:var(--g-muted)">${escapeHtml(
-              err.message
+              entry ? entry.description : err.message
             )}</p>`;
           }
         }
