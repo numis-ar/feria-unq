@@ -210,6 +210,14 @@
       }
       return res;
     } catch (err) {
+      const isAbort =
+        err.name === "AbortError" ||
+        /abort/i.test(err.message || "");
+      if (isAbort) {
+        // Intentional aborts (e.g. long-polling cancelled when WebSocket takes
+        // over) are part of the normal flow and should not be reported.
+        throw err;
+      }
       const duration = Math.round(performance.now() - start);
       enqueue("request", {
         method,
