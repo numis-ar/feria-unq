@@ -1,4 +1,4 @@
-const CACHE_NAME = "feria-unq-donde-assets-v2";
+const CACHE_NAME = "feria-unq-donde-assets-v3";
 const PRECACHE = [
   "./fonts/archivo.css",
   "./mapa-unq.png",
