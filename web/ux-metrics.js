@@ -50,13 +50,26 @@
     return item.affects_experience === true;
   }
 
+  function omitEmpty(obj) {
+    const out = {};
+    for (const key in obj) {
+      const val = obj[key];
+      if (val == null) continue;
+      if (typeof val === "string" && val === "") continue;
+      if (typeof val === "object" && !Array.isArray(val)) {
+        const cleaned = omitEmpty(val);
+        if (Object.keys(cleaned).length === 0) continue;
+        out[key] = cleaned;
+        continue;
+      }
+      out[key] = val;
+    }
+    return out;
+  }
+
   function enqueue(kind, payload) {
     if (Math.random() > sampleRate) return;
-    const base = {
-      ts: now(),
-      session_id: sessionId,
-    };
-    const item = Object.assign(base, payload);
+    const item = omitEmpty(payload);
     if (kind === "event") events.push(item);
     else if (kind === "request") requests.push(item);
     else if (kind === "load") loads.push(item);
@@ -86,12 +99,11 @@
   }
 
   function buildBody(arrays) {
-    return JSON.stringify({
-      session_id: sessionId,
-      events: arrays.events,
-      requests: arrays.requests,
-      loads: arrays.loads,
-    });
+    const body = { session_id: sessionId };
+    if (arrays.events.length) body.events = arrays.events;
+    if (arrays.requests.length) body.requests = arrays.requests;
+    if (arrays.loads.length) body.loads = arrays.loads;
+    return JSON.stringify(body);
   }
 
   function flush(sync) {
@@ -230,6 +242,8 @@
     }
 
     try {
+      if (isMetricsUrl(url)) return await originalFetch.apply(this, args);
+
       const res = await originalFetch.apply(this, args);
       const duration = Math.round(performance.now() - start);
       const status = res.status;
@@ -245,12 +259,13 @@
         payload: { statusText: res.statusText },
       });
 
-      if (status >= 500 && !isMetricsUrl(url)) {
+      if (status >= 500) {
         window.UXErrorCatalog &&
           window.UXErrorCatalog.show("network", `FETCH_${status}`, url);
       }
       return res;
     } catch (err) {
+      if (isMetricsUrl(url)) throw err;
       const isAbort =
         err.name === "AbortError" ||
         /abort/i.test(err.message || "");
@@ -269,7 +284,7 @@
         affects_experience: true,
         payload: { message: err.message },
       });
-      if (!isMetricsUrl(url) && window.UXErrorCatalog) {
+      if (window.UXErrorCatalog) {
         window.UXErrorCatalog.show("network", "FETCH_FAILED", err.message);
       }
       throw err;
@@ -285,6 +300,7 @@
       return await originalResponseJson.call(this);
     } catch (err) {
       const url = this.url || location.href;
+      if (isMetricsUrl(url)) throw err;
       enqueue("event", {
         action: "json-decode",
         root_code: "PARSE_ERROR",
@@ -296,7 +312,7 @@
           statusText: this.statusText,
         },
       });
-      if (!isMetricsUrl(url) && window.UXErrorCatalog) {
+      if (window.UXErrorCatalog) {
         window.UXErrorCatalog.show("json-decode", "PARSE_ERROR", err.message);
       }
       throw err;
@@ -322,6 +338,7 @@
     };
 
     xhr.addEventListener("loadend", () => {
+      if (isMetricsUrl(url)) return;
       const duration = Math.round(performance.now() - start);
       const status = xhr.status;
       const errorCode = status >= 400 ? `XHR_${status}` : null;
