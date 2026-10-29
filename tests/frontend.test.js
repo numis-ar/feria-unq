@@ -359,9 +359,10 @@ describe('Frontend tests', () => {
   });
 
   describe('generateRequestUid', () => {
-    it('should generate a 32-char uppercase uid', () => {
+    it('should generate a 52-char uppercase uid using Crockford Base32 alphabet', () => {
       const uid = generateRequestUid();
-      assert.match(uid, /^[0-9A-Z]{32}$/);
+      assert.match(uid, /^[0-9A-Z]{52}$/);
+      assert.ok(!/[ILOU]/i.test(uid), 'uid should not contain ambiguous Crockford chars');
     });
   });
 

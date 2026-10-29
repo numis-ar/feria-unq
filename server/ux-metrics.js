@@ -8,12 +8,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.UX_METRICS_DB_PATH || path.join(__dirname, '..', '.ux-metrics.sqlite');
 const SYNC_MS = parseInt(process.env.UX_METRICS_SYNC_MS || '300000', 10); // 5 min default
 const MAX_ROWS = parseInt(process.env.UX_METRICS_MAX_ROWS || '100000', 10);
+const AUTH_TOKEN = process.env.UX_METRICS_AUTH_TOKEN || '';
 
 let db = null;
 let lastBackupAt = 0;
 
 function now() {
   return Date.now();
+}
+
+function migrateBackupColumn(table, column, type) {
+  if (!db) return;
+  const info = db.prepare(`PRAGMA backup_db.table_info(${table})`).all();
+  const hasColumn = info.some((col) => col.name === column);
+  if (!hasColumn) {
+    db.exec(`ALTER TABLE backup_db.${table} ADD COLUMN ${column} ${type}`);
+  }
 }
 
 export function initUxMetrics() {
@@ -29,6 +39,7 @@ export function initUxMetrics() {
       action TEXT,
       root_code TEXT,
       url TEXT,
+      affects_experience INTEGER,
       payload_json TEXT,
       received_at INTEGER NOT NULL
     );
@@ -42,6 +53,7 @@ export function initUxMetrics() {
       status INTEGER,
       duration_ms INTEGER,
       error_code TEXT,
+      affects_experience INTEGER,
       payload_json TEXT,
       received_at INTEGER NOT NULL
     );
@@ -69,6 +81,8 @@ export function initUxMetrics() {
   if (fs.existsSync(DB_PATH)) {
     try {
       db.exec(`ATTACH '${DB_PATH.replace(/'/g, "''")}' AS backup_db`);
+      migrateBackupColumn('events', 'affects_experience', 'INTEGER');
+      migrateBackupColumn('requests', 'affects_experience', 'INTEGER');
       db.exec(`
         INSERT OR IGNORE INTO events SELECT * FROM backup_db.events;
         INSERT OR IGNORE INTO requests SELECT * FROM backup_db.requests;
@@ -152,12 +166,12 @@ export async function handleUxMetricsPost(req, res) {
   const sessionId = String(body.session_id || 'unknown').slice(0, 64);
 
   const insertEvent = db.prepare(`
-    INSERT INTO events (ts, session_id, type, action, root_code, url, payload_json, received_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO events (ts, session_id, type, action, root_code, url, affects_experience, payload_json, received_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertRequest = db.prepare(`
-    INSERT INTO requests (ts, session_id, method, url, status, duration_ms, error_code, payload_json, received_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO requests (ts, session_id, method, url, status, duration_ms, error_code, affects_experience, payload_json, received_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertLoad = db.prepare(`
     INSERT INTO loads (ts, session_id, url, load_ms, ttfb_ms, fcp_ms, lcp_ms, payload_json, received_at)
@@ -175,6 +189,7 @@ export async function handleUxMetricsPost(req, res) {
           ev.action ? String(ev.action).slice(0, 128) : null,
           ev.root_code ? String(ev.root_code).slice(0, 128) : null,
           ev.url ? String(ev.url).slice(0, 2048) : null,
+          ev.affects_experience != null ? (ev.affects_experience ? 1 : 0) : null,
           ev.payload ? JSON.stringify(ev.payload) : null,
           receivedAt
         );
@@ -191,6 +206,7 @@ export async function handleUxMetricsPost(req, res) {
           r.status != null ? Number(r.status) : null,
           r.duration_ms != null ? Number(r.duration_ms) : null,
           r.error_code ? String(r.error_code).slice(0, 128) : null,
+          r.affects_experience != null ? (r.affects_experience ? 1 : 0) : null,
           r.payload ? JSON.stringify(r.payload) : null,
           receivedAt
         );
@@ -224,6 +240,13 @@ export async function handleUxMetricsPost(req, res) {
 
 export function handleUxMetricsGet(req, res) {
   if (!db) initUxMetrics();
+  if (AUTH_TOKEN) {
+    const auth = req.headers.authorization || '';
+    if (!auth.startsWith('Bearer ') || auth.substring(7) !== AUTH_TOKEN) {
+      sendJson(res, 401, { error: 'unauthorized' });
+      return;
+    }
+  }
   const url = new URL(req.url, 'http://localhost');
   const since = parseInt(url.searchParams.get('since') || '0', 10);
   const limit = Math.min(10000, parseInt(url.searchParams.get('limit') || '1000', 10));

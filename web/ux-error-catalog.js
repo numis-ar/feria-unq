@@ -1,9 +1,11 @@
 // UX Error Catalog — shared across feria-unq pages.
 // Add new entries here so every user-facing error has a consistent
-// {action, rootCode, title, description, actionHint} shape.
+// {action, rootCode, title, description, actionHint, affectsExperience} shape.
 (function () {
   "use strict";
 
+  // affectsExperience = true  -> the user cannot use the app as intended.
+  // affectsExperience = false -> the user can recover by themselves; only report.
   const catalog = [
     // Generic fallback — must exist.
     {
@@ -12,6 +14,7 @@
       title: "Error inesperado",
       description: "Ocurrió un problema que no esperábamos.",
       actionHint: "Intentá recargar la página. Si persiste, contactá a soporte.",
+      affectsExperience: true,
     },
 
     // Runtime / network errors captured automatically.
@@ -21,6 +24,7 @@
       title: "Error interno",
       description: "La aplicación encontró un error inesperado.",
       actionHint: "Recargá la página. Si persiste, contactá a soporte.",
+      affectsExperience: true,
     },
     {
       action: "js-runtime",
@@ -28,6 +32,15 @@
       title: "Error interno",
       description: "La aplicación encontró un error inesperado.",
       actionHint: "Recargá la página. Si persiste, contactá a soporte.",
+      affectsExperience: true,
+    },
+    {
+      action: "json-decode",
+      rootCode: "PARSE_ERROR",
+      title: "Respuesta inválida",
+      description: "El servidor devolvió datos que no se pudieron interpretar.",
+      actionHint: "Intentá recargar la página. Si persiste, contactá a soporte.",
+      affectsExperience: true,
     },
     {
       action: "resource",
@@ -35,6 +48,7 @@
       title: "No se pudo cargar un recurso",
       description: "Una imagen, script u otro recurso no pudo cargarse.",
       actionHint: "Revisá tu conexión y recargá la página.",
+      affectsExperience: false,
     },
     {
       action: "network",
@@ -42,6 +56,7 @@
       title: "Error de red",
       description: "No se pudo completar la solicitud al servidor.",
       actionHint: "Revisá tu conexión a internet.",
+      affectsExperience: true,
     },
     {
       action: "network",
@@ -49,6 +64,7 @@
       title: "Error en actualizaciones en vivo",
       description: "La conexión de actualizaciones en vivo falló.",
       actionHint: "La app intentará reconectarse sola.",
+      affectsExperience: false,
     },
     {
       action: "network",
@@ -56,6 +72,7 @@
       title: "Actualizaciones en vivo interrumpidas",
       description: "Se perdió la conexión de actualizaciones en vivo.",
       actionHint: "La app intentará reconectarse sola.",
+      affectsExperience: false,
     },
 
     // Authentication / login.
@@ -65,6 +82,7 @@
       title: "Acceso fallido",
       description: "El usuario o la contraseña no son válidos.",
       actionHint: "Verificá los datos de acceso.",
+      affectsExperience: false,
     },
     {
       action: "login",
@@ -72,6 +90,7 @@
       title: "Acceso denegado",
       description: "No tenés permisos para ingresar.",
       actionHint: "Contactá a soporte.",
+      affectsExperience: true,
     },
     {
       action: "login",
@@ -79,6 +98,7 @@
       title: "Banco no autorizó",
       description: "Las credenciales fueron rechazadas por el banco.",
       actionHint: "Verificá usuario y contraseña.",
+      affectsExperience: false,
     },
     {
       action: "login",
@@ -86,6 +106,7 @@
       title: "Banco denegó el acceso",
       description: "El banco no permite el acceso con estas credenciales.",
       actionHint: "Contactá a soporte.",
+      affectsExperience: true,
     },
     {
       action: "login",
@@ -93,6 +114,7 @@
       title: "Sin conexión",
       description: "No se pudo contactar al servidor de autenticación.",
       actionHint: "Revisá tu conexión a internet.",
+      affectsExperience: true,
     },
     {
       action: "session",
@@ -100,6 +122,7 @@
       title: "Sesión expirada",
       description: "Tu sesión expiró o no está autorizada.",
       actionHint: "Volvé a iniciar sesión.",
+      affectsExperience: true,
     },
 
     // Productores / donde.html.
@@ -109,6 +132,7 @@
       title: "Listado no encontrado",
       description: "No se encontró el archivo de productorxs.",
       actionHint: "Recargá la página.",
+      affectsExperience: true,
     },
     {
       action: "load-productores",
@@ -116,6 +140,7 @@
       title: "Error al cargar listado",
       description: "El servidor no pudo entregar el listado de productorxs.",
       actionHint: "Intentá de nuevo en unos segundos.",
+      affectsExperience: true,
     },
     {
       action: "share",
@@ -123,6 +148,7 @@
       title: "No se pudo copiar",
       description: "El navegador no permitió copiar el enlace.",
       actionHint: "Copiá el enlace manualmente.",
+      affectsExperience: false,
     },
     {
       action: "share",
@@ -130,6 +156,7 @@
       title: "Compartir no disponible",
       description: "Tu navegador no permite compartir desde aquí.",
       actionHint: "Copiá el enlace manualmente.",
+      affectsExperience: false,
     },
 
     // Merchant operations.
@@ -139,6 +166,7 @@
       title: "Datos inválidos",
       description: "El monto ingresado no es válido.",
       actionHint: "Ingresá un monto mayor a 0 y menor al disponible.",
+      affectsExperience: false,
     },
     {
       action: "withdraw",
@@ -146,6 +174,7 @@
       title: "Saldo insuficiente",
       description: "No tenés saldo disponible para retirar.",
       actionHint: "Verificá el monto ingresado.",
+      affectsExperience: false,
     },
     {
       action: "withdraw",
@@ -153,6 +182,7 @@
       title: "Error al retirar",
       description: "El servidor no pudo crear el retiro.",
       actionHint: "Intentá de nuevo en unos segundos.",
+      affectsExperience: true,
     },
     {
       action: "withdraw",
@@ -160,6 +190,7 @@
       title: "Error al generar el QR",
       description: "No se pudo generar el código QR de retiro.",
       actionHint: "Intentá de nuevo.",
+      affectsExperience: true,
     },
     {
       action: "withdraw",
@@ -167,6 +198,7 @@
       title: "No se pudo confirmar el retiro",
       description: "La confirmación del retiro falló.",
       actionHint: "Intentá de nuevo o cancelá la operación.",
+      affectsExperience: true,
     },
     {
       action: "transfer",
@@ -174,6 +206,7 @@
       title: "Datos inválidos",
       description: "Los datos de la transferencia no son válidos.",
       actionHint: "Verificá el alias y el monto.",
+      affectsExperience: false,
     },
     {
       action: "transfer",
@@ -181,6 +214,7 @@
       title: "Cuenta no encontrada",
       description: "La cuenta destino no existe o está restringida.",
       actionHint: "Verificá el alias ingresado.",
+      affectsExperience: false,
     },
     {
       action: "transfer",
@@ -188,6 +222,7 @@
       title: "Saldo insuficiente",
       description: "No tenés saldo para realizar la transferencia.",
       actionHint: "Verificá el monto.",
+      affectsExperience: false,
     },
     {
       action: "transfer",
@@ -195,6 +230,7 @@
       title: "Error al transferir",
       description: "El servidor no pudo crear la transferencia.",
       actionHint: "Intentá de nuevo en unos segundos.",
+      affectsExperience: true,
     },
     {
       action: "close-account",
@@ -202,6 +238,7 @@
       title: "No se puede cerrar la caja",
       description: "La cuenta no tiene condiciones para cerrarse.",
       actionHint: "Verificá que tenga saldo o contactá a soporte.",
+      affectsExperience: false,
     },
     {
       action: "close-account",
@@ -209,6 +246,7 @@
       title: "Error al cerrar caja",
       description: "No se pudo cerrar la cuenta.",
       actionHint: "Intentá de nuevo o contactá a soporte.",
+      affectsExperience: true,
     },
     {
       action: "change-password",
@@ -216,6 +254,7 @@
       title: "Contraseña inválida",
       description: "La nueva contraseña no cumple los requisitos.",
       actionHint: "Revisá los requisitos de seguridad.",
+      affectsExperience: false,
     },
     {
       action: "change-password",
@@ -223,6 +262,7 @@
       title: "Error al cambiar contraseña",
       description: "No se pudo actualizar la contraseña.",
       actionHint: "Intentá de nuevo.",
+      affectsExperience: true,
     },
     {
       action: "polling",
@@ -230,6 +270,7 @@
       title: "Error al sincronizar datos",
       description: "No se pudieron obtener las últimas ordenes o transacciones.",
       actionHint: "Revisá tu conexión. La app reintentará sola.",
+      affectsExperience: true,
     },
     {
       action: "polling",
@@ -237,6 +278,7 @@
       title: "Servidor upstream no respondió",
       description: "El servidor intermedio no pudo contactar al banco o comercio.",
       actionHint: "Revisá tu conexión. La app reintentará sola.",
+      affectsExperience: true,
     },
     {
       action: "no-funds",
@@ -244,6 +286,7 @@
       title: "Sin fondos",
       description: "No tenés saldo disponible para esta operación.",
       actionHint: "Esperá a tener una venta o recibir una transferencia.",
+      affectsExperience: true,
     },
   ];
 
@@ -282,7 +325,7 @@
         extraMessage: extraMessage || "",
       };
       window.dispatchEvent(new CustomEvent("ux-error", { detail }));
-      if (window.UXMetrics && window.UXMetrics.showErrorToast) {
+      if (entry && entry.affectsExperience && window.UXMetrics && window.UXMetrics.showErrorToast) {
         window.UXMetrics.showErrorToast(detail);
       }
       return detail;

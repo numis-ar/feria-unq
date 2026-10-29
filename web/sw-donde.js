@@ -33,6 +33,12 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // El Cache API solo soporta requests GET; pasar cualquier otro método directo.
+  if (request.method !== "GET") {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   // Nunca cachear donde.html, productores.json ni las páginas de share:
   // así los cambios de contenido se ven al recargar.
   if (

@@ -11,6 +11,14 @@
   const sampleRate = cfg.sampleRate || 1.0;
   const interactionThrottleMs = cfg.interactionThrottleMs || 500;
 
+  function isMetricsUrl(url) {
+    try {
+      return new URL(url, location.href).pathname === endpoint;
+    } catch {
+      return false;
+    }
+  }
+
   const sessionId = (() => {
     const key = "ux-session-id";
     let id = sessionStorage.getItem(key);
@@ -108,6 +116,7 @@
       let filename = e.filename;
       let lineno = e.lineno;
       let colno = e.colno;
+      let affectsExperience = true;
 
       if (target && (target instanceof HTMLElement || target instanceof Element)) {
         action = "resource";
@@ -115,12 +124,14 @@
         url = target.src || target.href || location.href;
         message = "Resource failed to load: " + url;
         filename = url;
+        affectsExperience = false;
       }
 
       enqueue("event", {
         action,
         root_code: rootCode,
         url,
+        affects_experience: affectsExperience,
         payload: {
           message,
           filename,
@@ -130,8 +141,8 @@
         },
       });
 
-      if (action === "js-runtime" || action === "resource") {
-        window.UXErrorCatalog && window.UXErrorCatalog.show(action, rootCode, message);
+      if (window.UXErrorCatalog) {
+        window.UXErrorCatalog.show(action, rootCode, message);
       }
     },
     true
@@ -144,13 +155,15 @@
       action: "js-runtime",
       root_code: "UNHANDLED_REJECTION",
       url: location.href,
+      affects_experience: true,
       payload: {
         reason,
         stack: e.reason && e.reason.stack ? e.reason.stack : null,
       },
     });
-    window.UXErrorCatalog &&
+    if (window.UXErrorCatalog) {
       window.UXErrorCatalog.show("js-runtime", "UNHANDLED_REJECTION", reason);
+    }
   });
 
   // ---------------------------------------------------------------------------
@@ -171,16 +184,18 @@
       const duration = Math.round(performance.now() - start);
       const status = res.status;
       const errorCode = status >= 400 ? `FETCH_${status}` : null;
+      const affectsExperience = status >= 500;
       enqueue("request", {
         method,
         url,
         status,
         duration_ms: duration,
         error_code: errorCode,
+        affects_experience: affectsExperience,
         payload: { statusText: res.statusText },
       });
 
-      if (status >= 500) {
+      if (status >= 500 && !isMetricsUrl(url)) {
         window.UXErrorCatalog &&
           window.UXErrorCatalog.show("network", `FETCH_${status}`, url);
       }
@@ -193,10 +208,39 @@
         status: 0,
         duration_ms: duration,
         error_code: "FETCH_FAILED",
+        affects_experience: true,
         payload: { message: err.message },
       });
-      window.UXErrorCatalog &&
+      if (!isMetricsUrl(url) && window.UXErrorCatalog) {
         window.UXErrorCatalog.show("network", "FETCH_FAILED", err.message);
+      }
+      throw err;
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // JSON decode errors
+  // ---------------------------------------------------------------------------
+  const originalResponseJson = Response.prototype.json;
+  Response.prototype.json = async function jsonInterceptor() {
+    try {
+      return await originalResponseJson.call(this);
+    } catch (err) {
+      const url = this.url || location.href;
+      enqueue("event", {
+        action: "json-decode",
+        root_code: "PARSE_ERROR",
+        url,
+        affects_experience: true,
+        payload: {
+          message: err.message,
+          status: this.status,
+          statusText: this.statusText,
+        },
+      });
+      if (!isMetricsUrl(url) && window.UXErrorCatalog) {
+        window.UXErrorCatalog.show("json-decode", "PARSE_ERROR", err.message);
+      }
       throw err;
     }
   };
@@ -229,6 +273,7 @@
         status,
         duration_ms: duration,
         error_code: errorCode,
+        affects_experience: status >= 500,
         payload: { statusText: xhr.statusText },
       });
     });
@@ -256,12 +301,11 @@
         action: "network",
         root_code: "WS_ERROR",
         url,
+        affects_experience: false,
         payload: {},
       });
-      if (!wsErrorReported) {
-        wsErrorReported = true;
-        window.UXErrorCatalog &&
-          window.UXErrorCatalog.show("network", "WS_ERROR");
+      if (window.UXErrorCatalog) {
+        window.UXErrorCatalog.show("network", "WS_ERROR");
       }
       if (originalOnError) originalOnError.call(this, e);
     };
@@ -272,12 +316,11 @@
           action: "network",
           root_code: "WS_CLOSE",
           url,
+          affects_experience: false,
           payload: { code: e.code, reason: e.reason },
         });
-        if (!wsErrorReported) {
-          wsErrorReported = true;
-          window.UXErrorCatalog &&
-            window.UXErrorCatalog.show("network", "WS_CLOSE");
+        if (window.UXErrorCatalog) {
+          window.UXErrorCatalog.show("network", "WS_CLOSE");
         }
       }
       if (originalOnClose) originalOnClose.call(this, e);
@@ -339,42 +382,44 @@
   // ---------------------------------------------------------------------------
   window.addEventListener("load", () => {
     setTimeout(() => {
-      const nav = performance.getEntriesByType("navigation")[0] || {};
-      const paints = performance.getEntriesByType("paint");
-      const lcpEntries = performance.getEntriesByType(
-        "largest-contentful-paint"
-      );
+      try {
+        const nav = performance.getEntriesByType("navigation")[0];
+        if (!nav) return;
+        const paints = performance.getEntriesByType("paint");
+        const lcpEntries = performance.getEntriesByType(
+          "largest-contentful-paint"
+        );
 
-      const fcpEntry = paints.find((p) => p.name === "first-contentful-paint");
-      const lcpEntry = lcpEntries.length
-        ? lcpEntries[lcpEntries.length - 1]
-        : null;
-
-      const timing = nav;
-      const loadMs =
-        timing.loadEventEnd != null && timing.startTime != null
-          ? Math.round(timing.loadEventEnd - timing.startTime)
-          : null;
-      const ttfbMs =
-        timing.responseStart != null && timing.startTime != null
-          ? Math.round(timing.responseStart - timing.startTime)
+        const fcpEntry = paints.find(
+          (p) => p.name === "first-contentful-paint"
+        );
+        const lcpEntry = lcpEntries.length
+          ? lcpEntries[lcpEntries.length - 1]
           : null;
 
-      enqueue("load", {
-        url: location.href,
-        load_ms: loadMs,
-        ttfb_ms: ttfbMs,
-        fcp_ms: fcpEntry ? Math.round(fcpEntry.startTime) : null,
-        lcp_ms: lcpEntry ? Math.round(lcpEntry.startTime) : null,
-        payload: {
-          domComplete:
-            timing.domComplete != null ? Math.round(timing.domComplete) : null,
-          responseEnd:
-            timing.responseEnd != null ? Math.round(timing.responseEnd) : null,
-          fetchStart:
-            timing.fetchStart != null ? Math.round(timing.fetchStart) : null,
-        },
-      });
+        const loadMs =
+          nav.loadEventEnd != null ? Math.round(nav.loadEventEnd - nav.startTime) : null;
+        const ttfbMs =
+          nav.responseStart != null ? Math.round(nav.responseStart - nav.startTime) : null;
+
+        enqueue("load", {
+          url: location.href,
+          load_ms: loadMs,
+          ttfb_ms: ttfbMs,
+          fcp_ms: fcpEntry ? Math.round(fcpEntry.startTime) : null,
+          lcp_ms: lcpEntry ? Math.round(lcpEntry.startTime) : null,
+          payload: {
+            domComplete:
+              nav.domComplete != null ? Math.round(nav.domComplete) : null,
+            responseEnd:
+              nav.responseEnd != null ? Math.round(nav.responseEnd) : null,
+            fetchStart:
+              nav.fetchStart != null ? Math.round(nav.fetchStart) : null,
+          },
+        });
+      } catch {
+        // Ignore timing errors — never break the app for telemetry.
+      }
     }, 0);
   });
 
@@ -386,7 +431,11 @@
   // Public API
   // ---------------------------------------------------------------------------
   function showErrorToast(detail) {
-    let container = document.getElementById("ux-error-toast-container");
+    let container = document.getElementById("toast-container");
+    const useExistingContainer = !!container;
+    if (!container) {
+      container = document.getElementById("ux-error-toast-container");
+    }
     if (!container) {
       container = document.createElement("div");
       container.id = "ux-error-toast-container";
@@ -398,8 +447,15 @@
     }
 
     const toast = document.createElement("div");
-    toast.style.cssText =
-      "background:#fff;border-left:4px solid #dc5a1e;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:12px 16px;border-radius:4px;max-width:min(480px,calc(100vw - 32px));pointer-events:auto;font-family:system-ui,-apple-system,sans-serif;";
+    if (useExistingContainer) {
+      toast.className =
+        container.children.length % 2 === 0 ? "toast-info" : "toast-error";
+      toast.style.cssText =
+        "background:#fff;border-left:4px solid #dc5a1e;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:12px 16px;border-radius:4px;pointer-events:auto;font-family:system-ui,-apple-system,sans-serif;";
+    } else {
+      toast.style.cssText =
+        "background:#fff;border-left:4px solid #dc5a1e;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:12px 16px;border-radius:4px;max-width:min(480px,calc(100vw - 32px));pointer-events:auto;font-family:system-ui,-apple-system,sans-serif;";
+    }
 
     const titleHtml = `<strong style="display:block;color:#b91c1c;font-size:14px;margin-bottom:4px;">${escapeHtml(
       detail.title
@@ -438,11 +494,12 @@
 
   window.UXMetrics = {
     sessionId,
-    trackEvent(action, rootCode, payload) {
+    trackEvent(action, rootCode, payload, affectsExperience) {
       enqueue("event", {
         action,
         root_code: rootCode,
         url: location.href,
+        affects_experience: affectsExperience,
         payload,
       });
     },
@@ -453,6 +510,7 @@
         status,
         duration_ms: durationMs,
         error_code: errorCode,
+        affects_experience: status >= 500,
         payload,
       });
     },

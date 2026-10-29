@@ -13,7 +13,8 @@ los endpoints, sin identificar a los usuarios.
 - Registrar **interacciones** de usuario con una `session_id` anónima.
 - Medir **load time** y métricas de pintura (FCP, LCP, TTFB).
 - Todos los errores visibles para el usuario deben provenir de un **catálogo
-  compartido** con la forma `{action, rootCode, title, description, actionHint}`.
+  compartido** con la forma `{action, rootCode, title, description, actionHint,
+  affectsExperience}`.
 - Persistir las métricas en el servidor en **SQLite en memoria** y sincronizar a
   disco de forma configurable.
 
@@ -25,7 +26,7 @@ los endpoints, sin identificar a los usuarios.
 │  + ux-metrics.js │                            │  + ux-metrics.js    │
 │  + ux-error-    │  <──────────────────────── │  SQLite :memory:    │
 │    catalog.js   │      GET /ux-metrics       │  VACUUM INTO disco  │
-└─────────────────┘                            └─────────────────────┘
+└─────────────────┘      (Bearer token)        └─────────────────────┘
 ```
 
 ## Archivos principales
@@ -44,13 +45,22 @@ Cada error catalogado tiene esta forma:
 
 ```js
 {
-  action: "login",           // acción que el usuario intentaba
-  rootCode: "MERCHANT_AUTH_401", // código de error raíz
-  title: "Acceso fallido",   // título para el usuario
+  action: "login",                // acción que el usuario intentaba
+  rootCode: "MERCHANT_AUTH_401",  // código de error raíz
+  title: "Acceso fallido",        // título para el usuario
   description: "El usuario o la contraseña no son válidos.",
-  actionHint: "Verificá los datos de acceso."
+  actionHint: "Verificá los datos de acceso.",
+  affectsExperience: false,       // ¿impide usar la app como corresponde?
 }
 ```
+
+`affectsExperience` indica si el error es bloqueante:
+
+- `true` → el usuario no puede usar la aplicación como corresponde (500 en un
+  endpoint, JSON inválido, sesión expirada, etc.). Se muestra un toast.
+- `false` → el usuario puede resolverlo solo o no afecta la funcionalidad
+  visible (credenciales incorrectas, recurso que no carga, WS que se desconecta,
+  etc.). Solo se reporta; no se muestra toast.
 
 ### Cómo agregar un nuevo error
 
@@ -65,7 +75,8 @@ window.UXErrorCatalog.add({
   rootCode: "CODIGO_RAIZ",
   title: "Título visible",
   description: "Qué pasó.",
-  actionHint: "Qué puede hacer el usuario."
+  actionHint: "Qué puede hacer el usuario.",
+  affectsExperience: true,
 });
 ```
 
@@ -82,15 +93,20 @@ window.UXErrorCatalog.show("login", "MERCHANT_AUTH_401", "mensaje extra opcional
 ```
 
 Esto:
+
 1. Busca la entrada en el catálogo.
 2. Dispara el evento `ux-error` con el detalle.
-3. Muestra un toast con título, descripción y `actionHint`.
-4. Reporta el evento automáticamente a través de `UXMetrics.trackEvent` (solo
-   si se llamó desde un flujo de error que no está ya siendo capturado).
+3. Reporta el evento automáticamente a través de `UXMetrics.trackEvent`.
+4. **Solo si `affectsExperience === true`**, muestra un toast con título,
+   descripción y `actionHint`.
 
 > **Regla de oro:** si un mensaje de error se muestra al usuario, debe provenir
 > del catálogo. Los textos sueltos de `errorEl.textContent = e.message` deben
 > migrar a `UXErrorCatalog.show(...)`.
+>
+> **Regla de oro #2:** los errores que no afectan la experiencia no deben
+> mostrarse al usuario. Solo se reportan en `UXMetrics` para monitoreo
+> proactivo.
 
 ## Cliente de métricas (`web/ux-metrics.js`)
 
@@ -110,8 +126,11 @@ Para páginas en `web/v2/` la ruta es `../ux-error-catalog.js`.
 - **Requests**: intercepta `fetch` y `XMLHttpRequest` y mide `duration_ms`,
   `status`, `error_code` (`FETCH_404`, `XHR_500`, etc.) y errores de red
   (`FETCH_FAILED`).
+- **JSON decode**: intercepta `Response.prototype.json` y reporta
+  `json-decode/PARSE_ERROR` como afectante cuando el cuerpo no se puede
+  interpretar.
 - **WebSocket**: intercepta `WebSocket` y reporta `WS_ERROR` / `WS_CLOSE` no
-  limpio.
+  limpio como no afectantes.
 - **Interacciones**: clicks en elementos con `data-ux-action`, `button`, `a`,
   `input`, `[role="button"]`; submits de formularios.
 - **Load timing**: `load`, TTFB, FCP, LCP usando la Performance API.
@@ -131,7 +150,7 @@ window.UX_METRICS_CONFIG = {
 ### API pública
 
 ```js
-window.UXMetrics.trackEvent(action, rootCode, payload);
+window.UXMetrics.trackEvent(action, rootCode, payload, affectsExperience);
 window.UXMetrics.trackRequest(method, url, status, durationMs, errorCode, payload);
 window.UXMetrics.trackLoad(loadMs, ttfbMs, fcpMs, lcpMs, payload);
 window.UXMetrics.flush();
@@ -158,10 +177,14 @@ elemento.
   - Acepta un batch JSON con `session_id`, `events[]`, `requests[]`, `loads[]`.
   - Guarda en SQLite en memoria.
   - Devuelve `204` si tuvo éxito.
+  - Está abierto: el browser anónimo lo envía sin autenticar.
 
 - `GET /ux-metrics`
   - Query params: `?since=<ts>&limit=<n>&type=events|requests|loads`.
   - Devuelve JSON con los items almacenados.
+  - **Requiere autenticación** si está configurada la variable de entorno
+    `UX_METRICS_AUTH_TOKEN`. El header debe ser:
+    `Authorization: Bearer <UX_METRICS_AUTH_TOKEN>`.
 
 ### Persistencia
 
@@ -180,6 +203,7 @@ elemento.
 | `UX_METRICS_DB_PATH` | `.ux-metrics.sqlite` en la raíz del repo | Ruta del backup en disco. |
 | `UX_METRICS_SYNC_MS` | `300000` | Intervalo de sync a disco. |
 | `UX_METRICS_MAX_ROWS` | `100000` | Máximo de filas por tabla. |
+| `UX_METRICS_AUTH_TOKEN` | `''` (vacío) | Token Bearer para proteger `GET /ux-metrics`. Si está vacío, el endpoint es público. |
 
 ## Flujos de error por página
 
@@ -205,9 +229,21 @@ elemento.
 - Los errores JS, de red y de recursos se capturan automáticamente.
 - Si se agregan acciones interactivas nuevas, usar `UXErrorCatalog.show`.
 
+## Service workers
+
+Los service workers (`web/sw.js`, `web/sw-donde.js`) solo cachean requests
+`GET`. Los `POST` se pasan a la red sin intentar escribir en `Cache`, evitando
+el error:
+
+```
+TypeError: Failed to execute 'put' on 'Cache': Request method 'POST' is unsupported
+```
+
 ## Cómo consultar las métricas
 
 ```bash
+# Sin token configurado
+
 # Últimos 100 items de cualquier tipo
 curl http://localhost:3001/ux-metrics
 
@@ -216,6 +252,9 @@ curl "http://localhost:3001/ux-metrics?type=events&since=1699000000000&limit=50"
 
 # Requests con error
 curl "http://localhost:3001/ux-metrics?type=requests&limit=1000" | jq '.requests[] | select(.error_code != null)'
+
+# Con token configurado
+curl -H "Authorization: Bearer $UX_METRICS_AUTH_TOKEN" http://localhost:3001/ux-metrics
 ```
 
 ## Decisiones de diseño
@@ -224,6 +263,13 @@ curl "http://localhost:3001/ux-metrics?type=requests&limit=1000" | jq '.requests
   incluye PII.
 - **No bloqueante**: el cliente nunca bloquea la app por fallos de red al
   reportar; usa `sendBeacon` en `beforeunload`.
+- **Errores no afectantes**: los errores de recursos (`resource/LOAD_ERROR`),
+  WebSocket (`network/WS_ERROR`, `network/WS_CLOSE`) y respuestas 4xx se
+  reportan pero no se muestran al usuario.
+- **Errores afectantes**: 5xx en endpoints, fallos de red, JSON inválido,
+  excepciones JS no controladas, sesión expirada y condiciones de negocio que
+  impiden visiblemente una acción (p. ej. sin fondos para retirar/transferir)
+  sí muestran toast.
 - **No repetición excesiva**: los errores de WebSocket se muestran al usuario
   una sola vez por sesión (`wsErrorReported`), aunque se reportan siempre.
 - **Catálogo compartido**: un único archivo permite que todos los sitios
@@ -237,4 +283,5 @@ curl "http://localhost:3001/ux-metrics?type=requests&limit=1000" | jq '.requests
 - [ ] Incluir `ux-error-catalog.js` y `ux-metrics.js` en `<head>`.
 - [ ] Agregar `data-ux-action` a botones/formularios importantes.
 - [ ] Si se muestra un error, usar `UXErrorCatalog.show(action, rootCode)`.
-- [ ] Si se agrega un error nuevo, registrarlo en `web/ux-error-catalog.js`.
+- [ ] Si se agrega un error nuevo, registrarlo en `web/ux-error-catalog.js` y
+      definir `affectsExperience`.
