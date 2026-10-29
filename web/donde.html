@@ -420,6 +420,7 @@
         color: var(--color-text);
         line-height: 1.4;
         overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .contact-list__value a {
         color: var(--verde);
@@ -507,6 +508,16 @@
         }
         .modal__description {
           font-size: 15px;
+        }
+        .social-list {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .social-list a {
+          padding: 10px;
+          font-size: 13px;
+        }
+        .contact-list__value {
+          word-break: break-all;
         }
       }
     </style>
@@ -732,64 +743,64 @@
           <a href="./" style="color: #fff">Volver al inicio</a>
         </p>
       </footer>
-    </div>
 
-    <div
-      id="modal-overlay"
-      class="modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-titulo"
-      aria-hidden="true"
-    >
-      <div class="modal" role="document" tabindex="-1" id="modal">
-        <div class="modal__top-actions">
-          <button
-            type="button"
-            class="modal__share"
-            id="modal-compartir"
-            aria-label="Compartir este perfil"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              focusable="false"
+      <div
+        id="modal-overlay"
+        class="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-titulo"
+        aria-hidden="true"
+      >
+        <div class="modal" role="document" tabindex="-1" id="modal">
+          <div class="modal__top-actions">
+            <button
+              type="button"
+              class="modal__share"
+              id="modal-compartir"
+              aria-label="Compartir este perfil"
             >
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="modal__close"
-            id="modal-cerrar"
-            aria-label="Cerrar detalles"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              focusable="false"
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="modal__close"
+              id="modal-cerrar"
+              aria-label="Cerrar detalles"
             >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-        <div id="modal-contenido">
-          <!-- El contenido se carga con JavaScript -->
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div id="modal-contenido">
+            <!-- El contenido se carga con JavaScript -->
+          </div>
         </div>
       </div>
     </div>
@@ -1223,7 +1234,7 @@
         }
 
         function actualizarOG(p) {
-          const url = `${location.origin}${location.pathname}#${p.slug}`;
+          const url = `${location.origin}${location.pathname}?p=${p.slug}`;
           const imagen = p.imagen
             ? new URL(p.imagen, location.href).href
             : OG_ORIGINAL.image;
@@ -1248,7 +1259,7 @@
         }
 
         async function compartir(p) {
-          const url = `${location.origin}${location.pathname}#${p.slug}`;
+          const url = `${location.origin}${location.pathname}?p=${p.slug}`;
           const shareData = {
             title: p.nombreEmprendimiento,
             text: p.descripcion || "",
@@ -1302,7 +1313,7 @@
         function abrirModal(p, trigger, updateUrl = true) {
           triggerFocus = trigger || null;
           if (updateUrl && p.slug) {
-            history.pushState({ slug: p.slug }, "", `#${p.slug}`);
+            history.pushState({ slug: p.slug }, "", `?p=${p.slug}`);
           }
           actualizarOG(p);
           modalCompartir.dataset.slug = p.slug;
@@ -1369,7 +1380,7 @@
 
         function cerrarModal(updateUrl = true) {
           if (updateUrl) {
-            history.pushState(null, "", location.pathname + location.search);
+            history.pushState(null, "", location.pathname);
           }
           restaurarOG();
           overlay.setAttribute("aria-hidden", "true");
@@ -1416,8 +1427,9 @@
           element.addEventListener("keydown", focusTrapHandler);
         }
 
-        function abrirModalDesdeHash() {
-          const slug = location.hash.replace(/^#/, "");
+        function abrirModalDesdeUrl() {
+          const params = new URLSearchParams(location.search);
+          const slug = params.get("p") || location.hash.replace(/^#/, "");
           if (!slug) return;
           const p = productores.find((x) => x.slug === slug);
           if (p) abrirModal(p, null, false);
@@ -1440,11 +1452,12 @@
             cerrarModal();
           }
         });
-        window.addEventListener("hashchange", abrirModalDesdeHash);
+        window.addEventListener("hashchange", abrirModalDesdeUrl);
         window.addEventListener("popstate", () => {
-          const slug = location.hash.replace(/^#/, "");
+          const params = new URLSearchParams(location.search);
+          const slug = params.get("p") || location.hash.replace(/^#/, "");
           if (!slug) cerrarModal(false);
-          else abrirModalDesdeHash();
+          else abrirModalDesdeUrl();
         });
 
         inputBusqueda.addEventListener("input", actualizar);
@@ -1453,7 +1466,7 @@
 
         async function cargar() {
           try {
-            const response = await fetch("./productores.json");
+            const response = await fetch("./productores.json", { cache: "no-store" });
             if (!response.ok) throw new Error("No se pudo cargar el listado");
             productores = await response.json();
             rubros = obtenerRubros(productores);
@@ -1461,7 +1474,7 @@
             const seed = getSeed();
             ordenados = shuffle(productores, mulberry32(seed));
             actualizar();
-            abrirModalDesdeHash();
+            abrirModalDesdeUrl();
           } catch (err) {
             resultadosInfo.textContent =
               "Error al cargar el listado de productorxs.";
@@ -1473,7 +1486,7 @@
 
         if ("serviceWorker" in navigator) {
           navigator.serviceWorker
-            .register("./sw-donde.js")
+            .register("./sw-donde.js", { updateViaCache: "none" })
             .catch(() => {});
         }
 

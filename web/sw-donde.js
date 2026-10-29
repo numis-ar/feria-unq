@@ -1,7 +1,5 @@
-const CACHE_NAME = "feria-unq-donde-v1";
+const CACHE_NAME = "feria-unq-donde-assets-v2";
 const PRECACHE = [
-  "./donde.html",
-  "./productores.json",
   "./fonts/archivo.css",
   "./mapa-unq.png",
   "./screenshots/productor-placeholder.svg",
@@ -33,22 +31,20 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
-  // Siempre intentar la red primero para productores.json (puede cambiar).
-  if (request.url.endsWith("productores.json")) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  // Nunca cachear donde.html, productores.json ni las páginas de share:
+  // así los cambios de contenido se ven al recargar.
+  if (
+    url.pathname.endsWith("/donde.html") ||
+    url.pathname.endsWith("/productores.json") ||
+    url.pathname.startsWith("/share/")
+  ) {
+    event.respondWith(fetch(request));
     return;
   }
 
-  // Cache-first para el resto.
+  // Cache-first para assets estáticos.
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
