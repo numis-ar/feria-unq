@@ -12,6 +12,7 @@ const metrics = createUxMetrics({
 });
 
 export const initUxMetrics = metrics.init;
+export const closeUxMetrics = metrics.close;
 export const backupUxMetrics = metrics.backup;
 export const handleUxMetricsPost = metrics.handlePost;
 export const handleUxMetricsGet = metrics.handleGet;

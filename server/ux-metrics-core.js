@@ -90,9 +90,6 @@ export function createUxMetrics(options) {
       syncTimer.unref?.();
     }
 
-    process.on('SIGINT', backup);
-    process.on('SIGTERM', backup);
-
     return db;
   }
 

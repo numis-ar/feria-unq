@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
 import {
   initUxMetrics,
+  closeUxMetrics,
   handleUxMetricsPost,
   handleUxMetricsGet,
 } from './ux-metrics.js';
@@ -300,6 +301,28 @@ server.on('error', (err) => {
   console.error('Server error:', err);
   process.exit(1);
 });
+
+let shuttingDown = false;
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal}, shutting down...`);
+  server.close((err) => {
+    if (err) {
+      console.error('Error closing server:', err);
+    }
+    closeUxMetrics();
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error('Shutdown timeout reached, forcing exit');
+    closeUxMetrics();
+    process.exit(1);
+  }, 5000).unref?.();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && parseInt(LISTEN_FDS, 10) > 0) {
   server.listen({ fd: 3 }, () => {

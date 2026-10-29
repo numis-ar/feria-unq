@@ -19,6 +19,10 @@ export function initBackendUxMetrics() {
   initialized = true;
 }
 
+export function closeBackendUxMetrics() {
+  metrics.close();
+}
+
 function ensureInit() {
   if (!initialized) return null;
   metrics.init();

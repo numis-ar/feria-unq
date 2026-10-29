@@ -10,6 +10,7 @@ Environment=BANK_URL=https://bank.taler.ar
 Environment=ADMIN_TOKEN=qwe
 Environment=MERCHANT_BASE_URL=https://merchant.taler.ar
 ExecStart=node server/backend.ts
+TimeoutStopSec=10s
 
 [Install]
 WantedBy=multi-user.target

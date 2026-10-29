@@ -9,6 +9,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import {
   initBackendUxMetrics,
+  closeBackendUxMetrics,
   getSessionId,
   trackEvent,
   trackRequest,
@@ -1820,6 +1821,46 @@ server.on('upgrade', (req, socket: net.Socket, head) => {
 
 import { pathToFileURL } from 'url';
 
+let shuttingDown = false;
+
+function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal}, shutting down...`);
+
+  if (bankAdminTokenRefreshTimer) {
+    clearTimeout(bankAdminTokenRefreshTimer);
+    bankAdminTokenRefreshTimer = null;
+  }
+
+  for (const w of watchers.values()) {
+    w.running = false;
+    if (w.graceTimer) {
+      clearTimeout(w.graceTimer);
+      w.graceTimer = undefined;
+    }
+    for (const client of w.clients) {
+      client.terminate();
+    }
+    w.clients.clear();
+  }
+  watchers.clear();
+
+  server.close((err) => {
+    if (err) {
+      console.error('Error closing server:', err);
+    }
+    closeBackendUxMetrics();
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    console.error('Shutdown timeout reached, forcing exit');
+    closeBackendUxMetrics();
+    process.exit(1);
+  }, 5000).unref?.();
+}
+
 // Avoid listening when required as a module (e.g. in tests)
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   // Initialize UX metrics (SQLite in memory, synced to disk).
@@ -1831,6 +1872,9 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       log('Failed to fetch initial bank admin token:', e.message || e);
     });
   }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 
   if (LISTEN_PID && parseInt(LISTEN_PID, 10) === process.pid && LISTEN_FDS && parseInt(LISTEN_FDS, 10) > 0) {
     server.listen({ fd: 3 }, () => {
