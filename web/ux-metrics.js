@@ -179,6 +179,15 @@
     if (args[1] && args[1].method)
       method = String(args[1].method).toUpperCase();
 
+    // Propagate the anonymous session id to the backend so it can correlate
+    // backend-side activity with the same UX session.
+    if (!isMetricsUrl(url)) {
+      const options = args[1] || {};
+      const headers = options.headers ? { ...options.headers } : {};
+      headers["X-Session-Id"] = sessionId;
+      args[1] = { ...options, headers };
+    }
+
     try {
       const res = await originalFetch.apply(this, args);
       const duration = Math.round(performance.now() - start);
@@ -280,6 +289,11 @@
 
     xhr.send = function send(...sargs) {
       start = performance.now();
+      try {
+        xhr.setRequestHeader("X-Session-Id", sessionId);
+      } catch {
+        // Some requests may already be in a state that disallows headers.
+      }
       return realSend.apply(xhr, sargs);
     };
 

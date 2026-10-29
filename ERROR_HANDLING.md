@@ -21,22 +21,44 @@ los endpoints, sin identificar a los usuarios.
 ## Arquitectura
 
 ```
-┌─────────────────┐      POST /ux-metrics      ┌─────────────────────┐
-│  web/*.html     │  ───────────────────────>  │  server/frontend.js │
-│  + ux-metrics.js │                            │  + ux-metrics.js    │
-│  + ux-error-    │  <──────────────────────── │  SQLite :memory:    │
-│    catalog.js   │      GET /ux-metrics       │  VACUUM INTO disco  │
-└─────────────────┘      (Bearer token)        └─────────────────────┘
+                         ┌─────────────────────┐
+                         │  server/frontend.js │
+      POST /ux-metrics   │  + ux-metrics.js    │
+   ┌──────────────────>  │  SQLite :memory:    │
+   │                     │  VACUUM INTO disco  │
+   │                     └─────────────────────┘
+   │
+┌──┴──────────────┐
+│  web/*.html     │      X-Session-Id header
+│  + ux-metrics.js │  ───────────────────────────>
+│  + ux-error-    │
+│    catalog.js   │      POST /api/ux-metrics    ┌─────────────────────┐
+└─────────────────┘  ─────────────────────────> │  server/backend.js  │
+                                                │  + backend-ux-      │
+                                                │    metrics.js       │
+                                                │  SQLite :memory:    │
+                                                │  VACUUM INTO disco  │
+                                                └─────────────────────┘
 ```
+
+El núcleo compartido (`server/ux-metrics-core.js`) implementa el esquema, la
+ingesta, la query y la persistencia. Cada servidor tiene un adapter liviano que
+lee sus variables de entorno y lo cablea:
+
+- `server/ux-metrics.js` → adapter del frontend.
+- `server/backend-ux-metrics.js` → adapter del backend.
 
 ## Archivos principales
 
 | Archivo | Responsabilidad |
 |---|---|
 | `web/ux-error-catalog.js` | Catálogo compartido de errores. Cada página lo incluye. |
-| `web/ux-metrics.js` | Cliente de telemetría: captura errores, requests, interacciones y load timing. |
-| `server/ux-metrics.js` | Lógica del servidor: SQLite en memoria, ingest, query, backup. |
-| `server/frontend.js` | Expone `POST /ux-metrics` y `GET /ux-metrics`. |
+| `web/ux-metrics.js` | Cliente de telemetría: captura errores, requests, interacciones y load timing. Agrega `X-Session-Id` a cada request del browser. |
+| `server/ux-metrics-core.js` | Núcleo compartido: SQLite en memoria, esquema, ingest, query, backup y pruning. |
+| `server/ux-metrics.js` | Adapter liviano del frontend. Lee `UX_METRICS_DB_PATH` y expone `POST /ux-metrics` / `GET /ux-metrics`. |
+| `server/backend-ux-metrics.js` | Adapter liviano del backend. Expone `POST /api/ux-metrics` / `GET /api/ux-metrics` y helpers de tracking interno. |
+| `server/frontend.js` | Sirve el frontend y enruta métricas con `server/ux-metrics.js`. |
+| `server/backend.js` | Sirve la API, agrega `X-Session-Id` a CORS, trackea requests entrantes/salientes y eventos de negocio con `server/backend-ux-metrics.js`. |
 | `ERROR_HANDLING.md` | Este documento. |
 
 ## Catálogo de errores
@@ -169,9 +191,15 @@ importantes:
 Si no tiene `data-ux-action`, el cliente usa `id`, `name` o el texto del
 elemento.
 
-## Servidor (`server/frontend.js` + `server/ux-metrics.js`)
+## Servidores
 
-### Endpoints
+Ambos servidores usan el mismo núcleo (`server/ux-metrics-core.js`) con el
+mismo esquema, pero cada uno tiene su propia base en memoria y su propio
+adapter liviano.
+
+### Frontend (`server/frontend.js` + `server/ux-metrics.js`)
+
+#### Endpoints
 
 - `POST /ux-metrics`
   - Acepta un batch JSON con `session_id`, `events[]`, `requests[]`, `loads[]`.
@@ -183,10 +211,64 @@ elemento.
   - Query params: `?since=<ts>&limit=<n>&type=events|requests|loads`.
   - Devuelve JSON con los items almacenados.
   - **Requiere autenticación** si está configurada la variable de entorno
-    `UX_METRICS_AUTH_TOKEN`. El header debe ser:
-    `Authorization: Bearer <UX_METRICS_AUTH_TOKEN>`.
+    `UX_METRICS_AUTH_TOKEN`. Header: `Authorization: Bearer <token>`.
 
-### Persistencia
+#### Variables de entorno
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `UX_METRICS_DB_PATH` | `.ux-metrics.sqlite` | Ruta del backup en disco. |
+| `UX_METRICS_SYNC_MS` | `300000` | Intervalo de sync a disco. |
+| `UX_METRICS_MAX_ROWS` | `100000` | Máximo de filas por tabla. |
+| `UX_METRICS_AUTH_TOKEN` | `''` | Token Bearer para `GET /ux-metrics`. |
+
+### Backend (`server/backend.js` + `server/backend-ux-metrics.js`)
+
+El backend recibe el mismo `session_id` del browser a través del header
+`X-Session-Id` y lo usa para guardar toda la actividad relevante con el mismo
+identificador anónimo, permitiendo correlacionar la experiencia.
+
+#### Header `X-Session-Id`
+
+El cliente (`web/ux-metrics.js`) agrega automáticamente el header
+`X-Session-Id` a todos los `fetch` y `XMLHttpRequest` excepto a las métricas
+propiamente dichas (`/ux-metrics`). El backend lo lee en cada request y lo
+propaga a sus propias métricas.
+
+#### Endpoints
+
+- `POST /api/ux-metrics`
+  - Mismo formato que `POST /ux-metrics` del frontend.
+  - Abierto: recibe batches del browser si se configura el cliente para
+    apuntar al backend, o de procesos internos.
+
+- `GET /api/ux-metrics`
+  - Query params idénticos a `GET /ux-metrics`.
+  - Protegido por `UX_METRICS_AUTH_TOKEN` (mismo token que el frontend).
+
+#### Métricas internas que guarda el backend
+
+- **Requests entrantes**: método, path, status y duración de cada request HTTP.
+- **Requests salientes**: llamadas a banco/comerciante hechas por los proxies
+  (`/api/bank`, `/api/merchant`, `/api/orders`, `/api/transactions`, etc.) y
+  por `upstreamJson` (usado en `/api/state`).
+- **Eventos de negocio**:
+  - `api-state`: OK / MISSING_AUTH / UPSTREAM_401 / UPSTREAM_ERROR / EXCEPTION.
+  - `withdraw`: OK / NOT_ENOUGH_FUNDS / INVALID_AMOUNT / SCRIPT_ERROR.
+  - `close-account`: OK / ZERO_BALANCE / NO_BALANCE / UNAUTHORIZED / ERROR.
+  - `verify-account`: OK / RESTRICTED_ACCOUNT / NOT_FOUND / ADMIN_TOKEN_ERROR.
+  - `admin-notify`, `push-subscribe`, `push-unsubscribe`.
+
+#### Variables de entorno
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `BACKEND_UX_METRICS_DB_PATH` | `.backend-ux-metrics.sqlite` | Ruta del backup del backend. |
+| `UX_METRICS_SYNC_MS` | `300000` | Intervalo de sync a disco (compartida con frontend). |
+| `UX_METRICS_MAX_ROWS` | `100000` | Máximo de filas por tabla (compartida). |
+| `UX_METRICS_AUTH_TOKEN` | `''` | Token Bearer para `GET /api/ux-metrics` (compartido). |
+
+### Persistencia (ambos servidores)
 
 - La base de datos es SQLite `:memory:`.
 - Al iniciar, se intenta restaurar desde el archivo de backup con `ATTACH`.
@@ -195,15 +277,6 @@ elemento.
 - También se hace backup ante `SIGINT` y `SIGTERM`.
 - Se limita el tamaño a `UX_METRICS_MAX_ROWS` filas por tabla (default
   `100000`).
-
-### Variables de entorno
-
-| Variable | Default | Descripción |
-|---|---|---|
-| `UX_METRICS_DB_PATH` | `.ux-metrics.sqlite` en la raíz del repo | Ruta del backup en disco. |
-| `UX_METRICS_SYNC_MS` | `300000` | Intervalo de sync a disco. |
-| `UX_METRICS_MAX_ROWS` | `100000` | Máximo de filas por tabla. |
-| `UX_METRICS_AUTH_TOKEN` | `''` (vacío) | Token Bearer para proteger `GET /ux-metrics`. Si está vacío, el endpoint es público. |
 
 ## Flujos de error por página
 
@@ -244,17 +317,20 @@ TypeError: Failed to execute 'put' on 'Cache': Request method 'POST' is unsuppor
 ```bash
 # Sin token configurado
 
-# Últimos 100 items de cualquier tipo
+# Frontend (puerto 3001 por defecto)
 curl http://localhost:3001/ux-metrics
-
-# Últimos eventos desde una timestamp
 curl "http://localhost:3001/ux-metrics?type=events&since=1699000000000&limit=50"
 
-# Requests con error
-curl "http://localhost:3001/ux-metrics?type=requests&limit=1000" | jq '.requests[] | select(.error_code != null)'
+# Backend (puerto 3000 por defecto)
+curl http://localhost:3000/api/ux-metrics
+curl "http://localhost:3000/api/ux-metrics?type=requests&limit=1000" | jq '.requests[] | select(.error_code != null)'
+
+# Eventos de negocio generados en el backend
+curl "http://localhost:3000/api/ux-metrics?type=events&limit=1000" | jq '.events[] | select(.type == "business")'
 
 # Con token configurado
 curl -H "Authorization: Bearer $UX_METRICS_AUTH_TOKEN" http://localhost:3001/ux-metrics
+curl -H "Authorization: Bearer $UX_METRICS_AUTH_TOKEN" http://localhost:3000/api/ux-metrics
 ```
 
 ## Decisiones de diseño
@@ -275,8 +351,13 @@ curl -H "Authorization: Bearer $UX_METRICS_AUTH_TOKEN" http://localhost:3001/ux-
 - **Catálogo compartido**: un único archivo permite que todos los sitios
   (`descripcion`, `donde`, `merchant`, `v2`) hablen el mismo lenguaje de
   errores.
-- **Path `/ux-metrics`**: se eligió fuera de `/api/*` para evitar que un proxy
-  inverso como nginx redirija las métricas al backend (`server/backend.ts`).
+- **Correlación frontend/backend**: el mismo `session_id` anónimo viaja en el
+  header `X-Session-Id` desde el browser hasta el backend, permitiendo unir
+  métricas de navegador con las métricas internas del servidor.
+- **Core compartido**: `server/ux-metrics-core.js` centraliza el esquema y la
+  persistencia; los adapters son livianos y no duplican lógica.
+- **Path `/ux-metrics` (frontend)**: se eligió fuera de `/api/*` para evitar que
+  un proxy inverso como nginx redirija las métricas del browser al backend.
 
 ## Checklist para nuevas páginas
 

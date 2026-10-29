@@ -279,10 +279,16 @@ const server = http.createServer(async (req, res) => {
   try {
     await pipeline(stream, res);
   } catch (err) {
-    console.error(`Error streaming ${filePath}:`, err);
+    const isClientAbort =
+      err.code === 'ERR_STREAM_PREMATURE_CLOSE' ||
+      err.code === 'ECONNRESET' ||
+      err.code === 'EPIPE';
+    if (!isClientAbort) {
+      console.error(`Error streaming ${filePath}:`, err);
+    }
     if (!res.headersSent) {
       sendError(res, 500, 'Internal Server Error');
-    } else {
+    } else if (!res.destroyed) {
       res.destroy();
     }
   }

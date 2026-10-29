@@ -3,3 +3,5 @@
 /.push-subscriptions.json
 /.ux-metrics.sqlite
 /.ux-metrics-tmp.sqlite
+/.backend-ux-metrics.sqlite
+/.backend-ux-metrics-tmp.sqlite

@@ -7,6 +7,14 @@ import * as net from 'net';
 import { URL } from 'url';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import {
+  initBackendUxMetrics,
+  getSessionId,
+  trackEvent,
+  trackRequest,
+  handleUxMetricsPost,
+  handleUxMetricsGet,
+} from './backend-ux-metrics.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -187,7 +195,16 @@ function fetchAccount(targetAccount: string, adminToken: string): Promise<any> {
 }
 
 export async function handleVerifyAccount(req: http.IncomingMessage, res: http.ServerResponse, targetAccount: string) {
+  const sessionId = getSessionId(req);
   if (RESTRICTED_ACCOUNTS.includes(targetAccount)) {
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'verify-account',
+      root_code: 'RESTRICTED_ACCOUNT',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { targetAccount },
+    });
     sendError(res, 400, 'Transfer to this account is restricted');
     return;
   }
@@ -197,6 +214,14 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
     adminToken = await getBankAdminToken();
   } catch (e: any) {
     log('Failed to obtain bank admin token:', e.message || e);
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'verify-account',
+      root_code: 'ADMIN_TOKEN_ERROR',
+      url: req.url || '/',
+      affects_experience: true,
+      payload: { targetAccount, message: e.message },
+    });
     sendError(res, 500, 'Server misconfiguration: unable to obtain bank admin token');
     return;
   }
@@ -217,6 +242,14 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
 
   try {
     const accountInfo = await tryFetch(true);
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'verify-account',
+      root_code: 'OK',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { targetAccount },
+    });
     sendJson(res, 200, {
       username: targetAccount,
       alias: targetAccount,
@@ -224,11 +257,20 @@ export async function handleVerifyAccount(req: http.IncomingMessage, res: http.S
     });
   } catch (e: any) {
     log('Account not found error:', e.message || e);
-    sendError(res, e.status === 401 ? 500 : 404, e.status === 401 ? 'Unable to authenticate with bank' : 'Account not found');
+    const isAuthError = e.status === 401;
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'verify-account',
+      root_code: isAuthError ? 'ADMIN_AUTH_ERROR' : 'NOT_FOUND',
+      url: req.url || '/',
+      affects_experience: true,
+      payload: { targetAccount, message: e.message },
+    });
+    sendError(res, isAuthError ? 500 : 404, isAuthError ? 'Unable to authenticate with bank' : 'Account not found');
   }
 }
 
-export function proxyRequest(req: http.IncomingMessage, res: http.ServerResponse, targetBase: string, rest: string, authOverride?: string) {
+export function proxyRequest(req: http.IncomingMessage, res: http.ServerResponse, targetBase: string, rest: string, authOverride?: string, sessionId?: string) {
   const target = new URL(rest.replace(/^\/+/, ''), targetBase.endsWith('/') ? targetBase : targetBase + '/');
   const headers: Record<string, string> = {
     'Accept': req.headers.accept || 'application/json',
@@ -245,15 +287,37 @@ export function proxyRequest(req: http.IncomingMessage, res: http.ServerResponse
     rejectUnauthorized: false,
   };
 
+  const upstreamStart = Date.now();
   const client = target.protocol === 'https:' ? https : http;
   const upstream = client.request(options, (upRes) => {
     const headers: Record<string, string> = {};
     if (upRes.headers['content-type']) headers['Content-Type'] = upRes.headers['content-type'];
     res.writeHead(upRes.statusCode || 502, headers);
     upRes.pipe(res);
+    upRes.on('end', () => {
+      const status = upRes.statusCode || 0;
+      trackRequest(sessionId || 'unknown', {
+        method: req.method || 'GET',
+        url: target.href,
+        status,
+        duration_ms: Date.now() - upstreamStart,
+        error_code: status >= 400 ? `UPSTREAM_${status}` : null,
+        affects_experience: status >= 500,
+        payload: { proxy: true },
+      });
+    });
   });
   upstream.on('error', (e) => {
     log('Proxy error:', e.message || e);
+    trackRequest(sessionId || 'unknown', {
+      method: req.method || 'GET',
+      url: target.href,
+      status: 0,
+      duration_ms: Date.now() - upstreamStart,
+      error_code: 'UPSTREAM_NETWORK_ERROR',
+      affects_experience: true,
+      payload: { message: e.message },
+    });
     if (!res.headersSent) sendError(res, 502, 'Upstream request failed');
     else res.end();
   });
@@ -264,13 +328,15 @@ function log(...args: unknown[]) {
   console.log(new Date().toISOString(), ...args);
 }
 
+const ALLOWED_HEADERS = 'Content-Type, X-Session-Id, Authorization, X-Bank-Authorization, X-Admin-Token';
+
 function sendJson(res: http.ServerResponse, status: number, data: unknown) {
   const body = JSON.stringify(data);
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': ALLOWED_HEADERS,
   });
   res.end(body);
 }
@@ -300,8 +366,17 @@ export async function callGetMoneyScript(amount: number): Promise<string> {
 }
 
 export async function handleCloseAccount(req: http.IncomingMessage, res: http.ServerResponse, instanceId: string) {
+  const sessionId = getSessionId(req);
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'close-account',
+      root_code: 'UNAUTHORIZED',
+      url: req.url || '/',
+      affects_experience: true,
+      payload: { instanceId },
+    });
     sendError(res, 401, 'Unauthorized');
     return;
   }
@@ -337,6 +412,14 @@ export async function handleCloseAccount(req: http.IncomingMessage, res: http.Se
 
     const amountStr = balRes.balance?.amount;
     if (!amountStr) {
+      trackEvent(sessionId, {
+        type: 'business',
+        action: 'close-account',
+        root_code: 'NO_BALANCE',
+        url: req.url || '/',
+        affects_experience: true,
+        payload: { instanceId },
+      });
       sendError(res, 400, 'No balance found');
       return;
     }
@@ -350,6 +433,14 @@ export async function handleCloseAccount(req: http.IncomingMessage, res: http.Se
     }
     
     if (isNaN(numericAmount) || numericAmount <= 0) {
+      trackEvent(sessionId, {
+        type: 'business',
+        action: 'close-account',
+        root_code: 'ZERO_BALANCE',
+        url: req.url || '/',
+        affects_experience: false,
+        payload: { instanceId },
+      });
       sendJson(res, 200, { type: 'ok', message: 'Account balance is zero' });
       return;
     }
@@ -398,14 +489,31 @@ export async function handleCloseAccount(req: http.IncomingMessage, res: http.Se
       request.end();
     });
 
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'close-account',
+      root_code: 'OK',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { instanceId, amount: amountStr },
+    });
     sendJson(res, 200, { type: 'ok' });
   } catch (e: any) {
     log('Close account error:', e.message || e);
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'close-account',
+      root_code: 'ERROR',
+      url: req.url || '/',
+      affects_experience: true,
+      payload: { instanceId, message: e.message },
+    });
     sendError(res, 500, e.message || 'Internal error');
   }
 }
 
 export function handleWithdraw(req: http.IncomingMessage, res: http.ServerResponse, id: string) {
+  const sessionId = getSessionId(req);
   let raw = '';
   req.on('data', (chunk) => {
     raw += chunk;
@@ -415,6 +523,14 @@ export function handleWithdraw(req: http.IncomingMessage, res: http.ServerRespon
       const body = JSON.parse(raw);
       const parsed = parseAmount(body);
       if (!parsed.ok) {
+        trackEvent(sessionId, {
+          type: 'business',
+          action: 'withdraw',
+          root_code: 'INVALID_AMOUNT',
+          url: req.url || '/',
+          affects_experience: false,
+          payload: { id, error: parsed.error },
+        });
         sendError(res, 400, parsed.error);
         return;
       }
@@ -425,13 +541,37 @@ export function handleWithdraw(req: http.IncomingMessage, res: http.ServerRespon
       log(`Script output: ${output}`);
 
       if (!output.startsWith('taler://pay-push/')) {
+        trackEvent(sessionId, {
+          type: 'business',
+          action: 'withdraw',
+          root_code: 'NOT_ENOUGH_FUNDS',
+          url: req.url || '/',
+          affects_experience: true,
+          payload: { id, amount },
+        });
         sendJson(res, 200, { type: 'not-enough-funds' });
         return;
       }
 
+      trackEvent(sessionId, {
+        type: 'business',
+        action: 'withdraw',
+        root_code: 'OK',
+        url: req.url || '/',
+        affects_experience: false,
+        payload: { id, amount },
+      });
       sendJson(res, 200, { type: 'ok', uri: output });
     } catch (e: any) {
       log('Script error:', e.message || e);
+      trackEvent(sessionId, {
+        type: 'business',
+        action: 'withdraw',
+        root_code: 'SCRIPT_ERROR',
+        url: req.url || '/',
+        affects_experience: true,
+        payload: { id, message: e.message },
+      });
       sendJson(res, 200, { type: 'not-enough-funds' });
     }
   });
@@ -516,7 +656,7 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
-function upstreamJson(baseUrl: string, pathAndQuery: string, token?: string): Promise<{ status: number; json: any; networkError: boolean }> {
+function upstreamJson(baseUrl: string, pathAndQuery: string, token?: string, sessionId?: string): Promise<{ status: number; json: any; networkError: boolean }> {
   return new Promise((resolve) => {
     const url = new URL(pathAndQuery, baseUrl.endsWith('/') ? baseUrl : baseUrl + '/');
     const options: https.RequestOptions = {
@@ -530,17 +670,39 @@ function upstreamJson(baseUrl: string, pathAndQuery: string, token?: string): Pr
       },
       rejectUnauthorized: false,
     };
+    const upstreamStart = Date.now();
     const client = url.protocol === 'https:' ? https : http;
     const request = client.request(options, (response) => {
       let data = '';
       response.on('data', (chunk) => { data += chunk; });
       response.on('end', () => {
+        const status = response.statusCode || 0;
         let json: any = null;
         try { json = data ? JSON.parse(data) : null; } catch { /* keep null */ }
-        resolve({ status: response.statusCode || 0, json, networkError: false });
+        trackRequest(sessionId || 'unknown', {
+          method: 'GET',
+          url: url.href,
+          status,
+          duration_ms: Date.now() - upstreamStart,
+          error_code: status >= 400 ? `UPSTREAM_${status}` : null,
+          affects_experience: status >= 500,
+          payload: { source: 'upstreamJson' },
+        });
+        resolve({ status, json, networkError: false });
       });
     });
-    request.on('error', () => resolve({ status: 0, json: null, networkError: true }));
+    request.on('error', (e) => {
+      trackRequest(sessionId || 'unknown', {
+        method: 'GET',
+        url: url.href,
+        status: 0,
+        duration_ms: Date.now() - upstreamStart,
+        error_code: 'UPSTREAM_NETWORK_ERROR',
+        affects_experience: true,
+        payload: { message: e.message, source: 'upstreamJson' },
+      });
+      resolve({ status: 0, json: null, networkError: true });
+    });
     request.end();
   });
 }
@@ -572,30 +734,62 @@ function readJsonBody(req: http.IncomingMessage): Promise<any> {
 // Phase 1: REST aggregation endpoints
 // ---------------------------------------------------------------------------
 
-export async function handleApiState(req: http.IncomingMessage, res: http.ServerResponse, instance: string) {
+export async function handleApiState(req: http.IncomingMessage, res: http.ServerResponse, instance: string, sessionId?: string) {
   const merchantToken = bearerToken(req, 'authorization');
   const bankToken = bearerToken(req, 'x-bank-authorization');
   if (!merchantToken || !bankToken) {
+    trackEvent(sessionId || getSessionId(req), {
+      type: 'business',
+      action: 'api-state',
+      root_code: 'MISSING_AUTH',
+      url: req.url || '/',
+      affects_experience: true,
+      payload: { instance },
+    });
     sendError(res, 401, 'Unauthorized');
     return;
   }
   const enc = encodeURIComponent(instance);
   try {
     const [ordersRes, paidRes, accountRes, txRes] = await Promise.all([
-      upstreamJson(getMerchantUrl(), `/instances/${enc}/private/orders?limit=-10`, merchantToken),
-      upstreamJson(getMerchantUrl(), `/instances/${enc}/private/orders?paid=yes&limit=-500`, merchantToken),
-      upstreamJson(getBankUrl(), `/accounts/${enc}`, bankToken),
-      upstreamJson(getBankUrl(), `/accounts/${enc}/transactions?limit=-10`, bankToken),
+      upstreamJson(getMerchantUrl(), `/instances/${enc}/private/orders?limit=-10`, merchantToken, sessionId),
+      upstreamJson(getMerchantUrl(), `/instances/${enc}/private/orders?paid=yes&limit=-500`, merchantToken, sessionId),
+      upstreamJson(getBankUrl(), `/accounts/${enc}`, bankToken, sessionId),
+      upstreamJson(getBankUrl(), `/accounts/${enc}/transactions?limit=-10`, bankToken, sessionId),
     ]);
     const results = [ordersRes, paidRes, accountRes, txRes];
     if (results.some((r) => r.status === 401 || r.status === 403)) {
+      trackEvent(sessionId || getSessionId(req), {
+        type: 'business',
+        action: 'api-state',
+        root_code: 'UPSTREAM_401',
+        url: req.url || '/',
+        affects_experience: true,
+        payload: { instance },
+      });
       sendError(res, 401, 'Unauthorized');
       return;
     }
     if (results.some((r) => r.networkError || r.status < 200 || r.status >= 300)) {
+      trackEvent(sessionId || getSessionId(req), {
+        type: 'business',
+        action: 'api-state',
+        root_code: 'UPSTREAM_ERROR',
+        url: req.url || '/',
+        affects_experience: true,
+        payload: { instance },
+      });
       sendError(res, 502, 'Upstream request failed');
       return;
     }
+    trackEvent(sessionId || getSessionId(req), {
+      type: 'business',
+      action: 'api-state',
+      root_code: 'OK',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { instance },
+    });
 
     const orders = ordersRes.json?.orders ?? (Array.isArray(ordersRes.json) ? ordersRes.json : []);
     const paidList = paidRes.json?.orders ?? (Array.isArray(paidRes.json) ? paidRes.json : []);
@@ -618,6 +812,14 @@ export async function handleApiState(req: http.IncomingMessage, res: http.Server
     });
   } catch (e: any) {
     log('API state error:', e.message || e);
+    trackEvent(sessionId || getSessionId(req), {
+      type: 'business',
+      action: 'api-state',
+      root_code: 'EXCEPTION',
+      url: req.url || '/',
+      affects_experience: true,
+      payload: { instance, message: e.message },
+    });
     if (!res.headersSent) sendError(res, 502, 'Upstream request failed');
   }
 }
@@ -1299,14 +1501,31 @@ export async function sendAdminNotification(opts: { message: string; title?: str
 }
 
 export async function handleAdminNotify(req: http.IncomingMessage, res: http.ServerResponse) {
+  const sessionId = getSessionId(req);
   const adminToken = getAdminToken();
   if (!adminToken || req.headers['x-admin-token'] !== adminToken) {
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'admin-notify',
+      root_code: 'FORBIDDEN',
+      url: req.url || '/',
+      affects_experience: true,
+      payload: {},
+    });
     sendError(res, 403, 'Forbidden');
     return;
   }
   try {
     const body = await readJsonBody(req);
     if (typeof body?.message !== 'string' || !body.message) {
+      trackEvent(sessionId, {
+        type: 'business',
+        action: 'admin-notify',
+        root_code: 'MISSING_MESSAGE',
+        url: req.url || '/',
+        affects_experience: false,
+        payload: {},
+      });
       sendError(res, 400, 'Missing message');
       return;
     }
@@ -1315,18 +1534,43 @@ export async function handleAdminNotify(req: http.IncomingMessage, res: http.Ser
       title: typeof body.title === 'string' ? body.title : undefined,
       instance: typeof body.instance === 'string' ? body.instance : undefined,
     });
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'admin-notify',
+      root_code: 'OK',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { sent, instance: body.instance },
+    });
     sendJson(res, 200, { sent });
   } catch {
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'admin-notify',
+      root_code: 'INVALID_BODY',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: {},
+    });
     sendError(res, 400, 'Invalid JSON body');
   }
 }
 
 export async function handlePushSubscribe(req: http.IncomingMessage, res: http.ServerResponse) {
+  const sessionId = getSessionId(req);
   try {
     const body = await readJsonBody(req);
     const instance = body?.instance;
     const subscription = body?.subscription;
     if (typeof instance !== 'string' || !instance || !subscription || typeof subscription.endpoint !== 'string') {
+      trackEvent(sessionId, {
+        type: 'business',
+        action: 'push-subscribe',
+        root_code: 'INVALID_SUBSCRIPTION',
+        url: req.url || '/',
+        affects_experience: false,
+        payload: {},
+      });
       sendError(res, 400, 'Invalid subscription');
       return;
     }
@@ -1337,24 +1581,65 @@ export async function handlePushSubscribe(req: http.IncomingMessage, res: http.S
         auth: subscription.keys?.auth || '',
       },
     });
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'push-subscribe',
+      root_code: 'OK',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { instance },
+    });
     sendJson(res, 200, { type: 'ok' });
   } catch {
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'push-subscribe',
+      root_code: 'INVALID_BODY',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: {},
+    });
     sendError(res, 400, 'Invalid JSON body');
   }
 }
 
 export async function handlePushUnsubscribe(req: http.IncomingMessage, res: http.ServerResponse) {
+  const sessionId = getSessionId(req);
   try {
     const body = await readJsonBody(req);
     const instance = body?.instance;
     const endpoint = body?.endpoint;
     if (typeof instance !== 'string' || typeof endpoint !== 'string') {
+      trackEvent(sessionId, {
+        type: 'business',
+        action: 'push-unsubscribe',
+        root_code: 'INVALID_REQUEST',
+        url: req.url || '/',
+        affects_experience: false,
+        payload: {},
+      });
       sendError(res, 400, 'Invalid request');
       return;
     }
     removeSubscription(instance, endpoint);
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'push-unsubscribe',
+      root_code: 'OK',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { instance },
+    });
     sendJson(res, 200, { type: 'ok' });
   } catch {
+    trackEvent(sessionId, {
+      type: 'business',
+      action: 'push-unsubscribe',
+      root_code: 'INVALID_BODY',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: {},
+    });
     sendError(res, 400, 'Invalid JSON body');
   }
 }
@@ -1364,11 +1649,26 @@ export const server = http.createServer((req, res) => {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': ALLOWED_HEADERS,
     });
     res.end();
     return;
   }
+
+  const sessionId = getSessionId(req);
+  const requestStart = Date.now();
+  res.on('finish', () => {
+    const status = res.statusCode || 0;
+    trackRequest(sessionId, {
+      method: req.method || 'GET',
+      url: req.url || '/',
+      status,
+      duration_ms: Date.now() - requestStart,
+      error_code: status >= 400 ? `BACKEND_${status}` : null,
+      affects_experience: status >= 500,
+      payload: null,
+    });
+  });
 
   const baseUrl = `http://${req.headers.host || 'localhost'}`;
   const parsedUrl = new URL(req.url || '/', baseUrl);
@@ -1419,7 +1719,7 @@ export const server = http.createServer((req, res) => {
 
   const apiStateMatch = path.match(/^\/api\/state\/([^/]+)$/);
   if (req.method === 'GET' && apiStateMatch) {
-    handleApiState(req, res, apiStateMatch[1]).catch((e) => {
+    handleApiState(req, res, apiStateMatch[1], sessionId).catch((e) => {
       log(e);
       if (!res.headersSent) sendError(res, 500, 'Internal server error');
     });
@@ -1429,7 +1729,7 @@ export const server = http.createServer((req, res) => {
   const apiOrdersMatch = path.match(/^\/api\/orders\/([^/]+)$/);
   if (req.method === 'GET' && apiOrdersMatch) {
     const enc = encodeURIComponent(apiOrdersMatch[1]);
-    proxyRequest(req, res, getMerchantUrl(), `instances/${enc}/private/orders${parsedUrl.search}`);
+    proxyRequest(req, res, getMerchantUrl(), `instances/${enc}/private/orders${parsedUrl.search}`, undefined, sessionId);
     return;
   }
 
@@ -1437,7 +1737,7 @@ export const server = http.createServer((req, res) => {
   if (req.method === 'GET' && apiTransactionsMatch) {
     const enc = encodeURIComponent(apiTransactionsMatch[1]);
     const bankAuth = req.headers['x-bank-authorization'];
-    proxyRequest(req, res, getBankUrl(), `accounts/${enc}/transactions${parsedUrl.search}`, typeof bankAuth === 'string' ? bankAuth : undefined);
+    proxyRequest(req, res, getBankUrl(), `accounts/${enc}/transactions${parsedUrl.search}`, typeof bankAuth === 'string' ? bankAuth : undefined, sessionId);
     return;
   }
 
@@ -1463,13 +1763,29 @@ export const server = http.createServer((req, res) => {
 
   const apiMerchantMatch = path.match(/^\/api\/merchant\/(.*)$/);
   if (apiMerchantMatch) {
-    proxyRequest(req, res, getMerchantUrl(), apiMerchantMatch[1] + parsedUrl.search);
+    proxyRequest(req, res, getMerchantUrl(), apiMerchantMatch[1] + parsedUrl.search, undefined, sessionId);
     return;
   }
 
   const apiBankMatch = path.match(/^\/api\/bank\/(.*)$/);
   if (apiBankMatch) {
-    proxyRequest(req, res, getBankUrl(), apiBankMatch[1] + parsedUrl.search);
+    proxyRequest(req, res, getBankUrl(), apiBankMatch[1] + parsedUrl.search, undefined, sessionId);
+    return;
+  }
+
+  if (path === '/api/ux-metrics') {
+    if (req.method === 'POST') {
+      handleUxMetricsPost(req, res).catch((e) => {
+        log(e);
+        if (!res.headersSent) sendError(res, 500, 'Internal server error');
+      });
+      return;
+    }
+    if (req.method === 'GET') {
+      handleUxMetricsGet(req, res);
+      return;
+    }
+    sendError(res, 405, 'Method Not Allowed');
     return;
   }
 
@@ -1506,6 +1822,9 @@ import { pathToFileURL } from 'url';
 
 // Avoid listening when required as a module (e.g. in tests)
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  // Initialize UX metrics (SQLite in memory, synced to disk).
+  initBackendUxMetrics();
+
   // Pre-fetch and schedule rotation of the bank admin token on startup.
   if (!getBankAdminTokenEnv() && getBankAdminPwd()) {
     refreshBankAdminToken().catch((e) => {
