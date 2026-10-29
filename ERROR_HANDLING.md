@@ -162,8 +162,7 @@ Para páginas en `web/v2/` la ruta es `../ux-error-catalog.js`.
 ```js
 window.UX_METRICS_CONFIG = {
   endpoint: "/ux-metrics",      // URL de ingest
-  flushIntervalMs: 10000,       // flush periódico
-  batchSize: 50,                // flush inmediato al acumular N items
+  flushIntervalMs: 15000,       // flush periódico (mínimo 15s; máximo 1 POST cada 15s)
   sampleRate: 1.0,              // 0.0 - 1.0
   interactionThrottleMs: 500,   // throttle de interacciones
 };
@@ -356,6 +355,11 @@ curl -H "Authorization: Bearer $UX_METRICS_AUTH_TOKEN" http://localhost:3000/api
   métricas de navegador con las métricas internas del servidor.
 - **Core compartido**: `server/ux-metrics-core.js` centraliza el esquema y la
   persistencia; los adapters son livianos y no duplican lógica.
+- **Rate limiting del cliente**: el navegador acumula eventos y envía como
+  máximo un POST cada 15 segundos. Los items marcados como
+  `affects_experience: true` se envían inmediatamente, bypassando el límite.
+- **Flush en cierre**: antes de que el usuario cierre la pestaña se envía todo
+  lo acumulado con `sendBeacon`, sin respetar el rate limit.
 - **Path `/ux-metrics` (frontend)**: se eligió fuera de `/api/*` para evitar que
   un proxy inverso como nginx redirija las métricas del browser al backend.
 

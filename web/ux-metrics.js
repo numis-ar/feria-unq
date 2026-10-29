@@ -6,8 +6,7 @@
 
   const cfg = window.UX_METRICS_CONFIG || {};
   const endpoint = cfg.endpoint || "/ux-metrics";
-  const flushIntervalMs = cfg.flushIntervalMs || 10000;
-  const batchSize = cfg.batchSize || 50;
+  const flushIntervalMs = Math.max(15000, cfg.flushIntervalMs || 15000);
   const sampleRate = cfg.sampleRate || 1.0;
   const interactionThrottleMs = cfg.interactionThrottleMs || 500;
 
@@ -36,11 +35,19 @@
   let requests = [];
   let loads = [];
   let flushTimer = null;
+  let lastPostAt = now();
+  let pendingPost = null;
+  let pendingErrorFlush = false;
   let lastInteractionTs = 0;
   let wsErrorReported = false;
 
   function now() {
     return Date.now();
+  }
+
+  function isErrorItem(kind, item) {
+    if (kind === "load") return false;
+    return item.affects_experience === true;
   }
 
   function enqueue(kind, payload) {
@@ -54,17 +61,28 @@
     else if (kind === "request") requests.push(item);
     else if (kind === "load") loads.push(item);
 
-    const total = events.length + requests.length + loads.length;
-    if (total >= batchSize) flush();
-    else scheduleFlush();
+    flushSoon(isErrorItem(kind, item));
   }
 
-  function scheduleFlush() {
-    if (flushTimer) return;
-    flushTimer = setTimeout(() => {
+  function flushSoon(force) {
+    if (!events.length && !requests.length && !loads.length) return;
+    if (pendingPost) {
+      if (force) pendingErrorFlush = true;
+      return;
+    }
+    if (flushTimer) {
+      clearTimeout(flushTimer);
       flushTimer = null;
+    }
+    const elapsed = now() - lastPostAt;
+    if (force || elapsed >= flushIntervalMs) {
       flush();
-    }, flushIntervalMs);
+    } else {
+      flushTimer = setTimeout(() => {
+        flushTimer = null;
+        flush();
+      }, flushIntervalMs - elapsed);
+    }
   }
 
   function buildBody(arrays) {
@@ -84,22 +102,45 @@
     loads = [];
     const body = buildBody(batch);
 
-    if (sync && navigator.sendBeacon) {
-      navigator.sendBeacon(
-        endpoint,
-        new Blob([body], { type: "application/json" })
-      );
+    if (sync) {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          endpoint,
+          new Blob([body], { type: "application/json" })
+        );
+      } else {
+        fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+          keepalive: true,
+        }).catch(() => {
+          // Silent fail — we never want telemetry to break the app.
+        });
+      }
       return;
     }
 
-    fetch(endpoint, {
+    lastPostAt = now();
+    pendingErrorFlush = false;
+    pendingPost = fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
       keepalive: true,
-    }).catch(() => {
-      // Silent fail — we never want telemetry to break the app.
-    });
+    })
+      .catch(() => {
+        // Silent fail — we never want telemetry to break the app.
+      })
+      .finally(() => {
+        pendingPost = null;
+        if (pendingErrorFlush) {
+          pendingErrorFlush = false;
+          flushSoon(true);
+        } else if (events.length || requests.length || loads.length) {
+          flushSoon(false);
+        }
+      });
   }
 
   // ---------------------------------------------------------------------------
