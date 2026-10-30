@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cartel QR A4</title>
+<!-- GENERADO por regenerar/regenerar-pagina.py a partir de regenerar/plantilla.html. -->
+<style>
+
+  :root{ --verde:#064d2d; --crema:#f6f7f2; --guia:#a8a8a8 }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#e8eae6}
+  body{font-family:system-ui,sans-serif;color:#222}
+
+  /* ---------- Controles (solo pantalla) ---------- */
+  .panel{max-width:760px;margin:20px auto;background:#fff;border-radius:12px;padding:16px 18px;
+         box-shadow:0 2px 10px rgba(0,0,0,.08);font-size:13px;font-family:system-ui,sans-serif}
+  .panel h1{font-size:17px;margin-bottom:8px}
+  .panel p{color:#555;line-height:1.45;margin-bottom:10px}
+  .fila{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+  .fila label{width:150px;flex:none}
+  .fila input[type=text]{flex:1;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:inherit}
+  .panel button{background:var(--verde);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 14px system-ui,sans-serif;cursor:pointer;margin-right:8px}
+  .panel button.sec{background:#eee;color:#333}
+  .cuenta{flex:none;width:52px;text-align:right;color:#777;font-variant-numeric:tabular-nums}
+  .aviso{color:#b3261e;min-height:1em;margin:-4px 0 8px 160px!important}
+  .emojis{display:flex;flex-wrap:wrap;gap:4px;margin:-2px 0 10px 160px;min-height:4px;color:#777}
+  .emo{background:#f2f3f0;border:1px solid #ddd;border-radius:6px;padding:3px;cursor:pointer;line-height:0}
+  .emo:hover{background:#e3efe7;border-color:#9cc3a9}
+  .emo img{width:26px;height:26px}
+  .ayuda{color:#777;font-size:12px;margin:-4px 0 12px 160px!important}
+  .ayuda code{background:#f2f3f0;padding:0 3px;border-radius:3px}
+  .wrap{display:flex;justify-content:center;padding:8px 16px 40px}
+
+  /* ---------- Hoja A4: un único SVG en mm ---------- */
+  .hoja{width:210mm;height:297mm;background:#fff;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+  @media screen and (max-width:860px){ .hoja{zoom:.42} }
+
+  .hoja-svg{display:block;width:210mm;height:297mm}
+
+  /* ---------- Impresión ---------- */
+  @page{size:210mm 297mm;margin:0}
+  @media print{
+    html,body{background:#fff}
+    .panel{display:none}
+    .wrap{padding:0;display:block}
+    .hoja{box-shadow:none;zoom:1}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>Cartel QR plegable — A4 (2 carteles por hoja)</h1>
+  <p>Pegá el link del QR (o subí su imagen) y escribí el texto que va debajo. Al imprimir: tamaño <b>A4</b>, escala <b>100%</b>, márgenes <b>ninguno</b> y <b>gráficos de fondo</b> activados.</p>
+  <div class="fila"><label for="url">Link del QR</label><input type="text" id="url" value="__QR_DEFECTO__"></div>
+  <div class="fila"><label for="sub">Texto debajo del QR</label><input type="text" id="sub" value="__SUB_DEFECTO__" spellcheck="false"><span id="sub-cuenta" class="cuenta"></span></div>
+  <p id="sub-aviso" class="aviso"></p>
+  <div class="fila"><label for="emoji-buscar">Buscar emoji</label><input type="text" id="emoji-buscar" placeholder="ej.: shoe, zapatilla, corazon, smile…" spellcheck="false"></div>
+  <div id="emoji-resultados" class="emojis"></div>
+  <p class="ayuda">Hasta __SUB_MAX__ caracteres; cada emoji cuenta como uno. Se puede escribir el emoji, su shortcode (<code>:grinning:</code>, <code>:zapatilla_deportiva:</code>) o su código (<code>\U0001F600</code>).</p>
+  <div class="fila"><label for="qrfile">…o imagen del QR</label><input type="file" id="qrfile" accept="image/*"></div>
+  <button onclick="window.print()">Imprimir</button><button class="sec" onclick="usarLink()">Volver al QR del link</button>
+</div>
+
+<div class="wrap">
+<div class="hoja">
+__HOJA__
+</div>
+</div>
+
+<script src="emojis/indice.js"></script>
+<script>
+__QRLIB__
+</script>
+<script>
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+  let qrImagen = null;
+
+  // Mismo dibujo de QR que genera el script de Python (tienen que coincidir carácter a carácter)
+  function modulosQR(texto){
+    const q = qrcode(0, 'M');
+    q.addData(texto, 'Byte');
+    q.make();
+    const n = q.getModuleCount();
+    let d = '';
+    for (let r = 0; r < n; r++) {
+      let c = 0;
+      while (c < n) {
+        if (!q.isDark(r, c)) { c++; continue; }
+        let k = c;
+        while (k < n && q.isDark(r, k)) k++;
+        d += 'M' + c + ' ' + r + 'h' + (k - c) + 'v1h-' + (k - c) + 'z';
+        c = k;
+      }
+    }
+    return { d: d, escala: 'scale(' + (46 / n) + ')' };
+  }
+  function dibujarQR(){
+    const path = document.getElementById('qr-modulos');
+    const img = document.getElementById('qr-imagen');
+    if (qrImagen) {
+      img.setAttribute('href', qrImagen);
+      img.style.display = '';
+      path.style.display = 'none';
+    } else {
+      const m = modulosQR(document.getElementById('url').value);
+      path.setAttribute('d', m.d);
+      path.setAttribute('transform', m.escala);
+      path.style.display = '';
+      img.style.display = 'none';
+    }
+  }
+  // ---------- Texto editable debajo del QR (mismo armado que el script de Python) ----------
+  // Pasos (idénticos en generar-cartel.py):
+  //  1) \UXXXXXXXX y \uXXXX se convierten en el carácter correspondiente.
+  //  2) :shortcode: se reemplaza por su emoji (sin distinguir mayúsculas).
+  //  3) Se quitan los selectores de variación (U+FE0F).
+  //  4) Se separa en letras y emojis: primero se busca el emoji más largo que empiece ahí
+  //     (banderas, tonos de piel, secuencias con ZWJ); un solo carácter que también es letra
+  //     permitida se toma como letra.
+  //  5) Cada letra o emoji cuenta 1; el máximo es SUB.max.
+  const SUB = __SUB_JSON__;
+  const EMOJI = window.TWEMOJI || { archivos: {}, shortcodes: {} };
+  let EMOJI_LARGO = 1;
+  for (const k in EMOJI.archivos) EMOJI_LARGO = Math.max(EMOJI_LARGO, [...k].length);
+
+  function prepararTexto(cadena){
+    const errores = [];
+    let s = cadena.replace(/\\U([0-9a-fA-F]{8})|\\u([0-9a-fA-F]{4})/g, (m, a, b) => {
+      const cp = parseInt(a || b, 16);
+      if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) { errores.push('Código inválido: ' + m); return ''; }
+      return String.fromCodePoint(cp);
+    });
+    s = s.replace(/:([a-z0-9_+\-]+):/gi, (m, nombre) => {
+      const e = EMOJI.shortcodes[nombre.toLowerCase()];
+      if (e === undefined) { errores.push('Shortcode desconocido: ' + m); return m; }
+      return e;
+    });
+    s = s.replace(/️/g, '');
+    return { texto: s, errores: errores };
+  }
+  function segmentar(s){
+    const cps = [...s], partes = [], malos = [];
+    let i = 0;
+    while (i < cps.length) {
+      let largo = 0;
+      for (let k = Math.min(EMOJI_LARGO, cps.length - i); k >= 1; k--)
+        if (cps.slice(i, i + k).join('') in EMOJI.archivos) { largo = k; break; }
+      const ch = cps[i], may = ch.toUpperCase();
+      if (largo > 1 || (largo === 1 && !(may in SUB.glifos)))
+        partes.push({ emoji: EMOJI.archivos[cps.slice(i, i + largo).join('')] });
+      else if (may in SUB.glifos) { partes.push({ letra: may }); largo = 1; }
+      else { malos.push(ch); largo = 1; }
+      i += largo;
+    }
+    return { partes: partes, malos: malos };
+  }
+  function textoSub(partes){
+    let u = 0, svg = '', prev = null;
+    partes.forEach((p, i) => {
+      if (i > 0) u += SUB.espaciado + (p.letra && prev ? (SUB.kern[prev + p.letra] || 0) : 0);
+      if (p.letra) {
+        const g = SUB.glifos[p.letra];
+        if (g.d) svg += '<path transform="translate(' + u + ' 0)" d="' + g.d + '"/>';
+        u += g.a;
+        prev = p.letra;
+      } else {
+        svg += '<image href="' + SUB.emoji.carpeta + '/' + p.emoji + '.svg" width="' + SUB.emoji.lado +
+               '" height="' + SUB.emoji.lado + '" transform="translate(' + u + ' ' + SUB.emoji.arriba + ') scale(1 -1)"/>';
+        u += SUB.emoji.lado;
+        prev = null;
+      }
+    });
+    const tr = 'translate(' + SUB.x + ' ' + SUB.base + ') scale(' + SUB.escala + ' -' + SUB.escala +
+               ') translate(-' + (u / 2) + ' 0)';
+    return { tr: tr, svg: svg };
+  }
+  function analizarSub(cadena){
+    const pr = prepararTexto(cadena), sg = segmentar(pr.texto), errores = pr.errores.slice();
+    if (sg.malos.length) errores.push('Caracteres no permitidos: ' + [...new Set(sg.malos)].join(' '));
+    if (sg.partes.length > SUB.max) errores.push('Máximo ' + SUB.max + ' caracteres (hay ' + sg.partes.length + ').');
+    return { partes: sg.partes, errores: errores };
+  }
+  function dibujarSub(){
+    const r = analizarSub(document.getElementById('sub').value);
+    const cuenta = document.getElementById('sub-cuenta');
+    cuenta.textContent = r.partes.length + '/' + SUB.max;
+    cuenta.style.color = r.partes.length > SUB.max ? '#b3261e' : '';
+    document.getElementById('sub-aviso').textContent =
+      r.errores.length ? r.errores.join(' · ') + ' — el cartel muestra el último texto válido.' : '';
+    if (r.errores.length) return;            // se mantiene el último texto válido
+    const m = textoSub(r.partes);
+    const g = document.getElementById('texto-sub');
+    g.setAttribute('transform', m.tr);
+    g.innerHTML = m.svg;
+  }
+  document.getElementById('sub').addEventListener('input', dibujarSub);
+
+  // ---------- Buscador de emojis (carga solo las imágenes que muestra) ----------
+  const NOMBRES = Object.keys(EMOJI.shortcodes);
+  function buscarEmoji(){
+    const q = document.getElementById('emoji-buscar').value.trim().toLowerCase().replace(/^:|:$/g, '');
+    const caja = document.getElementById('emoji-resultados');
+    caja.innerHTML = '';
+    if (!NOMBRES.length) { caja.textContent = 'No se encontró la carpeta emojis/ junto a la página.'; return; }
+    if (q.length < 2) return;
+    const vistos = new Set();
+    const hallados = NOMBRES.filter(n => n.includes(q))
+      .sort((a, b) => (a.startsWith(q) ? 0 : 1) - (b.startsWith(q) ? 0 : 1) || a.length - b.length)
+      .filter(n => { const e = EMOJI.shortcodes[n]; if (vistos.has(e)) return false; vistos.add(e); return true; })
+      .slice(0, 40);
+    if (!hallados.length) { caja.textContent = 'Sin resultados.'; return; }
+    for (const n of hallados) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'emo'; b.title = ':' + n + ':';
+      const img = document.createElement('img');
+      img.src = SUB.emoji.carpeta + '/' + EMOJI.archivos[EMOJI.shortcodes[n]] + '.svg';
+      img.alt = ':' + n + ':'; img.loading = 'lazy';
+      b.appendChild(img);
+      b.onclick = () => {
+        const input = document.getElementById('sub');
+        const pos = input.selectionStart ?? input.value.length, fin = input.selectionEnd ?? pos;
+        const txt = ':' + n + ':';
+        input.value = input.value.slice(0, pos) + txt + input.value.slice(fin);
+        input.focus(); input.setSelectionRange(pos + txt.length, pos + txt.length);
+        dibujarSub();
+      };
+      caja.appendChild(b);
+    }
+  }
+  document.getElementById('emoji-buscar').addEventListener('input', buscarEmoji);
+
+  document.getElementById('url').addEventListener('input', () => { if (!qrImagen) dibujarQR(); });
+  document.getElementById('qrfile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { qrImagen = r.result; dibujarQR(); };
+    r.readAsDataURL(f);
+  });
+  function usarLink(){ qrImagen = null; document.getElementById('qrfile').value = ''; dibujarQR(); }
+
+  // Permite pasar el texto del QR por la URL: imprimir-qr-a4.html#qr=TEXTO
+  const qrParam = new URLSearchParams(location.hash.slice(1)).get('qr');
+  if (qrParam !== null) document.getElementById('url').value = qrParam;
+  // y el texto debajo del QR: imprimir-qr-a4.html#qr=TEXTO&texto=DESDE%20TU%20CELULAR
+  const subParam = new URLSearchParams(location.hash.slice(1)).get('texto');
+  if (subParam !== null) document.getElementById('sub').value = subParam;
+  dibujarQR();
+  dibujarSub();
+</script>
+</body>
+</html>

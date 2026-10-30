@@ -147,7 +147,8 @@ Para páginas en `web/v2/` la ruta es `../ux-error-catalog.js`.
   recursos (`<img>`, `<script>`, `<link>`, etc.).
 - **Requests**: intercepta `fetch` y `XMLHttpRequest` y mide `duration_ms`,
   `status`, `error_code` (`FETCH_404`, `XHR_500`, etc.) y errores de red
-  (`FETCH_FAILED`).
+  (`FETCH_FAILED`). Las llamadas al propio endpoint de métricas se excluyen
+  para que no actúen como heartbeat.
 - **JSON decode**: intercepta `Response.prototype.json` y reporta
   `json-decode/PARSE_ERROR` como afectante cuando el cuerpo no se puede
   interpretar.
@@ -201,7 +202,12 @@ adapter liviano.
 #### Endpoints
 
 - `POST /ux-metrics`
-  - Acepta un batch JSON con `session_id`, `events[]`, `requests[]`, `loads[]`.
+  - Acepta un batch JSON con `session_id` en el root y, opcionalmente,
+    `events[]`, `requests[]` y/o `loads[]` según lo acumulado.
+  - Cada ítem no incluye `session_id` ni `ts`; el servidor usa `received_at`
+    como timestamp.
+  - Los campos vacíos (`null`, `undefined`, strings vacíos, objetos vacíos) se
+    omiten en el cliente (p. ej. `error_code` solo aparece cuando hay error).
   - Guarda en SQLite en memoria.
   - Devuelve `204` si tuvo éxito.
   - Está abierto: el browser anónimo lo envía sin autenticar.
@@ -360,6 +366,13 @@ curl -H "Authorization: Bearer $UX_METRICS_AUTH_TOKEN" http://localhost:3000/api
   `affects_experience: true` se envían inmediatamente, bypassando el límite.
 - **Flush en cierre**: antes de que el usuario cierre la pestaña se envía todo
   lo acumulado con `sendBeacon`, sin respetar el rate limit.
+- **El endpoint no se mide a sí mismo**: las llamadas a `/ux-metrics` (o el
+  endpoint configurado) son passthrough en los interceptores de `fetch`,
+  `XMLHttpRequest` y `Response.prototype.json`, evitando que el propio envío de
+  métricas genere movimiento.
+- **Payload minimizado**: `session_id` va una sola vez en el root del batch; no
+  se envía `ts` por ítem; los campos vacíos se omiten. El servidor usa
+  `received_at` como timestamp.
 - **Path `/ux-metrics` (frontend)**: se eligió fuera de `/api/*` para evitar que
   un proxy inverso como nginx redirija las métricas del browser al backend.
 
