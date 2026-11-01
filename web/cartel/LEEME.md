@@ -1,18 +1,21 @@
 # Cartel QR plegable A4
 
-Una hoja A4 con 2 carteles tipo "carpa" que se doblan en triángulo para apoyar sobre una mesa.
+Una hoja A4 con 2 carteles tipo "carpa" que se doblan en triángulo para apoyar sobre
+una mesa. **Los dos carteles son independientes** (pensados para dos personas): el
+de la izquierda y el de la derecha llevan cada uno su propio QR y su propio texto.
+Las dos caras de un mismo cartel (A y B) muestran lo mismo.
 
 ## Qué hay en esta carpeta
 
 ```
 cartel/
 ├── imprimir-qr-a4.html
-├── generar-cartel.py          ← Genera el PDF leyendo imprimir-qr-a4.html.
+├── generar-cartel.py          ← Genera el PDF leyendo imprimir-qr-a4.html (sin red, sin Chrome).
 ├── emojis/                    ← Los ~3.700 emojis de Twemoji (un SVG cada uno) + indice.js.
 ├── LEEME.md                   ← Este instructivo.
 └── regenerar/                 ← Herramientas para volver a armar imprimir-qr-a4.html
     ├── regenerar-pagina.py    ← Configuración (textos, colores, medidas) + armado.
-    ├── preparar-emojis.py     ← Arma la carpeta emojis/ .
+    ├── preparar-emojis.py     ← Arma la carpeta emojis/ (normalmente no hace falta).
     ├── datos/                 ← Shortcodes (emojibase-data) y licencias de los emojis.
     ├── plantilla.html         ← Esqueleto de la página: estilos, panel y JavaScript.
     ├── fuentes/               ← Montserrat 600/700/800/900 (licencia OFL en OFL.txt).
@@ -21,7 +24,7 @@ cartel/
 ```
 
 `imprimir-qr-a4.html`, `generar-cartel.py` y la carpeta `emojis/` tienen que estar
-en la misma carpeta (o usá `--html RUTA` y `--emojis CARPETA` con el script). Sin `emojis/`
+**juntos** (o usá `--html RUTA` y `--emojis CARPETA` con el script). Sin `emojis/`
 todo funciona igual, pero no se pueden usar emojis.
 
 ## Requisitos (Debian 13)
@@ -31,33 +34,43 @@ sudo apt install weasyprint python3-qrcode     # para generar-cartel.py
 sudo apt install python3-fonttools             # para regenerar/regenerar-pagina.py
 ```
 
+Nada de esto usa la red.
+
 ## Uso diario
 
-**Desde el navegador:** abrí `imprimir-qr-a4.html`, poné el link del QR y el texto que va
-debajo, y tocá *Imprimir* (A4, escala 100%, márgenes "ninguno", gráficos de fondo
-activados).
+**Desde el navegador:** abrí `imprimir-qr-a4.html`. El panel tiene un bloque para el
+**cartel izquierdo** y otro para el **cartel derecho**: en cada uno poné el link del QR
+(o subí su imagen) y el texto que va debajo. Después tocá *Imprimir* (A4, escala
+100%, márgenes "ninguno", gráficos de fondo activados).
 
-También se puede abrir con los valores ya cargados:
-`imprimir-qr-a4.html#qr=TEXTO_DEL_QR&texto=DESDE%20TU%20CELULAR`
+También se puede abrir con los valores ya cargados (los cuatro, o los que quieras):
+`imprimir-qr-a4.html#qr-izquierda=QR1&texto-izquierda=ZAPAS&qr-derecha=QR2&texto-derecha=EMPANADAS`
+Si la URL trae otros nombres (por ejemplo los viejos `qr` y `texto`), la página los
+ignora y lo avisa.
 
-**Desde la terminal:**
+**Desde la terminal:** se pasan **exactamente dos pares**, uno por cartel, cada uno con
+sus dos valores en orden: primero el QR, después el texto.
 
 ```bash
-python3 generar-cartel.py "taler://pay/..."                                   # → cartel-qr.pdf
-python3 generar-cartel.py "taler://pay/..." -t "Pagá con tu billetera" -o puesto-12.pdf
+./generar-cartel.py --izquierda "QR_IZQUIERDO" "TEXTO_IZQUIERDO" \
+                    --derecha   "QR_DERECHO"   "TEXTO_DERECHO"   -o puesto.pdf
 ```
 
-- El texto del QR es obligatorio.
+- Los dos pares son **obligatorios** y van **una sola vez** cada uno. El script corta
+  con un error si falta uno, si se repite, si a un par le falta o le sobra un valor,
+  o si un QR está vacío.
+- El texto puede ir vacío (`""`) si no querés texto debajo del QR. Por defecto el
+  PDF sale como `cartel-qr.pdf`.
+- El texto admite hasta **22 caracteres** (el máximo lo calcula la herramienta; ver
+  más abajo). Si tiene más, o algún carácter no permitido, el script corta con un
+  error que dice de qué cartel es (`[izquierda]` o `[derecha]`).
 - `--buscar-emoji TEXTO` lista emojis y sus shortcodes (ver **Emojis**).
-- `-t` es el texto debajo del QR: hasta **22 caracteres** (el máximo lo calcula la
-  herramienta; ver más abajo). Si tiene más, o algún carácter no permitido, el script
-  corta con un error.
 
-Los dos caminos dan el mismo PDF.
+Los dos caminos dan el mismo PDF (comparado píxel por píxel a 600 dpi).
 
 ## Emojis
 
-El texto debajo del QR acepta emojis a color tipo Twemoji. Hay tres formas de escribirlos,
+El texto debajo del QR acepta emojis a color (Twemoji). Hay tres formas de escribirlos,
 iguales en la página y en el script:
 
 | Forma        | Ejemplo                                   |
@@ -67,8 +80,10 @@ iguales en la página y en el script:
 | Código       | `Venta de zapas \U0001F600` (o `\u2764` para 4 dígitos) |
 
 ```bash
-./generar-cartel.py -t "Venta de zapas \U0001F600" -o puesto-zapas.pdf "taler://pay-template/..."
-./generar-cartel.py -t "Zapas :athletic_shoe: :fire:" -o puesto-zapas.pdf "taler://..."
+./generar-cartel.py \
+    --izquierda "taler://pay-template/merchant.taler.ar/instances/test/UNQ" "Venta de zapas \U0001F600" \
+    --derecha   "taler://pay-template/merchant.taler.ar/instances/test/EMPANADAS" "Empanadas :fire: 🇦🇷" \
+    -o puesto.pdf
 ./generar-cartel.py --buscar-emoji zapa       # 👟  :zapatilla_deportiva:  …
 ```
 
@@ -79,7 +94,13 @@ iguales en la página y en el script:
   `:argentina:`). No distingue mayúsculas. Si uno no existe, el script avisa y sugiere
   parecidos; la página lo marca en rojo.
 - **En la página** hay un buscador: escribís una parte del nombre (en inglés o
-  castellano) y tocás el emoji para agregarlo.
+  castellano) y tocás el emoji para agregarlo. Se agrega al texto del cartel en el
+  que estabas escribiendo (el bloque resaltado; abajo del buscador dice cuál).
+- **Bajo demanda:** los emojis no están dentro de la página ni del script. La
+  página carga `emojis/indice.js` (la lista de emojis y shortcodes, ~290 KB) y luego
+  solo el SVG de cada emoji que se muestra; el script lee solo los SVG que usa.
+- Salen idénticos en el navegador y en el PDF del script: los SVG de `emojis/`
+  ya vienen preparados con los círculos y elipses pasados a curvas explícitas.
 - Un emoji mide lo mismo que una letra de cuerpo (3,4 mm) y queda centrado con
   las mayúsculas (`EMOJI_LADO` y `EMOJI_ARRIBA` en `regenerar-pagina.py`).
 
@@ -108,7 +129,7 @@ página.
 
 | Quiero cambiar…                                             | Dónde                                   | ¿Hay que regenerar? |
 |-------------------------------------------------------------|-----------------------------------------|---------------------|
-| El QR o el texto debajo del QR (para un cartel)             | La página o el parámetro del script     | No                  |
+| El QR o el texto de cada cartel (izquierdo / derecho)        | La página o `--izquierda`/`--derecha`   | No                  |
 | Título, "Con la app de", texto de las solapas               | `regenerar-pagina.py` (CONFIGURACIÓN)   | **Sí**              |
 | Textos por defecto (QR y texto debajo)                      | `regenerar-pagina.py` (CONFIGURACIÓN)   | **Sí**              |
 | Colores                                                     | `regenerar-pagina.py` (CONFIGURACIÓN)   | **Sí**              |
@@ -161,6 +182,14 @@ textos se guardan como dibujos de letras, no como letras. Así el navegador y
 WeasyPrint dibujan exactamente las mismas formas, sin depender de qué tipografía
 haya instalada ni de cómo cada programa ubica el texto. Por eso no se pueden
 editar a mano dentro del HTML y existe `regenerar-pagina.py`.
+
+**Dos carteles en la hoja.** Cada lado tiene su propia cara en el SVG
+(`cara-izquierda` y `cara-derecha`), con su QR (`qr-modulos-izquierda`, …) y su texto
+(`texto-sub-izquierda`, …); cada cara se usa dos veces en su columna (cara B invertida
+arriba, cara A abajo). Las partes fijas (fondo, logos, título, pie) están una sola vez
+(`cara-fija`). Los nombres de los lados salen de `LADOS` en `regenerar-pagina.py`, y
+de ahí los toman el panel de la página, los parámetros de la URL y las opciones del
+script (`--izquierda`, `--derecha`).
 
 **El texto editable debajo del QR.** La página trae una tabla con el dibujo, el
 ancho y el kerning de cada carácter permitido (`const SUB = {...}` en el HTML).

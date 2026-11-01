@@ -37,9 +37,14 @@ TITULO = ["ESCANEÁ Y", "PAGÁ"]                      # una entrada por renglón
 PIE = "Con la app de"                                # a la izquierda del logo de Taler
 SOLAPA = "Solapa de base · doblar hacia adentro"     # texto gris de las solapas M
 
-# Valores por defecto de la página (los dos se pueden cambiar al usarla)
+# Valores por defecto de la página (se cambian al usarla, por separado en cada lado)
 QR_DEFECTO = "https://unq.numis.ar/puesto-test"
 SUB_DEFECTO = "Desde tu celular"                     # texto editable debajo del QR
+
+# La hoja tiene DOS carteles independientes (uno por persona). Nombre de cada lado y
+# su posición x en la hoja. Estos nombres son los que usan la página
+# (#qr-izquierda=…) y el script (--izquierda QR TEXTO).
+LADOS = [("izquierda", 0), ("derecha", 105)]
 
 # Colores
 VERDE = "#064d2d"        # fondo de las caras y color del QR
@@ -235,7 +240,7 @@ def _mitad(u):
     return str(u // 2) if u % 2 == 0 else repr(u / 2)
 
 
-def texto_sub(cadena):
+def texto_sub(cadena, lado):
     """El mismo armado que hacen la página (JS) y generar-cartel.py."""
     u, partes, prev = 0, [], None
     for ch in cadena.upper():
@@ -247,7 +252,7 @@ def texto_sub(cadena):
         u += g["a"]
         prev = ch
     tr = f"translate({SUB_X} {SUB_BASE}) scale({SUB_ESCALA} -{SUB_ESCALA}) translate(-{_mitad(u)} 0)"
-    return f'<g id="texto-sub" fill="#fff" transform="{tr}">' + "".join(partes) + "</g>"
+    return f'<g id="texto-sub-{lado}" fill="#fff" transform="{tr}">' + "".join(partes) + "</g>"
 
 
 # ---------- Logos y formas ----------
@@ -283,32 +288,38 @@ def rect_redondeado(x, y, w, h, r):
 
 
 def armar_hoja():
+    """Dos carteles independientes: cada lado tiene su propia cara (con su QR y su texto),
+    que se usa dos veces en su columna (cara B invertida arriba, cara A abajo)."""
     qx, qy, lado, radio = QR_CAJA
-    cara = "".join([
+    fijo_arriba = "".join([
         f'<rect width="{W}" height="{CARA}" fill="{VERDE}"/>',
         logo(LOGO_ARRIBA, *LOGO_ARRIBA_CAJA),
         '<path fill="#fff" d="' + "".join(
             texto(r, TITULO_PESO, TITULO_TAM, W / 2, b, nombre=f"TITULO[{i}]")
             for i, (r, b) in enumerate(zip(TITULO, TITULO_BASES))) + '"/>',
-        '<use href="#qr" xlink:href="#qr"/>',
-        texto_sub(SUB_DEFECTO),
+    ])
+    fijo_pie = "".join([
         f'<rect y="{PIE_Y}" width="{W}" height="{PIE_ALTO}" fill="{CREMA}"/>',
         f'<path fill="{VERDE}" d="{texto(PIE, PIE_PESO, PIE_TAM, PIE_X_DERECHA, PIE_BASE, "right", "PIE")}"/>',
         logo(LOGO_PIE, *LOGO_PIE_CAJA),
     ])
     solapa = texto(SOLAPA, SOLAPA_PESO, SOLAPA_TAM, W / 2, SOLAPA_BASE, nombre="SOLAPA")
-    qr = (f'<g id="qr"><path fill="#fff" d="{rect_redondeado(qx, qy, lado, lado, radio)}"/>'
-          f'<g transform="translate({f(qx + QR_MARGEN)} {f(qy + QR_MARGEN)})">'
-          f'<path id="qr-modulos" fill="{VERDE}" transform="scale(1)" d=""/>'
-          f'<image id="qr-imagen" width="{f(lado - 2 * QR_MARGEN)}" height="{f(lado - 2 * QR_MARGEN)}" '
-          f'href="" style="display:none"/></g></g>')
-    partes = [f'<defs>{qr}<g id="cara">{cara}</g><path id="solapa" fill="{GUIA}" d="{solapa}"/></defs>',
-              f'<rect width="210" height="297" fill="#fff"/>']
-    for x0 in (0, W):
+    defs = [f'<g id="cara-fija">{fijo_arriba}{fijo_pie}</g>', f'<path id="solapa" fill="{GUIA}" d="{solapa}"/>']
+    for nombre, _ in LADOS:
+        defs.append(
+            f'<g id="cara-{nombre}"><use href="#cara-fija" xlink:href="#cara-fija"/>'
+            f'<path fill="#fff" d="{rect_redondeado(qx, qy, lado, lado, radio)}"/>'
+            f'<g transform="translate({f(qx + QR_MARGEN)} {f(qy + QR_MARGEN)})">'
+            f'<path id="qr-modulos-{nombre}" fill="{VERDE}" transform="scale(1)" d=""/>'
+            f'<image id="qr-imagen-{nombre}" width="{f(lado - 2 * QR_MARGEN)}" '
+            f'height="{f(lado - 2 * QR_MARGEN)}" href="" style="display:none"/></g>'
+            f'{texto_sub(SUB_DEFECTO, nombre)}</g>')
+    partes = ["<defs>" + "".join(defs) + "</defs>", '<rect width="210" height="297" fill="#fff"/>']
+    for nombre, x0 in LADOS:
         partes += [
             f'<use href="#solapa" xlink:href="#solapa" transform="rotate(180 {f(x0 + W/2)} {f(M/2)}) translate({f(x0)} 0)"/>',
-            f'<use href="#cara" xlink:href="#cara" transform="rotate(180 {f(x0 + W/2)} {f(M + CARA/2)}) translate({f(x0)} {M})"/>',
-            f'<use href="#cara" xlink:href="#cara" transform="translate({f(x0)} {f(M + CARA)})"/>',
+            f'<use href="#cara-{nombre}" xlink:href="#cara-{nombre}" transform="rotate(180 {f(x0 + W/2)} {f(M + CARA/2)}) translate({f(x0)} {M})"/>',
+            f'<use href="#cara-{nombre}" xlink:href="#cara-{nombre}" transform="translate({f(x0)} {f(M + CARA)})"/>',
             f'<use href="#solapa" xlink:href="#solapa" transform="translate({f(x0)} {f(M + 2*CARA)})"/>',
         ]
     partes.append(f'<g fill="none" stroke-width="0.25"><path stroke="{GUIA}" stroke-dasharray="1.2 0.9" '
@@ -325,14 +336,13 @@ def main():
                  f"o supera el máximo de {SUB_MAX}.")
     sub_json = json.dumps({"glifos": GLIFOS, "kern": KERN, "max": SUB_MAX, "escala": SUB_ESCALA,
                            "espaciado": SUB_ESPACIADO, "x": SUB_X, "base": SUB_BASE,
-                           "defecto": SUB_DEFECTO, "emoji": {"lado": EMOJI_LADO, "arriba": EMOJI_ARRIBA,
+                           "defecto": SUB_DEFECTO, "qr_defecto": QR_DEFECTO, "lados": [n for n, _ in LADOS],
+                           "emoji": {"lado": EMOJI_LADO, "arriba": EMOJI_ARRIBA,
                            "carpeta": "emojis"}}, ensure_ascii=False, separators=(",", ":"))
     html = (AQUI / "plantilla.html").read_text(encoding="utf-8")
     reemplazos = {
         "__HOJA__": armar_hoja(),
         "__SUB_MAX__": str(SUB_MAX),
-        "__SUB_DEFECTO__": SUB_DEFECTO,
-        "__QR_DEFECTO__": QR_DEFECTO.replace("&", "&amp;").replace('"', "&quot;"),
         "__SUB_JSON__": sub_json,
         "__QRLIB__": (AQUI / "lib/qrcode.js").read_text(encoding="utf-8").strip(),
     }
@@ -342,7 +352,7 @@ def main():
         html = html.replace(marca, valor)
     SALIDA.write_text(html, encoding="utf-8")
     print(f"Página generada: {SALIDA}")
-    print(f"Texto debajo del QR: máximo {SUB_MAX} caracteres.")
+    print(f"Carteles: {', '.join(n for n, _ in LADOS)} · texto debajo del QR: máximo {SUB_MAX} caracteres.")
 
 
 if __name__ == "__main__":

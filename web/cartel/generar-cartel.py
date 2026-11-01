@@ -13,13 +13,17 @@ página, así que sale idéntico módulo a módulo.
 Requisitos en Debian 13:
     sudo apt install weasyprint python3-qrcode
 
-Uso:
-    ./generar-cartel.py "TEXTO DEL QR"
-    ./generar-cartel.py "taler://pay/..." -t "Pagá con tu billetera" -o puesto-12.pdf
-    ./generar-cartel.py "taler://pay/..." --html /otra/ruta/imprimir-qr-a4.html
-    ./generar-cartel.py -t "Venta de zapas \U0001F600" -o zapas.pdf "taler://pay-template/..."
-    ./generar-cartel.py -t "Venta de zapas :athletic_shoe:" -o zapas.pdf "taler://..."
+Uso — la hoja tiene DOS carteles independientes (uno por persona); cada uno lleva
+su par QR + texto, y los dos pares son obligatorios:
+
+    ./generar-cartel.py --izquierda "QR_IZQ" "TEXTO_IZQ" --derecha "QR_DER" "TEXTO_DER"
+    ./generar-cartel.py \
+        --izquierda "taler://pay-template/merchant.taler.ar/instances/test/UNQ" "Venta de zapas \U0001F600" \
+        --derecha   "taler://pay-template/merchant.taler.ar/instances/test/UNQ2" "Empanadas :fire:" \
+        -o puesto.pdf
     ./generar-cartel.py --buscar-emoji zapa
+
+El texto puede ir vacío ("") si no se quiere texto debajo del QR.
 
 Emojis: se toman de la carpeta emojis/ (Twemoji, al lado de la página), solo los
 que usa cada cartel. Ver LEEME.md.
@@ -144,9 +148,13 @@ def cargar_pagina(ruta):
     if not m:
         sys.exit(f"Error: {ruta} no tiene la tabla del texto (const SUB = {{...}};).")
     SUB = json.loads(m.group(1))
-    for marca in ('id="qr-modulos"', 'id="texto-sub"'):
-        if marca not in pagina:
-            sys.exit(f"Error: {ruta} no tiene el elemento {marca}.")
+    if not SUB.get("lados"):
+        sys.exit(f"Error: {ruta} es de una versión anterior (un solo cartel). Regenerala con "
+                 f"regenerar/regenerar-pagina.py.")
+    for lado in SUB["lados"]:
+        for marca in (f'id="qr-modulos-{lado}"', f'id="texto-sub-{lado}"'):
+            if pagina.count(marca) != 1:
+                sys.exit(f"Error: {ruta} no tiene (una sola vez) el elemento {marca}.")
     return pagina
 
 
@@ -228,7 +236,7 @@ def _mitad(u):
     return str(u // 2) if u % 2 == 0 else repr(u / 2)
 
 
-def texto_sub(partes, carpeta_emojis):
+def texto_sub(partes, carpeta_emojis, lado):
     u, svg, prev = 0, [], None
     e = SUB["emoji"]
     for i, (tipo, valor) in enumerate(partes):
@@ -248,7 +256,7 @@ def texto_sub(partes, carpeta_emojis):
             prev = None
     tr = (f"translate({SUB['x']} {SUB['base']}) scale({SUB['escala']} -{SUB['escala']}) "
           f"translate(-{_mitad(u)} 0)")
-    return f'<g id="texto-sub" fill="#fff" transform="{tr}">' + "".join(svg) + "</g>"
+    return f'<g id="texto-sub-{lado}" fill="#fff" transform="{tr}">' + "".join(svg) + "</g>"
 
 
 def buscar_emojis(consulta):
@@ -271,21 +279,33 @@ def main():
     carpeta_emojis = carpeta_emojis.expanduser().resolve()
     hay_emojis = cargar_emojis(carpeta_emojis)
 
+    lados = SUB["lados"]
     ap = argparse.ArgumentParser(
-        description="Genera el PDF A4 del cartel QR (sin red ni Chrome).",
+        description="Genera el PDF A4 con los dos carteles QR (sin red ni Chrome). Cada cartel "
+                    "lleva su propio par QR + texto; los " + str(len(lados)) + " pares son obligatorios.",
         epilog="El texto acepta emojis: pegados, como shortcode (:grinning:, :zapatilla_deportiva:) "
                "o como código (\\U0001F600). Usá --buscar-emoji para encontrar shortcodes.")
-    ap.add_argument("qr", nargs="?", help="Texto o link que va dentro del QR (obligatorio)")
-    ap.add_argument("-t", "--texto", default=None,
-                    help=f"Texto debajo del QR, hasta {SUB['max']} caracteres; cada emoji cuenta 1 "
-                         f"(por defecto: \"{SUB['defecto']}\")")
+    for lado in lados:
+        ap.add_argument(f"--{lado}", nargs=2, metavar=("QR", "TEXTO"), action="append",
+                        help=f"Cartel de la {lado}: el QR (link o texto) y el texto debajo del QR "
+                             f"(hasta {SUB['max']} caracteres; cada emoji cuenta 1; puede ser \"\")")
     ap.add_argument("-o", "--salida", default="cartel-qr.pdf", help="PDF de salida (por defecto: cartel-qr.pdf)")
     ap.add_argument("--html", default=str(HTML_POR_DEFECTO),
                     help="Página del cartel a usar (por defecto: imprimir-qr-a4.html al lado del script)")
     ap.add_argument("--emojis", default=None,
                     help="Carpeta de emojis (por defecto: la carpeta emojis/ al lado de la página)")
     ap.add_argument("--buscar-emoji", metavar="TEXTO", help="Lista los emojis cuyo shortcode contiene TEXTO y sale")
-    args = ap.parse_args()
+    args, sobrantes = ap.parse_known_args()
+    uso = "Uso: " + " ".join(f'--{lado} "QR" "TEXTO"' for lado in lados) + " [-o salida.pdf]"
+    opciones = {s for a in ap._actions for s in a.option_strings}
+    for lado in lados:                       # un valor faltante hace que se "coma" la opción siguiente
+        for qr, texto in (getattr(args, lado) or []):
+            if qr in opciones or texto in opciones:
+                ap.error(f"--{lado} necesita exactamente dos valores (QR y TEXTO); si no querés texto, "
+                         f'poné "". {uso}')
+    if sobrantes:
+        ap.error("argumentos de más: " + " ".join(sobrantes) +
+                 ". Cada cartel lleva exactamente dos valores entre comillas (QR y TEXTO). " + uso)
 
     if args.buscar_emoji is not None:
         if not hay_emojis:
@@ -299,25 +319,45 @@ def main():
             print("Sin resultados.")
         return
 
-    if args.qr is None or not args.qr.strip():
-        ap.error("falta el texto del QR (o está vacío)")
+    # Exactamente un par (QR, TEXTO) por lado, sin repetir ni omitir ninguno.
+    pares, problemas = {}, []
+    for lado in lados:
+        valores = getattr(args, lado)
+        if not valores:
+            problemas.append(f"falta --{lado} QR TEXTO")
+        elif len(valores) > 1:
+            problemas.append(f"--{lado} aparece {len(valores)} veces (va una sola)")
+        else:
+            pares[lado] = valores[0]
+    if problemas:
+        ap.error("; ".join(problemas) + ". " + uso)
 
-    texto = SUB["defecto"] if args.texto is None else args.texto
-    partes, errores = analizar_texto(texto)
+    errores = []
+    contenido = {}
+    for lado, (qr, texto) in pares.items():
+        if not qr.strip():
+            errores.append(f"[{lado}] el QR está vacío")
+        partes, errs = analizar_texto(texto)
+        errores += [f"[{lado}] {e}" for e in errs]
+        contenido[lado] = (qr, partes)
     if errores:
         aviso = "" if hay_emojis else f"\n(No encontré {carpeta_emojis / 'indice.js'}: sin emojis disponibles.)"
-        sys.exit("Error en el texto debajo del QR:\n  - " + "\n  - ".join(errores) + "\n"
-                 "Se permiten letras (se pasan a mayúsculas), números, espacio, " + SUB_SIGNOS +
+        sys.exit("Error:\n  - " + "\n  - ".join(errores) + "\n"
+                 "En el texto se permiten letras (se pasan a mayúsculas), números, espacio, " + SUB_SIGNOS +
                  " y emojis." + aviso)
 
-    d, escala = modulos_qr(args.qr)
-    def poner_qr(m):
-        etiqueta = re.sub(r'\s(transform|d)="[^"]*"', "", m.group(0))
-        return etiqueta.replace('id="qr-modulos"', f'id="qr-modulos" transform="{escala}" d="{d}"', 1)
-    html = re.sub(r'<path id="qr-modulos"[^>]*>', poner_qr, pagina, count=1)
-    html = re.sub(r'<g id="texto-sub"[^>]*>.*?</g>', lambda m: texto_sub(partes, carpeta_emojis),
-                  html, count=1, flags=re.S)
-    html = re.sub(r'<image id="qr-imagen"[^>]*/>', "", html, count=1)   # solo se usa en la página
+    html = pagina
+    for lado, (qr, partes) in contenido.items():
+        d, escala = modulos_qr(qr)
+        def poner_qr(m, d=d, escala=escala, lado=lado):
+            etiqueta = re.sub(r'\s(transform|d)="[^"]*"', "", m.group(0))
+            return etiqueta.replace(f'id="qr-modulos-{lado}"',
+                                    f'id="qr-modulos-{lado}" transform="{escala}" d="{d}"', 1)
+        html = re.sub(rf'<path id="qr-modulos-{lado}"[^>]*>', poner_qr, html, count=1)
+        html = re.sub(rf'<g id="texto-sub-{lado}"[^>]*>.*?</g>',
+                      lambda m, partes=partes, lado=lado: texto_sub(partes, carpeta_emojis, lado),
+                      html, count=1, flags=re.S)
+        html = re.sub(rf'<image id="qr-imagen-{lado}"[^>]*/>', "", html, count=1)   # solo se usa en la página
 
     salida = Path(args.salida).expanduser().resolve()
     salida.parent.mkdir(parents=True, exist_ok=True)
@@ -338,6 +378,8 @@ def main():
     HTML(string=html, url_fetcher=sin_red, media_type="print",
          base_url=Path(previo.html).expanduser().resolve().parent.as_uri() + "/").write_pdf(str(salida))
     print(f"PDF generado: {salida}")
+    for lado, (qr, texto) in pares.items():
+        print(f"  {lado}: QR={qr!r} · texto={texto!r}")
 
 
 if __name__ == "__main__":

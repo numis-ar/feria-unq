@@ -30,6 +30,11 @@
   .emo img{width:26px;height:26px}
   .ayuda{color:#777;font-size:12px;margin:-4px 0 12px 160px!important}
   .ayuda code{background:#f2f3f0;padding:0 3px;border-radius:3px}
+  .lado{border:1px solid #dfe3dc;border-radius:10px;padding:10px 12px 2px;margin-bottom:12px}
+  .lado legend{font-weight:700;padding:0 6px;color:var(--verde)}
+  .lado.activo{border-color:#9cc3a9;box-shadow:0 0 0 2px #e3efe7}
+  .fila .sec-chica{background:#eee;color:#333;border:0;border-radius:6px;padding:6px 10px;font:12px system-ui,sans-serif;cursor:pointer;margin:0}
+  .destino{color:#555;font-size:12px;margin:-4px 0 6px 160px!important}
   .wrap{display:flex;justify-content:center;padding:8px 16px 40px}
 
   /* ---------- Hoja A4: un único SVG en mm ---------- */
@@ -53,15 +58,14 @@
 
 <div class="panel">
   <h1>Cartel QR plegable — A4 (2 carteles por hoja)</h1>
-  <p>Pegá el link del QR (o subí su imagen) y escribí el texto que va debajo. Al imprimir: tamaño <b>A4</b>, escala <b>100%</b>, márgenes <b>ninguno</b> y <b>gráficos de fondo</b> activados.</p>
-  <div class="fila"><label for="url">Link del QR</label><input type="text" id="url" value="__QR_DEFECTO__"></div>
-  <div class="fila"><label for="sub">Texto debajo del QR</label><input type="text" id="sub" value="__SUB_DEFECTO__" spellcheck="false"><span id="sub-cuenta" class="cuenta"></span></div>
-  <p id="sub-aviso" class="aviso"></p>
+  <p>La hoja tiene <b>dos carteles independientes</b>: el izquierdo y el derecho, cada uno con su propio QR y su propio texto (sus dos caras muestran lo mismo). Al imprimir: tamaño <b>A4</b>, escala <b>100%</b>, márgenes <b>ninguno</b> y <b>gráficos de fondo</b> activados.</p>
+  <div id="paneles"></div>
   <div class="fila"><label for="emoji-buscar">Buscar emoji</label><input type="text" id="emoji-buscar" placeholder="ej.: shoe, zapatilla, corazon, smile…" spellcheck="false"></div>
+  <p id="emoji-destino" class="destino"></p>
   <div id="emoji-resultados" class="emojis"></div>
-  <p class="ayuda">Hasta __SUB_MAX__ caracteres; cada emoji cuenta como uno. Se puede escribir el emoji, su shortcode (<code>:grinning:</code>, <code>:zapatilla_deportiva:</code>) o su código (<code>\U0001F600</code>).</p>
-  <div class="fila"><label for="qrfile">…o imagen del QR</label><input type="file" id="qrfile" accept="image/*"></div>
-  <button onclick="window.print()">Imprimir</button><button class="sec" onclick="usarLink()">Volver al QR del link</button>
+  <p class="ayuda">Hasta __SUB_MAX__ caracteres por texto; cada emoji cuenta como uno. Se puede escribir el emoji, su shortcode (<code>:grinning:</code>, <code>:zapatilla_deportiva:</code>) o su código (<code>\U0001F600</code>).</p>
+  <p id="aviso-general" class="aviso" style="margin-left:0!important"></p>
+  <button onclick="window.print()">Imprimir</button>
 </div>
 
 <div class="wrap">
@@ -76,7 +80,7 @@ __QRLIB__
 </script>
 <script>
   qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
-  let qrImagen = null;
+  const qrImagen = {};                      // imagen de QR subida, por lado
 
   // Mismo dibujo de QR que genera el script de Python (tienen que coincidir carácter a carácter)
   function modulosQR(texto){
@@ -97,15 +101,15 @@ __QRLIB__
     }
     return { d: d, escala: 'scale(' + (46 / n) + ')' };
   }
-  function dibujarQR(){
-    const path = document.getElementById('qr-modulos');
-    const img = document.getElementById('qr-imagen');
-    if (qrImagen) {
-      img.setAttribute('href', qrImagen);
+  function dibujarQR(lado){
+    const path = document.getElementById('qr-modulos-' + lado);
+    const img = document.getElementById('qr-imagen-' + lado);
+    if (qrImagen[lado]) {
+      img.setAttribute('href', qrImagen[lado]);
       img.style.display = '';
       path.style.display = 'none';
     } else {
-      const m = modulosQR(document.getElementById('url').value);
+      const m = modulosQR(document.getElementById('qr-' + lado).value);
       path.setAttribute('d', m.d);
       path.setAttribute('transform', m.escala);
       path.style.display = '';
@@ -138,7 +142,7 @@ __QRLIB__
       if (e === undefined) { errores.push('Shortcode desconocido: ' + m); return m; }
       return e;
     });
-    s = s.replace(/️/g, '');
+    s = s.replace(/\uFE0F/g, '');
     return { texto: s, errores: errores };
   }
   function segmentar(s){
@@ -183,20 +187,19 @@ __QRLIB__
     if (sg.partes.length > SUB.max) errores.push('Máximo ' + SUB.max + ' caracteres (hay ' + sg.partes.length + ').');
     return { partes: sg.partes, errores: errores };
   }
-  function dibujarSub(){
-    const r = analizarSub(document.getElementById('sub').value);
-    const cuenta = document.getElementById('sub-cuenta');
+  function dibujarSub(lado){
+    const r = analizarSub(document.getElementById('texto-' + lado).value);
+    const cuenta = document.getElementById('cuenta-' + lado);
     cuenta.textContent = r.partes.length + '/' + SUB.max;
     cuenta.style.color = r.partes.length > SUB.max ? '#b3261e' : '';
-    document.getElementById('sub-aviso').textContent =
+    document.getElementById('aviso-' + lado).textContent =
       r.errores.length ? r.errores.join(' · ') + ' — el cartel muestra el último texto válido.' : '';
     if (r.errores.length) return;            // se mantiene el último texto válido
     const m = textoSub(r.partes);
-    const g = document.getElementById('texto-sub');
+    const g = document.getElementById('texto-sub-' + lado);
     g.setAttribute('transform', m.tr);
     g.innerHTML = m.svg;
   }
-  document.getElementById('sub').addEventListener('input', dibujarSub);
 
   // ---------- Buscador de emojis (carga solo las imágenes que muestra) ----------
   const NOMBRES = Object.keys(EMOJI.shortcodes);
@@ -220,35 +223,71 @@ __QRLIB__
       img.alt = ':' + n + ':'; img.loading = 'lazy';
       b.appendChild(img);
       b.onclick = () => {
-        const input = document.getElementById('sub');
+        const input = document.getElementById('texto-' + ladoActivo);
         const pos = input.selectionStart ?? input.value.length, fin = input.selectionEnd ?? pos;
         const txt = ':' + n + ':';
         input.value = input.value.slice(0, pos) + txt + input.value.slice(fin);
         input.focus(); input.setSelectionRange(pos + txt.length, pos + txt.length);
-        dibujarSub();
+        dibujarSub(ladoActivo);
       };
       caja.appendChild(b);
     }
   }
   document.getElementById('emoji-buscar').addEventListener('input', buscarEmoji);
 
-  document.getElementById('url').addEventListener('input', () => { if (!qrImagen) dibujarQR(); });
-  document.getElementById('qrfile').addEventListener('change', e => {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = () => { qrImagen = r.result; dibujarQR(); };
-    r.readAsDataURL(f);
-  });
-  function usarLink(){ qrImagen = null; document.getElementById('qrfile').value = ''; dibujarQR(); }
+  // ---------- Un bloque del panel por cada cartel (lados definidos en SUB.lados) ----------
+  const TITULOS = { izquierda: 'Cartel izquierdo', derecha: 'Cartel derecho' };
+  let ladoActivo = SUB.lados[0];
+  function activar(lado){
+    ladoActivo = lado;
+    document.querySelectorAll('.lado').forEach(f => f.classList.toggle('activo', f.dataset.lado === lado));
+    document.getElementById('emoji-destino').textContent =
+      'Los emojis se agregan al texto del ' + (TITULOS[lado] || 'cartel ' + lado).toLowerCase() + '.';
+  }
+  const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  for (const lado of SUB.lados) {
+    const f = document.createElement('fieldset');
+    f.className = 'lado'; f.dataset.lado = lado;
+    f.innerHTML =
+      '<legend>' + (TITULOS[lado] || 'Cartel ' + lado) + '</legend>' +
+      '<div class="fila"><label for="qr-' + lado + '">Link del QR</label>' +
+        '<input type="text" id="qr-' + lado + '" value="' + esc(SUB.qr_defecto) + '" spellcheck="false"></div>' +
+      '<div class="fila"><label for="qrfile-' + lado + '">…o imagen del QR</label>' +
+        '<input type="file" id="qrfile-' + lado + '" accept="image/*">' +
+        '<button type="button" class="sec-chica" id="usarlink-' + lado + '">Volver al QR del link</button></div>' +
+      '<div class="fila"><label for="texto-' + lado + '">Texto debajo del QR</label>' +
+        '<input type="text" id="texto-' + lado + '" value="' + esc(SUB.defecto) + '" spellcheck="false">' +
+        '<span id="cuenta-' + lado + '" class="cuenta"></span></div>' +
+      '<p id="aviso-' + lado + '" class="aviso"></p>';
+    document.getElementById('paneles').appendChild(f);
+    f.addEventListener('focusin', () => activar(lado));
+    document.getElementById('qr-' + lado).addEventListener('input', () => { if (!qrImagen[lado]) dibujarQR(lado); });
+    document.getElementById('texto-' + lado).addEventListener('input', () => dibujarSub(lado));
+    document.getElementById('qrfile-' + lado).addEventListener('change', e => {
+      const archivo = e.target.files[0]; if (!archivo) return;
+      const r = new FileReader();
+      r.onload = () => { qrImagen[lado] = r.result; dibujarQR(lado); };
+      r.readAsDataURL(archivo);
+    });
+    document.getElementById('usarlink-' + lado).addEventListener('click', () => {
+      qrImagen[lado] = null; document.getElementById('qrfile-' + lado).value = ''; dibujarQR(lado);
+    });
+  }
 
-  // Permite pasar el texto del QR por la URL: imprimir-qr-a4.html#qr=TEXTO
-  const qrParam = new URLSearchParams(location.hash.slice(1)).get('qr');
-  if (qrParam !== null) document.getElementById('url').value = qrParam;
-  // y el texto debajo del QR: imprimir-qr-a4.html#qr=TEXTO&texto=DESDE%20TU%20CELULAR
-  const subParam = new URLSearchParams(location.hash.slice(1)).get('texto');
-  if (subParam !== null) document.getElementById('sub').value = subParam;
-  dibujarQR();
-  dibujarSub();
+  // ---------- Valores por la URL: #qr-izquierda=…&texto-izquierda=…&qr-derecha=…&texto-derecha=… ----------
+  const params = new URLSearchParams(location.hash.slice(1));
+  const validos = new Set(SUB.lados.flatMap(l => ['qr-' + l, 'texto-' + l]));
+  const desconocidos = [...new Set(params.keys())].filter(k => !validos.has(k));
+  if (desconocidos.length)
+    document.getElementById('aviso-general').textContent = 'Parámetros de la URL no reconocidos (se ignoran): ' +
+      desconocidos.join(', ') + '. Usá ' + [...validos].join(', ') + '.';
+  for (const lado of SUB.lados) {
+    if (params.has('qr-' + lado)) document.getElementById('qr-' + lado).value = params.get('qr-' + lado);
+    if (params.has('texto-' + lado)) document.getElementById('texto-' + lado).value = params.get('texto-' + lado);
+    dibujarQR(lado);
+    dibujarSub(lado);
+  }
+  activar(SUB.lados[0]);
 </script>
 </body>
 </html>
