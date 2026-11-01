@@ -80,6 +80,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
   let staticServer;
   let baseUrl;
   let profileRequestBody;
+  let profileRetryAt;
 
   before(async () => {
     staticServer = http.createServer((req, res) => {
@@ -124,7 +125,12 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
         req.on('end', () => {
           profileRequestBody = JSON.parse(raw);
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ type: 'ok' }));
+          if (profileRetryAt !== null) {
+            res.writeHead(429);
+            res.end(JSON.stringify({ type: 'error', message: 'Tenés que esperar.', retryAt: profileRetryAt }));
+          } else {
+            res.end(JSON.stringify({ type: 'ok' }));
+          }
         });
         return;
       }
@@ -178,6 +184,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
   });
 
   beforeEach(async () => {
+    profileRetryAt = null;
     page = await browser.newPage();
     page.setDefaultTimeout(5000);
     page.on('dialog', dialog => dialog.accept());
@@ -321,6 +328,9 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     assert.strictEqual(await page.inputValue('#profile-phone'), '1140011001');
     assert.strictEqual(await page.inputValue('#profile-instagram'), 'raicesdelrio');
     assert.strictEqual(await page.isChecked('#profile-whatsapp'), true);
+    assert.strictEqual(await page.getAttribute('#profile-description', 'maxlength'), '200');
+    assert.strictEqual(await page.getAttribute('#profile-location', 'maxlength'), '50');
+    assert.strictEqual((await page.locator('#profile legend').textContent()).trim(), 'Fotos');
 
     const largePng = await page.evaluate(() => {
       const canvas = document.createElement('canvas');
@@ -331,7 +341,11 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
       context.fillRect(0, 0, canvas.width, canvas.height);
       return canvas.toDataURL('image/png');
     });
-    await page.setInputFiles('#profile-photo-input', {
+    const [profileChooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.click('#profile-photo-preview'),
+    ]);
+    await profileChooser.setFiles({
       name: 'large.png',
       mimeType: 'image/png',
       buffer: Buffer.from(largePng.split(',')[1], 'base64'),
@@ -357,7 +371,11 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
       return canvas.toDataURL('image/png');
     });
     assert.ok(Buffer.byteLength(heavyPng.split(',')[1], 'base64') > 500 * 1024);
-    await page.setInputFiles('#product-photo-input-1', {
+    const [productChooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.click('#product-photo-preview-1'),
+    ]);
+    await productChooser.setFiles({
       name: 'heavy.png',
       mimeType: 'image/png',
       buffer: Buffer.from(heavyPng.split(',')[1], 'base64'),
@@ -372,8 +390,49 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     assert.strictEqual(profileRequestBody.profile.telefono, '1140011001');
     assert.ok(profileRequestBody.images.perfil.startsWith('data:image/png;base64,'));
     assert.ok(profileRequestBody.images.productos[0].startsWith('data:image/png;base64,'));
+    assert.ok(Buffer.byteLength(profileRequestBody.images.perfil.split(',')[1], 'base64') <= 500 * 1024);
     assert.ok(Buffer.byteLength(profileRequestBody.images.productos[0].split(',')[1], 'base64') <= 500 * 1024);
     assert.deepStrictEqual(profileRequestBody.images.productos.slice(1), [null, null, null]);
+  });
+
+  it('8. Profile validates lengths and explains rate-limit retry times', async () => {
+    profileRequestBody = null;
+    await page.goto(`${baseUrl}/merchant.html`);
+    await page.fill('#auth-user', 'raices-del-rio');
+    await page.fill('#auth-pass', 'secret1234');
+    await page.click('#btn-login');
+    await page.locator('#auth-modal').waitFor({ state: 'hidden' });
+    await page.click('#nav-profile-btn');
+    await page.waitForFunction(() => document.getElementById('profile-description').value.includes('Miel pura'));
+
+    await page.evaluate(() => { document.getElementById('profile-description').value = 'a'.repeat(201); });
+    await page.click('#btn-save-profile');
+    await page.locator('#profile-status', { hasText: '200 caracteres' }).waitFor({ state: 'visible' });
+    assert.strictEqual(profileRequestBody, null);
+
+    await page.fill('#profile-description', 'Descripción válida');
+    await page.evaluate(() => { document.getElementById('profile-location').value = 'a'.repeat(51); });
+    await page.click('#btn-save-profile');
+    await page.locator('#profile-status', { hasText: '50 caracteres' }).waitFor({ state: 'visible' });
+    assert.strictEqual(profileRequestBody, null);
+
+    await page.fill('#profile-location', 'Puesto 4');
+    profileRetryAt = Date.now() + 10 * 1000;
+    await page.click('#btn-save-profile');
+    await page.locator('#profile-status', { hasText: 'segundos' }).waitFor({ state: 'visible' });
+    const secondsText = await page.locator('#profile-status').textContent();
+    const seconds = Number(secondsText.match(/en (\d+) segundos/)[1]);
+    assert.ok(seconds >= 13 && seconds <= 15, secondsText);
+
+    profileRetryAt = Date.now() + 90 * 1000;
+    await page.click('#btn-save-profile');
+    await page.locator('#profile-status', { hasText: 'en 2 minutos' }).waitFor({ state: 'visible' });
+
+    profileRetryAt = Date.now() + 6 * 60 * 1000;
+    const retryDate = new Date(profileRetryAt + 5000);
+    const retryTime = `${String(retryDate.getHours()).padStart(2, '0')}:${String(retryDate.getMinutes()).padStart(2, '0')}`;
+    await page.click('#btn-save-profile');
+    await page.locator('#profile-status', { hasText: `después de las ${retryTime}` }).waitFor({ state: 'visible' });
   });
 });
 

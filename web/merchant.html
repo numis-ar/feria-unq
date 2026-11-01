@@ -1837,18 +1837,20 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div>
               <label for="profile-photo-input" class="block text-sm font-medium text-slate-700 mb-2" data-i18n="profile_photo">Foto del emprendimiento</label>
-              <img
-                id="profile-photo-preview"
-                src="./screenshots/productor-placeholder.svg"
-                alt="Foto actual del emprendimiento"
-                data-i18n-aria-label="profile_photo_alt"
-                class="w-40 h-40 object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3"
-              />
+              <label for="profile-photo-input" class="block w-40 cursor-pointer">
+                <img
+                  id="profile-photo-preview"
+                  src="./screenshots/productor-placeholder.svg"
+                  alt="Foto actual del emprendimiento"
+                  data-i18n-aria-label="profile_photo_alt"
+                  class="w-40 h-40 object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3"
+                />
+              </label>
               <input id="profile-photo-input" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:font-semibold file:text-indigo-700" />
             </div>
             <div>
               <label for="profile-description" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="profile_description">Descripción</label>
-              <textarea id="profile-description" rows="8" maxlength="2000" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+              <textarea id="profile-description" rows="8" maxlength="200" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
             </div>
           </div>
 
@@ -1890,31 +1892,35 @@
             </div>
             <div>
               <label for="profile-location" class="block text-sm font-medium text-slate-700 mb-1" data-i18n="profile_location">Ubicación en la feria</label>
-              <input id="profile-location" type="text" maxlength="200" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+              <input id="profile-location" type="text" maxlength="50" class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
             </div>
           </div>
 
           <fieldset>
-            <legend class="text-lg font-bold text-slate-800 mb-4" data-i18n="profile_products">Fotos de los productos</legend>
+            <legend class="text-lg font-bold text-slate-800 mb-4" data-i18n="profile_products">Fotos</legend>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
-                <label for="product-photo-input-1" class="block text-sm font-medium text-slate-700 mb-2"><span data-i18n="profile_product_photo">Foto de producto</span> 1</label>
-                <img id="product-photo-preview-1" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 1" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                <label for="product-photo-input-1" class="block cursor-pointer">
+                  <img id="product-photo-preview-1" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 1" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                </label>
                 <input id="product-photo-input-1" data-product-index="0" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-2 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700" />
               </div>
               <div>
-                <label for="product-photo-input-2" class="block text-sm font-medium text-slate-700 mb-2"><span data-i18n="profile_product_photo">Foto de producto</span> 2</label>
-                <img id="product-photo-preview-2" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 2" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                <label for="product-photo-input-2" class="block cursor-pointer">
+                  <img id="product-photo-preview-2" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 2" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                </label>
                 <input id="product-photo-input-2" data-product-index="1" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-2 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700" />
               </div>
               <div>
-                <label for="product-photo-input-3" class="block text-sm font-medium text-slate-700 mb-2"><span data-i18n="profile_product_photo">Foto de producto</span> 3</label>
-                <img id="product-photo-preview-3" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 3" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                <label for="product-photo-input-3" class="block cursor-pointer">
+                  <img id="product-photo-preview-3" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 3" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                </label>
                 <input id="product-photo-input-3" data-product-index="2" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-2 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700" />
               </div>
               <div>
-                <label for="product-photo-input-4" class="block text-sm font-medium text-slate-700 mb-2"><span data-i18n="profile_product_photo">Foto de producto</span> 4</label>
-                <img id="product-photo-preview-4" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 4" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                <label for="product-photo-input-4" class="block cursor-pointer">
+                  <img id="product-photo-preview-4" src="./screenshots/productor-placeholder.svg" alt="Foto de producto 4" class="w-full aspect-square object-cover rounded-2xl bg-slate-100 border border-slate-200 mb-3" />
+                </label>
                 <input id="product-photo-input-4" data-product-index="3" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-2 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700" />
               </div>
             </div>
@@ -2159,14 +2165,18 @@
           profile_phone_help: "Enter 10 digits including the area code, without +54 or 15.",
           profile_whatsapp: "This phone accepts WhatsApp",
           profile_location: "Location at the fair",
-          profile_products: "Product photos",
-          profile_product_photo: "Product photo",
+          profile_products: "Photos",
           profile_save: "Save profile",
           profile_saved: "Profile saved successfully.",
           profile_load_error: "Could not load the profile.",
           profile_image_error: "Could not process the image.",
           profile_image_ready: "Image ready to save.",
           profile_phone_invalid: "Enter a valid 10-digit Argentine phone, without +54 or 15.",
+          profile_description_too_long: "Description cannot exceed 200 characters.",
+          profile_location_too_long: "Location cannot exceed 50 characters.",
+          profile_wait_after: "You have to wait before making more changes. Try again after {time}.",
+          profile_wait_minutes: "You have to wait before making more changes. Try again in {minutes} minutes.",
+          profile_wait_seconds: "You have to wait before making more changes. Try again in {seconds} seconds.",
           nav_user: "User",
           withdraw_step_amount: "Amount",
           withdraw_step_scan: "Scan QR",
@@ -2352,14 +2362,18 @@
           profile_phone_help: "Ingresá 10 dígitos con código de área, sin +54 ni 15.",
           profile_whatsapp: "Este teléfono acepta WhatsApp",
           profile_location: "Ubicación en la feria",
-          profile_products: "Fotos de los productos",
-          profile_product_photo: "Foto de producto",
+          profile_products: "Fotos",
           profile_save: "Guardar perfil",
           profile_saved: "Perfil guardado correctamente.",
           profile_load_error: "No se pudo cargar el perfil.",
           profile_image_error: "No se pudo procesar la imagen.",
           profile_image_ready: "Imagen lista para guardar.",
           profile_phone_invalid: "Ingresá un teléfono argentino válido de 10 dígitos, sin +54 ni 15.",
+          profile_description_too_long: "La descripción no puede superar los 200 caracteres.",
+          profile_location_too_long: "La ubicación no puede superar los 50 caracteres.",
+          profile_wait_after: "Tenés que esperar antes de hacer muchas modificaciones. Podés volver a intentarlo después de las {time}.",
+          profile_wait_minutes: "Tenés que esperar antes de hacer muchas modificaciones. Podés volver a intentarlo en {minutes} minutos.",
+          profile_wait_seconds: "Tenés que esperar antes de hacer muchas modificaciones. Podés volver a intentarlo en {seconds} segundos.",
           nav_user: "Usuario",
           withdraw_step_amount: "Monto",
           withdraw_step_scan: "Escanear QR",
@@ -3924,6 +3938,20 @@
         status.classList.remove("hidden");
       }
 
+      function profileRetryMessage(retryAt) {
+        const waitUntil = retryAt + 5000;
+        const remaining = Math.max(0, waitUntil - Date.now());
+        if (remaining > 5 * 60 * 1000) {
+          const date = new Date(waitUntil);
+          const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+          return tf("profile_wait_after", { time });
+        }
+        if (remaining > 60 * 1000) {
+          return tf("profile_wait_minutes", { minutes: Math.ceil(remaining / 60000) });
+        }
+        return tf("profile_wait_seconds", { seconds: Math.max(1, Math.ceil(remaining / 1000)) });
+      }
+
       function setProfilePreview(id, src) {
         const image = document.getElementById(id);
         image.onerror = () => {
@@ -4101,8 +4129,20 @@
       document.getElementById("profile-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         if (pendingProfileImages > 0) return;
+        const descriptionInput = document.getElementById("profile-description");
+        const locationInput = document.getElementById("profile-location");
         const phoneInput = document.getElementById("profile-phone");
         const phone = phoneInput.value;
+        if (descriptionInput.value.length > 200) {
+          showProfileStatus(t("profile_description_too_long"), true);
+          descriptionInput.focus();
+          return;
+        }
+        if (locationInput.value.length > 50) {
+          showProfileStatus(t("profile_location_too_long"), true);
+          locationInput.focus();
+          return;
+        }
         if (phone && !/^(?:9)?[1-9]\d{9}$/.test(phone)) {
           phoneInput.setAttribute("aria-invalid", "true");
           showProfileStatus(t("profile_phone_invalid"), true);
@@ -4112,13 +4152,13 @@
 
         const payload = {
           profile: {
-            descripcion: document.getElementById("profile-description").value,
+            descripcion: descriptionInput.value,
             instagram: document.getElementById("profile-instagram").value.trim().replace(/^@/, ""),
             facebook: document.getElementById("profile-facebook").value.trim().replace(/^@/, ""),
             twitter: document.getElementById("profile-twitter").value.trim().replace(/^@/, ""),
             telefono: phone,
             whatsapp: document.getElementById("profile-whatsapp").checked,
-            ubicacion: document.getElementById("profile-location").value,
+            ubicacion: locationInput.value,
           },
           images: {
             perfil: profileImageChanges.perfil,
@@ -4137,6 +4177,9 @@
             body: JSON.stringify(payload),
           });
           const result = await response.json().catch(() => ({}));
+          if (response.status === 429 && Number.isFinite(result.retryAt)) {
+            throw new Error(profileRetryMessage(result.retryAt));
+          }
           if (!response.ok) throw new Error(result.message || t("profile_load_error"));
           profileImageChanges.perfil = null;
           profileImageChanges.productos = [null, null, null, null];

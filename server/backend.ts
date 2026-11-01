@@ -803,11 +803,11 @@ function validateProducerProfileBody(body: any): { profile?: ProducerProfileData
   if (!source || typeof source !== 'object' || Array.isArray(source)) {
     return { error: 'Datos de perfil inválidos.' };
   }
-  if (typeof source.descripcion !== 'string' || source.descripcion.length > 2000) {
-    return { error: 'La descripción no puede superar los 2000 caracteres.' };
+  if (typeof source.descripcion !== 'string' || source.descripcion.length > 200) {
+    return { error: 'La descripción no puede superar los 200 caracteres.' };
   }
-  if (typeof source.ubicacion !== 'string' || source.ubicacion.length > 200) {
-    return { error: 'La ubicación no puede superar los 200 caracteres.' };
+  if (typeof source.ubicacion !== 'string' || source.ubicacion.length > 50) {
+    return { error: 'La ubicación no puede superar los 50 caracteres.' };
   }
   if (!validateSocialId(source.instagram, /^[A-Za-z0-9._]+$/)) {
     return { error: 'El ID de Instagram es inválido.' };
@@ -889,6 +889,12 @@ async function acquireProducerLock(lockPath: string): Promise<fs.promises.FileHa
   }
 }
 
+function sendProfileRateLimit(res: http.ServerResponse, retryAt: number): void {
+  const retryAfter = Math.max(1, Math.ceil((retryAt - Date.now()) / 1000));
+  res.setHeader('Retry-After', String(retryAfter));
+  sendJson(res, 429, { type: 'error', message: PROFILE_RATE_MESSAGE, retryAt });
+}
+
 export async function handleProducerProfile(req: http.IncomingMessage, res: http.ServerResponse, instance: string, sessionId?: string) {
   if (!/^[A-Za-z0-9_-]+$/.test(instance)) {
     sendError(res, 400, 'ID de usuario inválido.');
@@ -925,18 +931,16 @@ export async function handleProducerProfile(req: http.IncomingMessage, res: http
   await fs.promises.mkdir(producerDir, { recursive: true });
   const lock = await acquireProducerLock(lockPath);
   if (!lock) {
-    res.setHeader('Retry-After', '60');
-    sendError(res, 429, PROFILE_RATE_MESSAGE);
+    sendProfileRateLimit(res, Date.now() + PROFILE_MIN_INTERVAL_MS);
     return;
   }
 
   try {
     try {
       const stat = await fs.promises.stat(infoPath);
-      const elapsed = Date.now() - stat.mtimeMs;
-      if (elapsed < PROFILE_MIN_INTERVAL_MS) {
-        res.setHeader('Retry-After', String(Math.max(1, Math.ceil((PROFILE_MIN_INTERVAL_MS - elapsed) / 1000))));
-        sendError(res, 429, PROFILE_RATE_MESSAGE);
+      const retryAt = stat.mtimeMs + PROFILE_MIN_INTERVAL_MS;
+      if (Date.now() < retryAt) {
+        sendProfileRateLimit(res, retryAt);
         return;
       }
     } catch (e: any) {

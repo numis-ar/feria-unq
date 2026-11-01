@@ -397,8 +397,12 @@ describe('Backend tests', () => {
         .set('Authorization', 'Bearer bank-token')
         .send(validBody());
       await save().expect(200);
+      const beforeRetry = Date.now();
       const limited = await save().expect(429);
       assert.match(limited.body.message, /esperar/i);
+      assert.strictEqual(typeof limited.body.retryAt, 'number');
+      assert.ok(limited.body.retryAt >= beforeRetry + 59 * 1000);
+      assert.ok(limited.body.retryAt <= Date.now() + 61 * 1000);
 
       const old = new Date(Date.now() - 61 * 1000);
       fs.utimesSync(path.join(tmpDir, 'shop1', 'info.json'), old, old);
@@ -414,6 +418,8 @@ describe('Backend tests', () => {
         .send(validBody())
         .expect(429);
       assert.match(res.body.message, /esperar/i);
+      assert.strictEqual(typeof res.body.retryAt, 'number');
+      assert.ok(res.body.retryAt > Date.now());
       assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', 'info.json')), false);
     });
 
@@ -426,6 +432,22 @@ describe('Backend tests', () => {
         .send(body)
         .expect(400);
       assert.match(res.body.message, /argentino/i);
+    });
+
+    it('enforces the description and location length limits', async () => {
+      const save = () => request(server)
+        .post('/api/profile/shop1')
+        .set('Authorization', 'Bearer bank-token');
+      const longDescription = validBody();
+      longDescription.profile.descripcion = 'a'.repeat(201);
+      const descriptionRes = await save().send(longDescription).expect(400);
+      assert.match(descriptionRes.body.message, /200 caracteres/);
+
+      const longLocation = validBody();
+      longLocation.profile.ubicacion = 'a'.repeat(51);
+      const locationRes = await save().send(longLocation).expect(400);
+      assert.match(locationRes.body.message, /50 caracteres/);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', 'info.json')), false);
     });
 
     it('rejects PNG images that are 2000 pixels wide or larger', async () => {
