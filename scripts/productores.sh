@@ -21,9 +21,11 @@ import { isDeepStrictEqual } from 'node:util';
 const publicPath = process.env.PRODUCTORES_JSON;
 const personalDir = process.env.PRODUCTORES_DIR;
 const args = process.argv.slice(2);
+const update = args[0] === '--update';
+const selectedId = update ? args[1] : undefined;
 
-if (args.length > 1 || (args.length === 1 && args[0] !== '--update')) {
-  console.error('Uso: scripts/productores.sh [--update]');
+if (args.length > 2 || (args.length > 0 && !update) || (update && args.length === 2 && !selectedId)) {
+  console.error('Uso: scripts/productores.sh [--update [ID]]');
   process.exit(1);
 }
 
@@ -95,8 +97,7 @@ function getStatus(producers, personalData) {
 }
 
 function printList(label, values) {
-  console.log(`${label}: ${values.length}`);
-  for (const value of values) console.log(`  - ${value}`);
+  console.log(`${label} (${values.length})${values.length > 0 ? `: ${values.join(', ')}` : ''}`);
 }
 
 function printStatus(status) {
@@ -125,10 +126,19 @@ async function main() {
 
   const personalData = await readPersonalData();
 
-  if (args[0] === '--update') {
-    for (const producer of producers) {
-      const info = personalData.get(producer.id);
-      if (info !== undefined) Object.assign(producer, info, { id: producer.id });
+  if (update) {
+    if (selectedId !== undefined && !personalData.has(selectedId)) {
+      throw new Error(`No existe ${path.join(personalDir, selectedId, 'info.json')}`);
+    }
+
+    const idsToUpdate = selectedId === undefined ? personalData.keys() : [selectedId];
+    const producersById = new Map(producers.map((producer) => [producer.id, producer]));
+
+    for (const id of idsToUpdate) {
+      const info = personalData.get(id);
+      const producer = producersById.get(id);
+      if (producer === undefined) producers.push({ ...info, id });
+      else Object.assign(producer, info, { id });
     }
 
     const temporaryPath = `${publicPath}.${process.pid}.tmp`;
