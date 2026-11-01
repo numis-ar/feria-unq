@@ -14,6 +14,7 @@ exec 9>"$PRODUCTORES_JSON.lock"
 flock -x 9
 
 node --input-type=module - "$@" <<'NODE'
+import { spawn } from 'node:child_process';
 import { readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
@@ -25,6 +26,23 @@ const update = args[0] === '--update';
 const selectedId = update ? args[1] : undefined;
 const profileFields = ['descripcion', 'instagram', 'facebook', 'twitter', 'telefono', 'whatsapp', 'ubicacion'];
 const imageFiles = ['perfil.png', '1.png', '2.png', '3.png', '4.png'];
+const merchantBaseUrl = 'https://merchant.taler.ar';
+const placeholderUrl = 'https://unq.numis.ar/screenshots/productor-placeholder.svg';
+const instanceConfigFields = [
+  'name',
+  'email',
+  'phone_number',
+  'website',
+  'logo',
+  'address',
+  'jurisdiction',
+  'use_stefan',
+  'default_pay_delay',
+  'default_refund_delay',
+  'default_wire_transfer_delay',
+  'default_wire_transfer_rounding_interval',
+];
+let defaultLogoPromise;
 
 if (args.length > 2 || (args.length > 0 && !update) || (update && args.length === 2 && !selectedId)) {
   console.error('Uso: scripts/productores.sh [--update [ID]]');
@@ -94,6 +112,105 @@ async function readPersonalData() {
   return personalData;
 }
 
+async function merchantRequest(url, options = {}) {
+  let response;
+  try {
+    response = await fetch(url, { ...options, signal: AbortSignal.timeout(30000) });
+  } catch (error) {
+    throw new Error(`No se pudo conectar con Merchant: ${error.message}`);
+  }
+  if (!response.ok) {
+    const details = await response.text().catch(() => '');
+    throw new Error(`Merchant respondió HTTP ${response.status}${details ? `: ${details.slice(0, 200)}` : ''}`);
+  }
+  return response;
+}
+
+async function getMerchantToken() {
+  const credentials = Buffer.from(`admin:${process.env.MERCHANT_PASSWORD}`).toString('base64');
+  const response = await merchantRequest(`${merchantBaseUrl}/instances/admin/private/token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ scope: 'all' }),
+  });
+  const data = await response.json();
+  const token = data.access_token || data.token;
+  if (!token) throw new Error('Merchant no devolvió un access token');
+  return token;
+}
+
+function convertSvgToPng(svg) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('magick', ['-', '-resize', '140x140!', 'png:-'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 30000,
+    });
+    const output = [];
+    const errors = [];
+    let failure;
+    child.stdout.on('data', (chunk) => output.push(chunk));
+    child.stderr.on('data', (chunk) => errors.push(chunk));
+    child.on('error', (error) => { failure = error; });
+    child.stdin.on('error', (error) => { failure = error; });
+    child.on('close', (code) => {
+      if (failure) {
+        reject(failure);
+        return;
+      }
+      if (code !== 0) {
+        reject(new Error(`ImageMagick falló: ${Buffer.concat(errors).toString().trim()}`));
+        return;
+      }
+      resolve(Buffer.concat(output));
+    });
+    child.stdin.end(svg);
+  });
+}
+
+async function getDefaultLogo() {
+  defaultLogoPromise ??= (async () => {
+    const response = await fetch(placeholderUrl, { signal: AbortSignal.timeout(30000) });
+    if (!response.ok) throw new Error(`No se pudo descargar el placeholder: HTTP ${response.status}`);
+    const png = await convertSvgToPng(Buffer.from(await response.arrayBuffer()));
+    return `data:image/png;base64,${png.toString('base64')}`;
+  })();
+  return defaultLogoPromise;
+}
+
+async function getProducerLogo(id) {
+  try {
+    const png = await readFile(path.join(personalDir, id, 'perfil.png'));
+    return `data:image/png;base64,${png.toString('base64')}`;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    return getDefaultLogo();
+  }
+}
+
+async function updateMerchantLogo(id, token) {
+  const logo = await getProducerLogo(id);
+  const authorization = `Bearer ${token}`;
+  const instanceUrl = `${merchantBaseUrl}/management/instances/${encodeURIComponent(id)}`;
+  const response = await merchantRequest(instanceUrl, { headers: { Authorization: authorization } });
+  const current = await response.json();
+  const configuration = {};
+  for (const field of instanceConfigFields) {
+    if (current[field] !== undefined) configuration[field] = current[field];
+  }
+  configuration.logo = logo;
+  await merchantRequest(instanceUrl, {
+    method: 'PATCH',
+    headers: {
+      Authorization: authorization,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(configuration),
+  });
+}
+
 function getStatus(producers, personalData) {
   const publicIds = new Set(producers.map((producer) => producer.id));
   const outdated = [];
@@ -156,11 +273,24 @@ async function main() {
     if (selectedId !== undefined && !personalData.has(selectedId)) {
       throw new Error(`No existe ${path.join(personalDir, selectedId, 'info.json')}`);
     }
+    if (!process.env.MERCHANT_PASSWORD) {
+      throw new Error('MERCHANT_PASSWORD es obligatorio para --update');
+    }
 
-    const idsToUpdate = selectedId === undefined ? personalData.keys() : [selectedId];
+    const idsToUpdate = selectedId === undefined ? [...personalData.keys()] : [selectedId];
+    const token = idsToUpdate.length > 0 ? await getMerchantToken() : null;
     const producersById = new Map(producers.map((producer) => [producer.id, producer]));
+    const failedIds = [];
 
     for (const id of idsToUpdate) {
+      try {
+        await updateMerchantLogo(id, token);
+      } catch (error) {
+        failedIds.push(id);
+        console.error(`${id}: ${error.message}`);
+        continue;
+      }
+
       const info = personalData.get(id);
       const producer = producersById.get(id);
       if (producer === undefined) producers.push({ ...info, id });
@@ -174,6 +304,11 @@ async function main() {
     } catch (error) {
       await unlink(temporaryPath).catch(() => {});
       throw error;
+    }
+
+    if (failedIds.length > 0) {
+      console.error(`No se actualizaron: ${failedIds.join(', ')}`);
+      process.exitCode = 1;
     }
   }
 
