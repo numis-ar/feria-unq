@@ -59,8 +59,7 @@ Este documento resume las decisiones tomadas para la página de ubicación y lis
 ## 8. Imágenes de perfil
 
 - Mientras no haya fotos reales se usa `web/screenshots/productor-placeholder.svg`.
-- `scripts/descargar-foto-instagram.sh` descarga la foto de perfil de un handle de Instagram, la guarda en `web/productores/<handle>.jpg` y vincula esa imagen al productor correspondiente en `web/productores.json`.
-- El script soporta cookies (`--cookies archivo.txt` o `INSTAGRAM_COOKIES_FILE`) porque Instagram suele bloquear requests anónimas.
+- El script soporta cookies en formato Netscape (`--cookies archivo.txt` o `INSTAGRAM_COOKIES_FILE`). Una sesión activa es necesaria cuando Instagram oculta la grilla de publicaciones a visitantes anónimos.
 
 ## 9. Accesibilidad (a11y)
 
