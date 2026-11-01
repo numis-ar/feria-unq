@@ -720,15 +720,246 @@ function bearerToken(req: http.IncomingMessage, headerName: string): string | nu
   return null;
 }
 
-function readJsonBody(req: http.IncomingMessage): Promise<any> {
+function readJsonBody(req: http.IncomingMessage, maxBytes?: number): Promise<any> {
   return new Promise((resolve, reject) => {
     let raw = '';
-    req.on('data', (chunk) => { raw += chunk; });
+    let size = 0;
+    let tooLarge = false;
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (maxBytes !== undefined && size > maxBytes) {
+        tooLarge = true;
+        raw = '';
+      } else if (!tooLarge) {
+        raw += chunk;
+      }
+    });
     req.on('end', () => {
+      if (tooLarge) {
+        reject(Object.assign(new Error('Request body too large'), { status: 413 }));
+        return;
+      }
       try { resolve(raw ? JSON.parse(raw) : {}); } catch (e) { reject(e); }
     });
     req.on('error', reject);
   });
+}
+
+const PROFILE_MIN_INTERVAL_MS = 60 * 1000;
+const PROFILE_IMAGE_MAX_BYTES = 500 * 1024;
+const PROFILE_IMAGE_MAX_DIMENSION = 2000;
+const PROFILE_BODY_MAX_BYTES = 4 * 1024 * 1024;
+const PROFILE_RATE_MESSAGE = 'Tenés que esperar antes de hacer muchas modificaciones.';
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+interface ProducerProfileData {
+  descripcion: string;
+  instagram: string;
+  facebook: string;
+  twitter: string;
+  telefono: string;
+  whatsapp: boolean;
+  ubicacion: string;
+}
+
+interface ProducerImageData {
+  filename: string;
+  data: Buffer;
+}
+
+function getProducersDir(): string {
+  return process.env.PRODUCERS_DIR || path.join(process.cwd(), 'web', 'productores');
+}
+
+export function isValidArgentinePhone(value: unknown): value is string {
+  return typeof value === 'string' && (value === '' || /^(?:9)?[1-9]\d{9}$/.test(value));
+}
+
+function validateSocialId(value: unknown, pattern: RegExp): value is string {
+  return typeof value === 'string' && value.length <= 100 && (value === '' || pattern.test(value));
+}
+
+function decodeProfilePng(value: unknown): Buffer | null {
+  if (typeof value !== 'string') return null;
+  const match = value.match(/^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/);
+  if (!match || match[1].length % 4 !== 0) return null;
+  const data = Buffer.from(match[1], 'base64');
+  if (
+    data.length === 0 ||
+    data.length > PROFILE_IMAGE_MAX_BYTES ||
+    data.length < 33 ||
+    !data.subarray(0, 8).equals(PNG_SIGNATURE) ||
+    data.readUInt32BE(8) !== 13 ||
+    data.subarray(12, 16).toString('ascii') !== 'IHDR'
+  ) return null;
+  const width = data.readUInt32BE(16);
+  const height = data.readUInt32BE(20);
+  if (width === 0 || height === 0 || width >= PROFILE_IMAGE_MAX_DIMENSION || height >= PROFILE_IMAGE_MAX_DIMENSION) return null;
+  return data;
+}
+
+function validateProducerProfileBody(body: any): { profile?: ProducerProfileData; images?: ProducerImageData[]; error?: string } {
+  const source = body?.profile;
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    return { error: 'Datos de perfil inválidos.' };
+  }
+  if (typeof source.descripcion !== 'string' || source.descripcion.length > 2000) {
+    return { error: 'La descripción no puede superar los 2000 caracteres.' };
+  }
+  if (typeof source.ubicacion !== 'string' || source.ubicacion.length > 200) {
+    return { error: 'La ubicación no puede superar los 200 caracteres.' };
+  }
+  if (!validateSocialId(source.instagram, /^[A-Za-z0-9._]+$/)) {
+    return { error: 'El ID de Instagram es inválido.' };
+  }
+  if (!validateSocialId(source.facebook, /^[A-Za-z0-9.-]+$/)) {
+    return { error: 'El ID de Facebook es inválido.' };
+  }
+  if (!validateSocialId(source.twitter, /^[A-Za-z0-9_]+$/)) {
+    return { error: 'El ID de Twitter es inválido.' };
+  }
+  if (!isValidArgentinePhone(source.telefono)) {
+    return { error: 'Ingresá un teléfono argentino de 10 dígitos, sin +54.' };
+  }
+  if (typeof source.whatsapp !== 'boolean') {
+    return { error: 'El valor de WhatsApp es inválido.' };
+  }
+
+  const images: ProducerImageData[] = [];
+  const rawImages = body.images || {};
+  if (typeof rawImages !== 'object' || Array.isArray(rawImages)) {
+    return { error: 'Las imágenes son inválidas.' };
+  }
+  if (rawImages.perfil !== undefined && rawImages.perfil !== null) {
+    const data = decodeProfilePng(rawImages.perfil);
+    if (!data) return { error: 'La foto de perfil debe ser PNG, pesar hasta 500 KB y medir menos de 2000 × 2000 píxeles.' };
+    images.push({ filename: 'perfil.png', data });
+  }
+  if (rawImages.productos !== undefined) {
+    if (!Array.isArray(rawImages.productos) || rawImages.productos.length !== 4) {
+      return { error: 'Se esperan cuatro espacios para fotos de productos.' };
+    }
+    for (let i = 0; i < 4; i++) {
+      const value = rawImages.productos[i];
+      if (value === null || value === undefined) continue;
+      const data = decodeProfilePng(value);
+      if (!data) return { error: `La foto de producto ${i + 1} debe ser PNG, pesar hasta 500 KB y medir menos de 2000 × 2000 píxeles.` };
+      images.push({ filename: `${i + 1}.png`, data });
+    }
+  }
+
+  return {
+    profile: {
+      descripcion: source.descripcion.trim(),
+      instagram: source.instagram.replace(/^@/, ''),
+      facebook: source.facebook.replace(/^@/, ''),
+      twitter: source.twitter.replace(/^@/, ''),
+      telefono: source.telefono,
+      whatsapp: source.whatsapp,
+      ubicacion: source.ubicacion.trim(),
+    },
+    images,
+  };
+}
+
+async function writeProducerFile(filename: string, data: string | Buffer): Promise<void> {
+  const temp = `${filename}.${process.pid}.${crypto.randomBytes(6).toString('hex')}.tmp`;
+  try {
+    await fs.promises.writeFile(temp, data, { flag: 'wx' });
+    await fs.promises.rename(temp, filename);
+  } finally {
+    await fs.promises.rm(temp, { force: true }).catch(() => {});
+  }
+}
+
+async function acquireProducerLock(lockPath: string): Promise<fs.promises.FileHandle | null> {
+  try {
+    return await fs.promises.open(lockPath, 'wx');
+  } catch (e: any) {
+    if (e.code !== 'EEXIST') throw e;
+    try {
+      const stat = await fs.promises.stat(lockPath);
+      if (Date.now() - stat.mtimeMs <= 5 * 60 * 1000) return null;
+      await fs.promises.rm(lockPath, { force: true });
+      return await fs.promises.open(lockPath, 'wx');
+    } catch (staleError: any) {
+      if (staleError.code === 'ENOENT') return acquireProducerLock(lockPath);
+      throw staleError;
+    }
+  }
+}
+
+export async function handleProducerProfile(req: http.IncomingMessage, res: http.ServerResponse, instance: string, sessionId?: string) {
+  if (!/^[A-Za-z0-9_-]+$/.test(instance)) {
+    sendError(res, 400, 'ID de usuario inválido.');
+    return;
+  }
+  const token = bearerToken(req, 'authorization');
+  if (!token) {
+    sendError(res, 401, 'Unauthorized');
+    return;
+  }
+
+  const auth = await upstreamJson(getBankUrl(), `/accounts/${encodeURIComponent(instance)}`, token, sessionId);
+  if (auth.status !== 200) {
+    sendError(res, auth.networkError || auth.status >= 500 ? 502 : 401, auth.networkError || auth.status >= 500 ? 'No se pudo validar la sesión.' : 'Unauthorized');
+    return;
+  }
+
+  let body: any;
+  try {
+    body = await readJsonBody(req, PROFILE_BODY_MAX_BYTES);
+  } catch (e: any) {
+    sendError(res, e.status === 413 ? 413 : 400, e.status === 413 ? 'El contenido enviado es demasiado grande.' : 'Invalid JSON body');
+    return;
+  }
+  const validated = validateProducerProfileBody(body);
+  if (validated.error || !validated.profile || !validated.images) {
+    sendError(res, 400, validated.error || 'Datos de perfil inválidos.');
+    return;
+  }
+
+  const producerDir = path.join(getProducersDir(), instance);
+  const infoPath = path.join(producerDir, 'info.json');
+  const lockPath = path.join(producerDir, 'info.lock');
+  await fs.promises.mkdir(producerDir, { recursive: true });
+  const lock = await acquireProducerLock(lockPath);
+  if (!lock) {
+    res.setHeader('Retry-After', '60');
+    sendError(res, 429, PROFILE_RATE_MESSAGE);
+    return;
+  }
+
+  try {
+    try {
+      const stat = await fs.promises.stat(infoPath);
+      const elapsed = Date.now() - stat.mtimeMs;
+      if (elapsed < PROFILE_MIN_INTERVAL_MS) {
+        res.setHeader('Retry-After', String(Math.max(1, Math.ceil((PROFILE_MIN_INTERVAL_MS - elapsed) / 1000))));
+        sendError(res, 429, PROFILE_RATE_MESSAGE);
+        return;
+      }
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') throw e;
+    }
+
+    await writeProducerFile(infoPath, JSON.stringify(validated.profile, null, 2) + '\n');
+    for (const image of validated.images) {
+      await writeProducerFile(path.join(producerDir, image.filename), image.data);
+    }
+    trackEvent(sessionId || getSessionId(req), {
+      type: 'business',
+      action: 'save-profile',
+      root_code: 'OK',
+      url: req.url || '/',
+      affects_experience: false,
+      payload: { instance, images: validated.images.length },
+    });
+  } finally {
+    await lock.close();
+    await fs.promises.rm(lockPath, { force: true });
+  }
+  sendJson(res, 200, { type: 'ok' });
 }
 
 // ---------------------------------------------------------------------------
@@ -1715,6 +1946,22 @@ export const server = http.createServer((req, res) => {
 
   if (path === '/api/config' && req.method === 'GET') {
     sendJson(res, 200, { bankHost: new URL(getBankUrl()).host });
+    return;
+  }
+
+  const profileMatch = path.match(/^\/api\/profile\/([^/]+)$/);
+  if (req.method === 'POST' && profileMatch) {
+    let instance = '';
+    try {
+      instance = decodeURIComponent(profileMatch[1]);
+    } catch {
+      sendError(res, 400, 'ID de usuario inválido.');
+      return;
+    }
+    handleProducerProfile(req, res, instance, sessionId).catch((e) => {
+      log('Profile save error:', e.message || e);
+      if (!res.headersSent) sendError(res, 500, 'No se pudo guardar el perfil.');
+    });
     return;
   }
 

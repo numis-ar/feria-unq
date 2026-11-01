@@ -79,6 +79,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
   let page;
   let staticServer;
   let baseUrl;
+  let profileRequestBody;
 
   before(async () => {
     staticServer = http.createServer((req, res) => {
@@ -115,6 +116,16 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
       if (cleanUrl.includes('/close-account')) {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ type: 'ok' }));
+        return;
+      }
+      if (req.method === 'POST' && cleanUrl.startsWith('/api/profile/')) {
+        let raw = '';
+        req.on('data', (chunk) => { raw += chunk; });
+        req.on('end', () => {
+          profileRequestBody = JSON.parse(raw);
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ type: 'ok' }));
+        });
         return;
       }
       if (cleanUrl.match(/\/accounts\/[^/?]+$/)) {
@@ -295,6 +306,74 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await orderRow.waitFor({ state: 'visible' });
     const text = await orderRow.textContent();
     assert.ok(text.includes('Coffee'));
+  });
+
+  it('7. Profile loads producer data, resizes photos and saves changes', async () => {
+    profileRequestBody = null;
+    await page.goto(`${baseUrl}/merchant.html`);
+    await page.fill('#auth-user', 'raices-del-rio');
+    await page.fill('#auth-pass', 'secret1234');
+    await page.click('#btn-login');
+    await page.locator('#auth-modal').waitFor({ state: 'hidden' });
+    await page.click('#nav-profile-btn');
+    await page.locator('#profile:not(.hidden)').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => document.getElementById('profile-description').value.includes('Miel pura'));
+    assert.strictEqual(await page.inputValue('#profile-phone'), '1140011001');
+    assert.strictEqual(await page.inputValue('#profile-instagram'), 'raicesdelrio');
+    assert.strictEqual(await page.isChecked('#profile-whatsapp'), true);
+
+    const largePng = await page.evaluate(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 2100;
+      canvas.height = 100;
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#064d2d';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/png');
+    });
+    await page.setInputFiles('#profile-photo-input', {
+      name: 'large.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(largePng.split(',')[1], 'base64'),
+    });
+    await page.waitForFunction(() => {
+      const image = document.getElementById('profile-photo-preview');
+      return image.src.startsWith('data:image/png') && image.complete && image.naturalWidth === 1999;
+    });
+
+    const heavyPng = await page.evaluate(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 700;
+      canvas.height = 700;
+      const context = canvas.getContext('2d');
+      const pixels = context.createImageData(canvas.width, canvas.height);
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        pixels.data[i] = Math.floor(Math.random() * 256);
+        pixels.data[i + 1] = Math.floor(Math.random() * 256);
+        pixels.data[i + 2] = Math.floor(Math.random() * 256);
+        pixels.data[i + 3] = 255;
+      }
+      context.putImageData(pixels, 0, 0);
+      return canvas.toDataURL('image/png');
+    });
+    assert.ok(Buffer.byteLength(heavyPng.split(',')[1], 'base64') > 500 * 1024);
+    await page.setInputFiles('#product-photo-input-1', {
+      name: 'heavy.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(heavyPng.split(',')[1], 'base64'),
+    });
+    await page.waitForFunction(() => document.getElementById('product-photo-preview-1').src.startsWith('data:image/png'));
+
+    await page.fill('#profile-description', 'Descripción actualizada');
+    await page.click('#btn-save-profile');
+    await page.locator('#profile-status', { hasText: 'Perfil guardado correctamente.' }).waitFor({ state: 'visible' });
+    assert.ok(profileRequestBody);
+    assert.strictEqual(profileRequestBody.profile.descripcion, 'Descripción actualizada');
+    assert.strictEqual(profileRequestBody.profile.telefono, '1140011001');
+    assert.ok(profileRequestBody.images.perfil.startsWith('data:image/png;base64,'));
+    assert.ok(profileRequestBody.images.productos[0].startsWith('data:image/png;base64,'));
+    assert.ok(Buffer.byteLength(profileRequestBody.images.productos[0].split(',')[1], 'base64') <= 500 * 1024);
+    assert.deepStrictEqual(profileRequestBody.images.productos.slice(1), [null, null, null]);
   });
 });
 

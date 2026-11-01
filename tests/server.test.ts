@@ -322,6 +322,130 @@ describe('Backend tests', () => {
     });
   });
 
+  describe('POST /api/profile/:instance', () => {
+    let tmpDir: string;
+    const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
+    function validBody() {
+      return {
+        profile: {
+          descripcion: 'Productos artesanales',
+          instagram: 'tienda.local',
+          facebook: 'tienda-local',
+          twitter: 'tienda_local',
+          telefono: '1140011001',
+          whatsapp: true,
+          ubicacion: 'Puesto 4',
+        },
+        images: { productos: [null, null, null, null] },
+      };
+    }
+
+    function allowShop1() {
+      mockBankHandler = (req, res) => {
+        if (req.method === 'GET' && req.url === '/accounts/shop1' && req.headers.authorization === 'Bearer bank-token') {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ name: 'Shop 1' }));
+          return;
+        }
+        res.writeHead(401);
+        res.end();
+      };
+    }
+
+    beforeEach(() => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'feria-profile-'));
+      process.env.PRODUCERS_DIR = tmpDir;
+      allowShop1();
+    });
+
+    afterEach(() => {
+      delete process.env.PRODUCERS_DIR;
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it('requires a valid bank token', async () => {
+      await request(server).post('/api/profile/shop1').send(validBody()).expect(401);
+      await request(server)
+        .post('/api/profile/shop1')
+        .set('Authorization', 'Bearer wrong')
+        .send(validBody())
+        .expect(401);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', 'info.json')), false);
+    });
+
+    it('saves info.json and PNG files for the authenticated user', async () => {
+      const body = validBody();
+      body.images = { perfil: tinyPng, productos: [tinyPng, null, null, null] } as any;
+      await request(server)
+        .post('/api/profile/shop1')
+        .set('Authorization', 'Bearer bank-token')
+        .send(body)
+        .expect(200);
+
+      const info = JSON.parse(fs.readFileSync(path.join(tmpDir, 'shop1', 'info.json'), 'utf8'));
+      assert.deepStrictEqual(info, body.profile);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', 'perfil.png')), true);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', '1.png')), true);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', '2.png')), false);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', 'info.lock')), false);
+    });
+
+    it('rejects another change for one minute and accepts it after that', async () => {
+      const save = () => request(server)
+        .post('/api/profile/shop1')
+        .set('Authorization', 'Bearer bank-token')
+        .send(validBody());
+      await save().expect(200);
+      const limited = await save().expect(429);
+      assert.match(limited.body.message, /esperar/i);
+
+      const old = new Date(Date.now() - 61 * 1000);
+      fs.utimesSync(path.join(tmpDir, 'shop1', 'info.json'), old, old);
+      await save().expect(200);
+    });
+
+    it('honors an existing producer lock', async () => {
+      fs.mkdirSync(path.join(tmpDir, 'shop1'), { recursive: true });
+      fs.writeFileSync(path.join(tmpDir, 'shop1', 'info.lock'), 'locked');
+      const res = await request(server)
+        .post('/api/profile/shop1')
+        .set('Authorization', 'Bearer bank-token')
+        .send(validBody())
+        .expect(429);
+      assert.match(res.body.message, /esperar/i);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', 'info.json')), false);
+    });
+
+    it('rejects non-Argentine phone formats', async () => {
+      const body = validBody();
+      body.profile.telefono = '+54 11 4001 1001';
+      const res = await request(server)
+        .post('/api/profile/shop1')
+        .set('Authorization', 'Bearer bank-token')
+        .send(body)
+        .expect(400);
+      assert.match(res.body.message, /argentino/i);
+    });
+
+    it('rejects PNG images that are 2000 pixels wide or larger', async () => {
+      const png = Buffer.alloc(33);
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(png);
+      png.writeUInt32BE(13, 8);
+      png.write('IHDR', 12, 'ascii');
+      png.writeUInt32BE(2000, 16);
+      png.writeUInt32BE(100, 20);
+      const body = validBody();
+      body.images = { perfil: `data:image/png;base64,${png.toString('base64')}`, productos: [null, null, null, null] } as any;
+      await request(server)
+        .post('/api/profile/shop1')
+        .set('Authorization', 'Bearer bank-token')
+        .send(body)
+        .expect(400);
+      assert.strictEqual(fs.existsSync(path.join(tmpDir, 'shop1', 'info.json')), false);
+    });
+  });
+
   describe('WebSocket /ws', () => {
     async function listenBackend(): Promise<number> {
       if (!(server as any).listening) {
