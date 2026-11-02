@@ -15,7 +15,7 @@ flock -x 9
 
 node --input-type=module - "$@" <<'NODE'
 import { spawn } from 'node:child_process';
-import { readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
+import { readFile, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -94,17 +94,8 @@ async function readPersonalData() {
       if (Object.hasOwn(info, field)) data[field] = info[field];
     }
     for (let i = 0; i < imageFiles.length; i++) {
-      let imageExists;
-      try {
-        imageExists = (await stat(path.join(producerDir, imageFiles[i]))).isFile();
-      } catch (error) {
-        if (error.code === 'ENOENT') continue;
-        throw error;
-      }
-      if (imageExists) {
-        const field = i === 0 ? 'imagen' : `imagen${i + 1}`;
-        data[field] = `./productores/${encodeURIComponent(entry.name)}/${imageFiles[i]}`;
-      }
+      const field = i === 0 ? 'imagen' : `imagen${i}`;
+      data[field] = `./productores/${encodeURIComponent(entry.name)}/${imageFiles[i]}`;
     }
     personalData.set(entry.name, data);
   }
