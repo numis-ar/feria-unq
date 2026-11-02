@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credencial A4</title>
+<!-- GENERADO por regenerar/regenerar-pagina.py a partir de regenerar/plantilla.html. -->
+<style>
+  :root{ --verde:#064d2d }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#e8eae6}
+  body{font-family:system-ui,sans-serif;color:#222}
+
+  /* ---------- Controles (solo pantalla) ---------- */
+  .panel{max-width:760px;margin:20px auto;background:#fff;border-radius:12px;padding:16px 18px;
+         box-shadow:0 2px 10px rgba(0,0,0,.08);font-size:13px}
+  .panel h1{font-size:17px;margin-bottom:8px}
+  .panel p{color:#555;line-height:1.45;margin-bottom:10px}
+  .lado{border:1px solid #dfe3dc;border-radius:10px;padding:10px 12px 2px;margin-bottom:12px}
+  .lado legend{font-weight:700;padding:0 6px;color:var(--verde)}
+  .fila{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+  .fila label{width:150px;flex:none}
+  .fila input[type=text]{flex:1;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:inherit}
+  .cuenta{flex:none;width:52px;text-align:right;color:#777;font-variant-numeric:tabular-nums}
+  .aviso{color:#b3261e;min-height:1em;margin:-4px 0 8px 160px!important}
+  .ayuda{color:#777;font-size:12px;margin:0 0 12px!important}
+  .ayuda code{background:#f2f3f0;padding:0 3px;border-radius:3px}
+  .panel button{background:var(--verde);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:700 14px system-ui,sans-serif;cursor:pointer}
+  .panel button:disabled{background:#9aa79f;cursor:not-allowed}
+  .wrap{display:flex;justify-content:center;padding:8px 16px 40px}
+
+  /* ---------- Hoja A4: un único SVG en mm ---------- */
+  .hoja{width:210mm;height:297mm;background:#fff;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+  @media screen and (max-width:860px){ .hoja{zoom:.42} }
+  .hoja-svg{display:block;width:210mm;height:297mm}
+
+  /* ---------- Impresión ---------- */
+  @page{size:210mm 297mm;margin:0}
+  @media print{
+    html,body{background:#fff}
+    .panel{display:none}
+    .wrap{padding:0;display:block}
+    .hoja{box-shadow:none;zoom:1}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>Credenciales para productorxs — A4 (2 por hoja)</h1>
+  <p>La hoja tiene <b>dos credenciales independientes</b>: la izquierda y la derecha, cada una con su propio QR y su propio usuario. Al imprimir: tamaño <b>A4</b>, escala <b>100%</b>, márgenes <b>ninguno</b> y <b>gráficos de fondo</b> activados.</p>
+  <div id="paneles"></div>
+  <p class="ayuda">Usuario: hasta __USR_MAX__ caracteres — letras sin tilde, números y <code>. _ - @ +</code>; se respetan mayúsculas y minúsculas. Si es largo pasa a dos renglones (se corta preferentemente después de <code>. _ - @ +</code>).</p>
+  <p id="aviso-general" class="aviso" style="margin-left:0!important"></p>
+  <button id="imprimir" onclick="window.print()">Imprimir</button>
+</div>
+
+<div class="wrap">
+<div class="hoja">
+__HOJA__
+</div>
+</div>
+
+<script>
+__QRLIB__
+</script>
+<script>
+  // Mismo armado que generar-credencial.py (tienen que coincidir carácter a carácter).
+  const USR = __USR_JSON__;
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+
+  // ---------- QR ----------
+  function modulosQR(texto){
+    const q = qrcode(0, 'M');
+    q.addData(texto, 'Byte');
+    q.make();
+    const n = q.getModuleCount();
+    let d = '';
+    for (let r = 0; r < n; r++) {
+      let c = 0;
+      while (c < n) {
+        if (!q.isDark(r, c)) { c++; continue; }
+        let k = c;
+        while (k < n && q.isDark(r, k)) k++;
+        d += 'M' + c + ' ' + r + 'h' + (k - c) + 'v1h-' + (k - c) + 'z';
+        c = k;
+      }
+    }
+    return { d: d, escala: 'scale(' + (USR.qr_lado / n) + ')' };
+  }
+
+  // ---------- Usuario: 1 renglón, o 2 si en uno quedaría chico ----------
+  function ancho(s){
+    let u = 0, prev = null;
+    for (const ch of s) {
+      if (prev !== null) u += (USR.kern[prev + ch] || 0);
+      u += USR.glifos[ch].a;
+      prev = ch;
+    }
+    return u;
+  }
+  function textoUsuario(usuario){
+    const cs = [...usuario], n = cs.length, u = ancho(cs);
+    let s = Math.min(USR.esc_una_max, USR.ancho / u), lineas;
+    if (s >= USR.esc_una_min || n < 2) {
+      lineas = [[cs, -USR.cap / 2]];
+    } else {
+      const mejor = cands => {
+        let b = null;
+        for (const i of cands) {
+          const m = Math.max(ancho(cs.slice(0, i)), ancho(cs.slice(i)));
+          if (b === null || m < b[1]) b = [i, m];
+        }
+        return b;
+      };
+      const todosI = [], sepI = [];
+      for (let i = 1; i < n; i++) { todosI.push(i); if (USR.cortes.includes(cs[i - 1])) sepI.push(i); }
+      const todos = mejor(todosI), sep = mejor(sepI);
+      let corte = todos;
+      if (sep && 5 * sep[1] <= 6 * todos[1] && Math.min(USR.esc_dos_max, USR.ancho / sep[1]) >= USR.esc_dos_min)
+        corte = sep;
+      s = Math.min(USR.esc_dos_max, USR.ancho / corte[1]);
+      const i = corte[0];
+      lineas = [[cs.slice(0, i), USR.interlinea / 2 - USR.cap / 2], [cs.slice(i), -USR.interlinea / 2 - USR.cap / 2]];
+    }
+    let svg = '';
+    for (const [texto, ty] of lineas) {
+      let x = 0, partes = '', prev = null;
+      for (const ch of texto) {
+        if (prev !== null) x += (USR.kern[prev + ch] || 0);
+        const g = USR.glifos[ch];
+        if (g.d) partes += '<path transform="translate(' + x + ' 0)" d="' + g.d + '"/>';
+        x += g.a;
+        prev = ch;
+      }
+      svg += '<g transform="translate(-' + (x / 2) + ' ' + ty + ')">' + partes + '</g>';
+    }
+    return { tr: 'translate(' + USR.cx + ' ' + USR.cy + ') scale(' + s + ' -' + s + ')', svg: svg };
+  }
+
+  // ---------- Validación ----------
+  function erroresQR(qr){ return qr.trim() ? [] : ['El QR está vacío.']; }
+  function erroresUsuario(usuario){
+    const e = [];
+    const malos = [...new Set([...usuario].filter(ch => !(ch in USR.glifos)))];
+    if (!usuario.length) e.push('El usuario está vacío.');
+    if (malos.length) e.push('Caracteres no permitidos en el usuario: ' + malos.map(c => c === ' ' ? '(espacio)' : c).join(' '));
+    if ([...usuario].length > USR.max) e.push('Usuario: máximo ' + USR.max + ' caracteres (hay ' + [...usuario].length + ').');
+    return e;
+  }
+
+  const TITULOS = { izquierda: 'Credencial izquierda', derecha: 'Credencial derecha' };
+  const valido = {};
+  function actualizar(lado){
+    const qr = document.getElementById('qr-' + lado).value;
+    const usuario = document.getElementById('usuario-' + lado).value;
+    const eq = erroresQR(qr), eu = erroresUsuario(usuario), e = eq.concat(eu);
+    const cuenta = document.getElementById('cuenta-' + lado);
+    cuenta.textContent = [...usuario].length + '/' + USR.max;
+    cuenta.style.color = [...usuario].length > USR.max ? '#b3261e' : '';
+    document.getElementById('aviso-' + lado).textContent =
+      e.length ? e.join(' · ') + ' — se muestra el último valor válido.' : '';
+    valido[lado] = !e.length;
+    document.getElementById('imprimir').disabled = !USR.lados.every(l => valido[l]);
+    if (!eq.length) {                        // si hay error se mantiene el último QR válido
+      const m = modulosQR(qr);
+      const p = document.getElementById('qr-modulos-' + lado);
+      p.setAttribute('d', m.d);
+      p.setAttribute('transform', m.escala);
+    }
+    if (!eu.length) {                        // ídem con el usuario
+      const t = textoUsuario(usuario);
+      const g = document.getElementById('texto-usuario-' + lado);
+      g.setAttribute('transform', t.tr);
+      g.innerHTML = t.svg;
+    }
+  }
+
+  // ---------- Un bloque del panel por credencial ----------
+  const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  for (const lado of USR.lados) {
+    const f = document.createElement('fieldset');
+    f.className = 'lado';
+    f.innerHTML =
+      '<legend>' + (TITULOS[lado] || 'Credencial ' + lado) + '</legend>' +
+      '<div class="fila"><label for="qr-' + lado + '">QR (link o texto)</label>' +
+        '<input type="text" id="qr-' + lado + '" value="' + esc(USR.qr_defecto) + '" spellcheck="false"></div>' +
+      '<div class="fila"><label for="usuario-' + lado + '">Usuario</label>' +
+        '<input type="text" id="usuario-' + lado + '" value="' + esc(USR.usuario_defecto) + '" spellcheck="false" autocomplete="off" autocapitalize="off">' +
+        '<span id="cuenta-' + lado + '" class="cuenta"></span></div>' +
+      '<p id="aviso-' + lado + '" class="aviso"></p>';
+    document.getElementById('paneles').appendChild(f);
+    document.getElementById('qr-' + lado).addEventListener('input', () => actualizar(lado));
+    document.getElementById('usuario-' + lado).addEventListener('input', () => actualizar(lado));
+  }
+
+  // ---------- Valores por la URL: #qr-izquierda=…&usuario-izquierda=…&qr-derecha=…&usuario-derecha=… ----------
+  const params = new URLSearchParams(location.hash.slice(1));
+  const validos = new Set(USR.lados.flatMap(l => ['qr-' + l, 'usuario-' + l]));
+  const desconocidos = [...new Set(params.keys())].filter(k => !validos.has(k));
+  if (desconocidos.length)
+    document.getElementById('aviso-general').textContent = 'Parámetros de la URL no reconocidos (se ignoran): ' +
+      desconocidos.join(', ') + '. Usá ' + [...validos].join(', ') + '.';
+  for (const lado of USR.lados) {
+    if (params.has('qr-' + lado)) document.getElementById('qr-' + lado).value = params.get('qr-' + lado);
+    if (params.has('usuario-' + lado)) document.getElementById('usuario-' + lado).value = params.get('usuario-' + lado);
+    actualizar(lado);
+  }
+</script>
+</body>
+</html>
