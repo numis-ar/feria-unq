@@ -28,7 +28,7 @@ This document records the main design decisions taken for the Feria UNQ frontend
 
 **Decision:** `puesto.html` supports two ways to receive a QR payload:
 
-1. Legacy explicit value: `puesto.html?qr=<raw-qr-text>`.
+1. Legacy explicit value: `puesto.html?qr=<payment-url>`, restricted to Taler or HTTPS URLs.
 2. Named ID: `/puesto-<id>`, where `<id>` is looked up in an internal JavaScript map (`PUESTO_MAP`) embedded in the page.
 
 **Rationale:**

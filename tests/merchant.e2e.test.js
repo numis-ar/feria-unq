@@ -214,6 +214,20 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     assert.strictEqual(statSold, '10.00');
   });
 
+  it('1b. Login preloads usr and focuses the password', async () => {
+    await page.addInitScript(() => {
+      localStorage.setItem('taler_username', 'saved-user');
+      localStorage.setItem('taler_password', 'saved-pass');
+    });
+    await page.goto(`${baseUrl}/merchant.html?usr=producer01`);
+    await page.locator('#auth-modal').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => document.activeElement?.id === 'auth-pass');
+
+    assert.strictEqual(await page.locator('#auth-user').inputValue(), 'producer01');
+    assert.strictEqual(await page.locator('#auth-pass').inputValue(), '');
+    assert.strictEqual(await page.evaluate(() => document.activeElement?.id), 'auth-pass');
+  });
+
   it('2. Change Password Feature', async () => {
     await page.goto(`${baseUrl}/merchant.html`);
     await page.fill('#auth-user', 'default');
@@ -313,6 +327,37 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await orderRow.waitFor({ state: 'visible' });
     const text = await orderRow.textContent();
     assert.ok(text.includes('Coffee'));
+  });
+
+  it('6b. Order notifications render API content as text', async () => {
+    const maliciousSummary = '<img src=x onerror="window.__toastXss = 1">';
+    let orderRequests = 0;
+    await page.route('**/api/merchant/instances/default/private/orders**', async (route) => {
+      orderRequests++;
+      const malicious = orderRequests > 2;
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ orders: [{
+          order_id: 'notification-xss',
+          summary: malicious ? maliciousSummary : 'Initial order',
+          amount: 'NUMIS:10',
+          refund_amount: 'NUMIS:0',
+          paid: malicious,
+          wired: malicious,
+          timestamp: { t_s: Math.floor(Date.now() / 1000) },
+        }] }),
+      });
+    });
+    await page.addInitScript(() => { window.__toastXss = 0; });
+    await page.goto(`${baseUrl}/merchant.html`);
+    await page.fill('#auth-user', 'default');
+    await page.fill('#auth-pass', 'secret1234');
+    await page.click('#btn-login');
+
+    const toastText = page.locator('#toast-container p', { hasText: maliciousSummary });
+    await toastText.waitFor({ state: 'visible' });
+    assert.strictEqual(await page.evaluate(() => window.__toastXss), 0);
+    assert.strictEqual(await page.locator('#toast-container img').count(), 0);
   });
 
   it('7. Profile loads producer data, resizes photos and saves changes', async () => {
