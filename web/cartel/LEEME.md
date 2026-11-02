@@ -61,9 +61,10 @@ sus dos valores en orden: primero el QR, después el texto.
   o si un QR está vacío.
 - El texto puede ir vacío (`""`) si no querés texto debajo del QR. Por defecto el
   PDF sale como `cartel-qr.pdf`.
-- El texto admite hasta **22 caracteres** (el máximo lo calcula la herramienta; ver
-  más abajo). Si tiene más, o algún carácter no permitido, el script corta con un
-  error que dice de qué cartel es (`[izquierda]` o `[derecha]`).
+- El texto admite hasta **50 caracteres** y ocupa una sola línea. Si tiene más, se
+  acorta y termina en `...`; si supera el ancho disponible, queda recortado. Los
+  caracteres no permitidos producen un error que identifica el cartel (`[izquierda]`
+  o `[derecha]`).
 - `--buscar-emoji TEXTO` lista emojis y sus shortcodes (ver **Emojis**).
 
 Los dos caminos dan el mismo PDF (comparado píxel por píxel a 600 dpi).
@@ -87,7 +88,7 @@ iguales en la página y en el script:
 ./generar-cartel.py --buscar-emoji zapa       # 👟  :zapatilla_deportiva:  …
 ```
 
-- **Cada emoji cuenta como 1 carácter** del máximo de 22, incluidos los compuestos:
+- **Cada emoji cuenta como 1 carácter** del máximo de 50, incluidos los compuestos:
   banderas (🇦🇷), tonos de piel (👍🏽) y secuencias como 🏳️‍🌈.
 - **Shortcodes:** los de GitHub/Slack en inglés (`:grinning:`, `:athletic_shoe:`, `:+1:`)
   y los de Unicode en castellano (`:cara_sonriendo:`, `:zapatilla_deportiva:`,
@@ -194,15 +195,15 @@ script (`--izquierda`, `--derecha`).
 **El texto editable debajo del QR.** La página trae una tabla con el dibujo, el
 ancho y el kerning de cada carácter permitido (`const SUB = {...}` en el HTML).
 La página (en JavaScript) y el script (en Python) arman el texto con esa misma
-tabla y con la misma regla, así que salen idénticos.
+tabla y con la misma regla, así que salen idénticos. Los glifos `Ū` y `Ű` se toman
+de `web/fonts/archivo-700.ttf`, porque no están incluidos en la fuente Montserrat.
 
-**Cómo se calcula el máximo de caracteres.** Es el mayor número de caracteres para
-el que *cualquier* combinación de caracteres permitidos y emojis entra en
-`SUB_ANCHO_MAX` (93 mm), contando el ancho real, el kerning y el espaciado entre
-letras (un emoji mide 1 em, menos que la W). Con
-Montserrat SemiBold a 3,4 mm da 22; el peor caso es "WWWW…" (22 W = 92,9 mm).
-Si cambiás `PERMITIDOS`, `SUB_ESCALA`, `SUB_ESPACIADO` o `SUB_ANCHO_MAX`, el máximo
-se recalcula solo al regenerar.
+**Máximo de caracteres y recorte.** `SUB_MAX`, en `regenerar/regenerar-pagina.py`,
+fija el máximo en 50 caracteres, contando cada emoji como uno. Si un texto lo supera,
+se conservan los primeros `SUB_MAX - 3` caracteres y se agrega `...`. El texto se dibuja
+siempre en una sola línea, centrado debajo del QR; si supera `SUB_ANCHO_MAX` (93 mm),
+un área de recorte del SVG corta el sobrante en ambos extremos sin achicar la letra
+ni partirla en varias líneas.
 
 **El QR.** La página usa `lib/qrcode.js` (nivel de corrección M, modo byte UTF-8).
 El script usa `python3-qrcode`, con el mismo criterio para elegir la máscara que la

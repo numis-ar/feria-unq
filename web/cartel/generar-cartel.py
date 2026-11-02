@@ -47,7 +47,7 @@ except ImportError:
     sys.exit("Falta WeasyPrint. Instalalo con: sudo apt install weasyprint")
 
 VERDE = "#064d2d"
-SUB_SIGNOS = ". , : ; ! ¡ ? ¿ - ' ( ) / & + @ # $ % ·"
+SUB_SIGNOS = ". , : ; ! ¡ ? ¿ - ' \" _ ° ( ) / & + @ # $ % ·"
 
 
 # ---------------------------------------------------------------------------
@@ -227,7 +227,7 @@ def analizar_texto(cadena):
     if malos:
         errores.append("caracteres no permitidos: " + " ".join(dict.fromkeys(malos)))
     if len(partes) > SUB["max"]:
-        errores.append(f"tiene {len(partes)} caracteres y el máximo es {SUB['max']} (cada emoji cuenta 1)")
+        partes = partes[:SUB["max"] - 3] + [("letra", ".")] * 3
     return partes, errores
 
 

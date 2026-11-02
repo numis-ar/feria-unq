@@ -63,7 +63,7 @@
   <div class="fila"><label for="emoji-buscar">Buscar emoji</label><input type="text" id="emoji-buscar" placeholder="ej.: shoe, zapatilla, corazon, smile…" spellcheck="false"></div>
   <p id="emoji-destino" class="destino"></p>
   <div id="emoji-resultados" class="emojis"></div>
-  <p class="ayuda">Hasta __SUB_MAX__ caracteres por texto; cada emoji cuenta como uno. Se puede escribir el emoji, su shortcode (<code>:grinning:</code>, <code>:zapatilla_deportiva:</code>) o su código (<code>\U0001F600</code>).</p>
+  <p class="ayuda">Hasta __SUB_MAX__ caracteres por texto; cada emoji cuenta como uno. Los textos más largos terminan en <code>...</code>. El texto ocupa una sola línea y se recorta si supera el ancho disponible. Se puede escribir el emoji, su shortcode (<code>:grinning:</code>, <code>:zapatilla_deportiva:</code>) o su código (<code>\U0001F600</code>).</p>
   <p id="aviso-general" class="aviso" style="margin-left:0!important"></p>
   <button onclick="window.print()">Imprimir</button>
 </div>
@@ -184,7 +184,8 @@ __QRLIB__
   function analizarSub(cadena){
     const pr = prepararTexto(cadena), sg = segmentar(pr.texto), errores = pr.errores.slice();
     if (sg.malos.length) errores.push('Caracteres no permitidos: ' + [...new Set(sg.malos)].join(' '));
-    if (sg.partes.length > SUB.max) errores.push('Máximo ' + SUB.max + ' caracteres (hay ' + sg.partes.length + ').');
+    if (sg.partes.length > SUB.max)
+      sg.partes = sg.partes.slice(0, SUB.max - 3).concat(Array.from({ length: 3 }, () => ({ letra: '.' })));
     return { partes: sg.partes, errores: errores };
   }
   function dibujarSub(lado){

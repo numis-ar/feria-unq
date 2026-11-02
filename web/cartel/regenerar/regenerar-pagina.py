@@ -56,13 +56,14 @@ CORTE = "#d0d0d0"        # línea de corte entre las dos secciones
 LOGO_ARRIBA = "logos/numis-logo-sobre-verde.svg"
 LOGO_PIE = "logos/taler-logo-2021.svg"
 
-# Tipografía (archivos en fuentes/, por peso)
+# Tipografía (archivos en fuentes/, por peso; Archivo cubre los glifos que faltan en Montserrat)
 FUENTES = {600: "fuentes/Montserrat-SemiBold.ttf", 700: "fuentes/Montserrat-Bold.ttf",
            800: "fuentes/Montserrat-ExtraBold.ttf", 900: "fuentes/Montserrat-Black.ttf"}
+FUENTE_COMPLEMENTO = "../../fonts/archivo-700.ttf"
 
 # Caracteres que se pueden escribir en el texto editable debajo del QR.
 # (Las minúsculas se aceptan y se pasan a mayúsculas.)
-PERMITIDOS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ÁÉÍÓÚÜÑ.,:;!¡?¿-'()/&+@#$%·"
+PERMITIDOS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ÁÉÍÓÚÜÑŪŰ.,:;!¡?¿-'\"_°()/&+@#$%·"
 
 # =============================================================================
 # MEDIDAS — en milímetros. Hoja A4 = 2 secciones de 105 mm de ancho; cada una:
@@ -80,7 +81,8 @@ SUB_PESO = 600
 SUB_ESCALA = "0.0034"                                # cuerpo 3,4 mm (fuente de 1000 unidades)
 SUB_ESPACIADO = 103                                  # espaciado entre letras (unidades de la fuente)
 SUB_X, SUB_BASE = 52.5, 105.2                        # centro y línea de base
-SUB_ANCHO_MAX = 93                                   # ancho disponible: define el máximo de caracteres
+SUB_ANCHO_MAX = 93                                   # el texto se recorta al superar este ancho
+SUB_MAX = 38                                         # máximo de caracteres, letras o emojis
 EMOJI_LADO = 1000                                    # emoji: cuadrado de 1 em (3,4 mm), en unidades de la fuente
 EMOJI_ARRIBA = 850                                   # borde superior del emoji sobre la línea de base
                                                      # (queda centrado en la altura de las mayúsculas)
@@ -171,6 +173,7 @@ class Fuente:
 
 
 FUENTE = {peso: Fuente(ruta) for peso, ruta in FUENTES.items()}
+COMPLEMENTO = Fuente(FUENTE_COMPLEMENTO)
 
 
 def medir(cadena, fu):
@@ -203,11 +206,16 @@ def tabla_sub():
     fu = FUENTE[SUB_PESO]
     glifos = {}
     for ch in PERMITIDOS:
-        g = fu.glifo(ch)
-        glifos[ch] = {"a": fu.avance(g), "d": fu.trazo(g)}
+        origen = fu if ord(ch) in fu.cmap else COMPLEMENTO
+        g = origen.glifo(ch)
+        escala = fu.upem / origen.upem
+        glifos[ch] = {"a": round(origen.avance(g) * escala),
+                      "d": origen.trazo(g, (escala, 0, 0, escala, 0, 0))}
     kern = {}
     for a in PERMITIDOS:
         for b in PERMITIDOS:
+            if ord(a) not in fu.cmap or ord(b) not in fu.cmap:
+                continue
             k = fu.kern(fu.glifo(a), fu.glifo(b))
             if k:
                 kern[a + b] = k
@@ -215,25 +223,6 @@ def tabla_sub():
 
 
 GLIFOS, KERN = tabla_sub()
-
-
-def maximo_caracteres():
-    """Mayor n tal que CUALQUIER combinación de n caracteres permitidos (letras o emojis)
-    entra en el ancho. Programación dinámica sobre el peor caso exacto (ancho + kerning +
-    espaciado). Un emoji cuenta como 1 carácter, mide EMOJI_LADO y no tiene kerning."""
-    limite = round(SUB_ANCHO_MAX / float(SUB_ESCALA))
-    anchos = {c: g["a"] for c, g in GLIFOS.items()}
-    anchos["<emoji>"] = EMOJI_LADO
-    peor = dict(anchos)
-    n = 0
-    while max(peor.values()) <= limite:
-        n += 1
-        peor = {c: max(peor[p] + SUB_ESPACIADO + KERN.get(p + c, 0) for p in anchos) + anchos[c]
-                for c in anchos}
-    return n
-
-
-SUB_MAX = maximo_caracteres()
 
 
 def _mitad(u):
@@ -252,7 +241,8 @@ def texto_sub(cadena, lado):
         u += g["a"]
         prev = ch
     tr = f"translate({SUB_X} {SUB_BASE}) scale({SUB_ESCALA} -{SUB_ESCALA}) translate(-{_mitad(u)} 0)"
-    return f'<g id="texto-sub-{lado}" fill="#fff" transform="{tr}">' + "".join(partes) + "</g>"
+    return (f'<g clip-path="url(#texto-sub-clip-{lado})"><g id="texto-sub-{lado}" fill="#fff" transform="{tr}">'
+            + "".join(partes) + "</g></g>")
 
 
 # ---------- Logos y formas ----------
@@ -307,6 +297,9 @@ def armar_hoja():
     defs = [f'<g id="cara-fija">{fijo_arriba}{fijo_pie}</g>', f'<path id="solapa" fill="{GUIA}" d="{solapa}"/>']
     for nombre, _ in LADOS:
         defs.append(
+            f'<clipPath id="texto-sub-clip-{nombre}" clipPathUnits="userSpaceOnUse">'
+            f'<rect x="{f((W - SUB_ANCHO_MAX) / 2)}" y="{f(SUB_BASE - 5)}" '
+            f'width="{f(SUB_ANCHO_MAX)}" height="7"/></clipPath>'
             f'<g id="cara-{nombre}"><use href="#cara-fija" xlink:href="#cara-fija"/>'
             f'<path fill="#fff" d="{rect_redondeado(qx, qy, lado, lado, radio)}"/>'
             f'<g transform="translate({f(qx + QR_MARGEN)} {f(qy + QR_MARGEN)})">'
@@ -330,6 +323,8 @@ def armar_hoja():
 
 
 def main():
+    if SUB_MAX < 3:
+        sys.exit("Error: SUB_MAX debe ser al menos 3 para poder agregar ...")
     malos = [c for c in SUB_DEFECTO if c.upper() not in GLIFOS]
     if malos or len(SUB_DEFECTO) > SUB_MAX:
         sys.exit(f"Error: SUB_DEFECTO {SUB_DEFECTO!r} tiene caracteres no permitidos {malos} "
