@@ -290,9 +290,9 @@
   <div class="overlay" aria-hidden="true"></div>
 
   <div id="missing-qr" class="qr-missing" hidden>
-    <strong>Falta el contenido del QR.</strong><br />
-    Pasá el valor por URL con <code>?qr=...</code> o <code>&amp;qr=...</code>.<br />
-    Ejemplo: <code>https://unq.numis.ar/puesto.html?qr=pagar-a-mi-puesto</code>
+    <strong>Falta el contenido del QR o no es válido.</strong><br />
+    Pasá una URL de pago Taler o HTTPS con <code>?qr=...</code> o <code>&amp;qr=...</code>.<br />
+    Ejemplo: <code>https://unq.numis.ar/puesto-test</code>
   </div>
 
   <div class="scene" role="main" aria-label="Código QR para pagar en el puesto">
@@ -346,6 +346,15 @@
         return null;
       }
 
+      function isSafePaymentUrl(value) {
+        try {
+          const url = new URL(value);
+          return url.protocol === 'taler:' || url.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      }
+
       function renderQR(url) {
         if (!window.qrcode) {
           document.getElementById('qr-frame').innerHTML =
@@ -396,7 +405,7 @@
       const value = getQrValue();
       const payBtn = document.getElementById('btn-pay');
 
-      if (!value) {
+      if (!value || !isSafePaymentUrl(value)) {
         document.getElementById('missing-qr').hidden = false;
         if (payBtn) payBtn.hidden = true;
       } else {
