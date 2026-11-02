@@ -475,6 +475,77 @@
         height: 20px;
         flex: none;
       }
+      .producer-gallery {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        gap: 8px;
+        margin: 0 0 22px;
+      }
+      .producer-gallery__button {
+        aspect-ratio: 1;
+        padding: 0;
+        overflow: hidden;
+        border: 2px solid transparent;
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        cursor: pointer;
+      }
+      .producer-gallery__button:hover,
+      .producer-gallery__button:focus-visible {
+        border-color: var(--naranja);
+        outline: 3px solid var(--naranja);
+        outline-offset: 2px;
+      }
+      .producer-gallery__image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .image-viewer {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 64px 20px 20px;
+        background: rgba(0, 0, 0, 0.96);
+      }
+      .image-viewer[aria-hidden="false"] {
+        display: flex;
+      }
+      .image-viewer__image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .image-viewer__close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: 50%;
+        background: var(--color-surface);
+        color: var(--color-text);
+        cursor: pointer;
+      }
+      .image-viewer__close:hover,
+      .image-viewer__close:focus-visible {
+        background: var(--naranja);
+        color: #fff;
+        outline: 3px solid #fff;
+        outline-offset: 2px;
+      }
+      .image-viewer__close svg {
+        width: 22px;
+        height: 22px;
+      }
 
       @media (max-width: 640px) {
         .producer-card {
@@ -805,6 +876,37 @@
           </div>
         </div>
       </div>
+
+      <div
+        id="image-viewer"
+        class="image-viewer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Imagen ampliada"
+        aria-hidden="true"
+      >
+        <button
+          type="button"
+          class="image-viewer__close"
+          id="image-viewer-close"
+          aria-label="Cerrar imagen ampliada"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <img id="image-viewer-image" class="image-viewer__image" alt="" />
+      </div>
     </div>
 
     <script>
@@ -822,6 +924,9 @@
         const modalCerrar = document.getElementById("modal-cerrar");
         const modalCompartir = document.getElementById("modal-compartir");
         const modalContenido = document.getElementById("modal-contenido");
+        const imageViewer = document.getElementById("image-viewer");
+        const imageViewerClose = document.getElementById("image-viewer-close");
+        const imageViewerImage = document.getElementById("image-viewer-image");
 
         const OG_ORIGINAL = {
           title:
@@ -1314,7 +1419,31 @@
           }, 2500);
         }
 
+        let imageViewerTrigger = null;
+
+        function abrirVisorImagen(button) {
+          imageViewerTrigger = button;
+          imageViewerImage.src = button.dataset.src;
+          imageViewerImage.alt = button.dataset.alt;
+          imageViewer.setAttribute("aria-hidden", "false");
+          overlay.setAttribute("inert", "");
+          imageViewerClose.focus();
+        }
+
+        function cerrarVisorImagen(restoreFocus = true) {
+          imageViewer.setAttribute("aria-hidden", "true");
+          overlay.removeAttribute("inert");
+          imageViewerImage.removeAttribute("src");
+          imageViewerImage.alt = "";
+          const trigger = imageViewerTrigger;
+          imageViewerTrigger = null;
+          if (restoreFocus && trigger) trigger.focus();
+        }
+
         function abrirModal(p, trigger, updateUrl = true) {
+          if (imageViewer.getAttribute("aria-hidden") === "false") {
+            cerrarVisorImagen(false);
+          }
           triggerFocus = trigger || null;
           if (updateUrl && p.slug) {
             history.pushState({ slug: p.slug }, "", `?p=${p.slug}`);
@@ -1327,6 +1456,28 @@
           );
           const redes = redesSociales(p);
           const contactoHtml = listaContacto(p);
+          const galleryImages = [p.imagen1, p.imagen2, p.imagen3, p.imagen4].filter(Boolean);
+          let galleryHtml = "";
+          if (galleryImages.length > 0) {
+            galleryHtml = `
+              <div class="producer-gallery" role="group" aria-label="Fotos de ${escapeHtml(p.nombreEmprendimiento)}">
+                ${galleryImages.map((src, index) => {
+                  const alt = `Foto ${index + 1} de ${p.nombreEmprendimiento}`;
+                  return `
+                    <button
+                      type="button"
+                      class="producer-gallery__button"
+                      data-src="${escapeHtml(src)}"
+                      data-alt="${escapeHtml(alt)}"
+                      aria-label="Ampliar ${escapeHtml(alt)}"
+                    >
+                      <img class="producer-gallery__image" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" />
+                    </button>
+                  `;
+                }).join("")}
+              </div>
+            `;
+          }
 
           let redesHtml = "";
           if (redes.length > 0) {
@@ -1372,6 +1523,7 @@
               </div>
             </div>
             ${descripcion}
+            ${galleryHtml}
             ${contactoHtml}
             ${redesHtml}
           `;
@@ -1383,6 +1535,9 @@
         }
 
         function cerrarModal(updateUrl = true) {
+          if (imageViewer.getAttribute("aria-hidden") === "false") {
+            cerrarVisorImagen(false);
+          }
           if (updateUrl) {
             history.pushState(null, "", location.pathname);
           }
@@ -1439,6 +1594,10 @@
           if (p) abrirModal(p, null, false);
         }
 
+        modalContenido.addEventListener("click", (e) => {
+          const button = e.target.closest(".producer-gallery__button");
+          if (button) abrirVisorImagen(button);
+        });
         overlay.addEventListener("click", (e) => {
           if (e.target === overlay) cerrarModal();
         });
@@ -1448,11 +1607,21 @@
           const p = productores.find((x) => x.slug === slug);
           if (p) compartir(p);
         });
+        imageViewer.addEventListener("click", (e) => {
+          if (e.target === imageViewer) cerrarVisorImagen();
+        });
+        imageViewerClose.addEventListener("click", () => cerrarVisorImagen());
+        imageViewer.addEventListener("keydown", (e) => {
+          if (e.key === "Tab") {
+            e.preventDefault();
+            imageViewerClose.focus();
+          }
+        });
         document.addEventListener("keydown", (e) => {
-          if (
-            e.key === "Escape" &&
-            overlay.getAttribute("aria-hidden") === "false"
-          ) {
+          if (e.key !== "Escape") return;
+          if (imageViewer.getAttribute("aria-hidden") === "false") {
+            cerrarVisorImagen();
+          } else if (overlay.getAttribute("aria-hidden") === "false") {
             cerrarModal();
           }
         });
