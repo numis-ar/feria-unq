@@ -44,6 +44,11 @@ const producers = [
     imagen3: './productores/broken/3.png',
     imagen4: './productores/broken/4.png',
   },
+  {
+    id: 'unnamed',
+    rubro: 'Artesanías',
+    descripcion: 'Sin nombre de emprendimiento',
+  },
 ];
 
 describe('Galería del detalle de productor', () => {
@@ -160,5 +165,18 @@ describe('Galería del detalle de productor', () => {
     await page.locator('.producer-gallery').waitFor({ state: 'detached' });
 
     assert.equal(await page.locator('.producer-gallery__button').count(), 0);
+  });
+
+  it('omite emprendimientos sin nombre y ordena perfiles sin rubro', async () => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    await page.goto(`${baseUrl}/donde.html`);
+    await page.locator('.producer-card[data-id="four"]').waitFor();
+    assert.equal(await page.locator('.producer-card[data-id="unnamed"]').count(), 0);
+
+    await page.selectOption('#orden', 'rubro-asc');
+    assert.equal(await page.locator('.producer-card').count(), 4);
+    assert.deepEqual(errors, []);
   });
 });

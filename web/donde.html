@@ -1151,7 +1151,7 @@
                   );
                 case "rubro-asc":
                   return (
-                    a.rubro.localeCompare(b.rubro) ||
+                    (a.rubro || "").localeCompare(b.rubro || "") ||
                     a.nombreEmprendimiento.localeCompare(b.nombreEmprendimiento)
                   );
                 case "ubicacion-asc":
@@ -1665,7 +1665,11 @@
           try {
             const response = await fetch("./productores.json", { cache: "no-store" });
             if (!response.ok) throw new Error("No se pudo cargar el listado");
-            productores = await response.json();
+            productores = (await response.json()).filter(
+              (p) =>
+                typeof p.nombreEmprendimiento === "string" &&
+                p.nombreEmprendimiento.trim()
+            );
             rubros = obtenerRubros(productores);
             llenarSelectRubros();
             const seed = getSeed();
