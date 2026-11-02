@@ -8,7 +8,6 @@ import * as path from 'path';
 const producers = [
   {
     id: 'four',
-    slug: 'four',
     nombreEmprendimiento: 'Cuatro',
     rubro: 'Artesanías',
     descripcion: 'Cuatro fotos',
@@ -20,7 +19,6 @@ const producers = [
   },
   {
     id: 'two',
-    slug: 'two',
     nombreEmprendimiento: 'Dos',
     rubro: 'Artesanías',
     descripcion: 'Dos fotos',
@@ -31,10 +29,8 @@ const producers = [
   },
   {
     id: 'none',
-    slug: 'none',
     nombreEmprendimiento: 'Ninguna',
-    rubro: 'Artesanías',
-    descripcion: 'Sin fotos',
+    descripcion: 'Sin fotos ni rubro',
     imagen: './screenshots/productor-placeholder.svg',
   },
 ];
@@ -130,5 +126,7 @@ describe('Galería del detalle de productor', () => {
     await page.locator('#modal-overlay[aria-hidden="false"]').waitFor();
     assert.equal(await page.locator('.producer-gallery').count(), 0);
     assert.equal(await page.locator('#image-viewer').getAttribute('aria-hidden'), 'true');
+    assert.equal(await page.locator('.producer-card[data-id="none"] .producer-card__tag').count(), 0);
+    assert.equal(await page.locator('.producer-card[data-id="four"] .producer-card__tag').count(), 1);
   });
 });

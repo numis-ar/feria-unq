@@ -318,7 +318,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
   it('7. Profile loads producer data, resizes photos and saves changes', async () => {
     profileRequestBody = null;
     await page.goto(`${baseUrl}/merchant.html`);
-    await page.fill('#auth-user', 'raices-del-rio');
+    await page.fill('#auth-user', 'p01');
     await page.fill('#auth-pass', 'secret1234');
     await page.click('#btn-login');
     await page.locator('#auth-modal').waitFor({ state: 'hidden' });
@@ -398,7 +398,7 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
   it('8. Profile validates lengths and explains rate-limit retry times', async () => {
     profileRequestBody = null;
     await page.goto(`${baseUrl}/merchant.html`);
-    await page.fill('#auth-user', 'raices-del-rio');
+    await page.fill('#auth-user', 'p01');
     await page.fill('#auth-pass', 'secret1234');
     await page.click('#btn-login');
     await page.locator('#auth-modal').waitFor({ state: 'hidden' });

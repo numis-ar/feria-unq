@@ -1201,7 +1201,10 @@
             );
             const altImg = `Imagen de ${escapeHtml(p.nombreEmprendimiento)}`;
             const desc = campoVisible("descripcion") ? p.descripcion : "";
-            const rubroTag = campoVisible("rubro") ? p.rubro : "";
+            const rubroTag =
+              campoVisible("rubro") && p.rubro
+                ? `<span class="producer-card__tag">${escapeHtml(p.rubro)}</span>`
+                : "";
 
             card.innerHTML = `
               <img class="producer-card__image" src="${img}" alt="${altImg}" loading="lazy" />
@@ -1210,9 +1213,7 @@
                   p.nombreEmprendimiento
                 )}</h3>
                 <p class="producer-card__desc">${escapeHtml(desc)}</p>
-                <span class="producer-card__tag">${escapeHtml(
-                  rubroTag
-                )}</span>
+                ${rubroTag}
               </div>
             `;
 
@@ -1341,7 +1342,7 @@
         }
 
         function actualizarOG(p) {
-          const url = `${location.origin}${location.pathname}?p=${p.slug}`;
+          const url = `${location.origin}${location.pathname}?p=${p.id}`;
           const imagen = p.imagen
             ? new URL(p.imagen, location.href).href
             : OG_ORIGINAL.image;
@@ -1366,7 +1367,7 @@
         }
 
         async function compartir(p) {
-          const url = `${location.origin}${location.pathname}?p=${p.slug}`;
+          const url = `${location.origin}${location.pathname}?p=${p.id}`;
           const shareData = {
             title: p.nombreEmprendimiento,
             text: p.descripcion || "",
@@ -1445,11 +1446,11 @@
             cerrarVisorImagen(false);
           }
           triggerFocus = trigger || null;
-          if (updateUrl && p.slug) {
-            history.pushState({ slug: p.slug }, "", `?p=${p.slug}`);
+          if (updateUrl && p.id) {
+            history.pushState({ id: p.id }, "", `?p=${p.id}`);
           }
           actualizarOG(p);
-          modalCompartir.dataset.slug = p.slug;
+          modalCompartir.dataset.id = p.id;
 
           const img = escapeHtml(
             p.imagen || "./screenshots/productor-placeholder.svg"
@@ -1545,7 +1546,7 @@
           overlay.setAttribute("aria-hidden", "true");
           document.body.classList.remove("modal-active");
           modalContenido.innerHTML = "";
-          modalCompartir.dataset.slug = "";
+          modalCompartir.dataset.id = "";
           if (triggerFocus) {
             triggerFocus.focus();
             triggerFocus = null;
@@ -1588,9 +1589,9 @@
 
         function abrirModalDesdeUrl() {
           const params = new URLSearchParams(location.search);
-          const slug = params.get("p") || location.hash.replace(/^#/, "");
-          if (!slug) return;
-          const p = productores.find((x) => x.slug === slug);
+          const id = params.get("p") || location.hash.replace(/^#/, "");
+          if (!id) return;
+          const p = productores.find((x) => x.id === id);
           if (p) abrirModal(p, null, false);
         }
 
@@ -1603,8 +1604,8 @@
         });
         modalCerrar.addEventListener("click", () => cerrarModal());
         modalCompartir.addEventListener("click", () => {
-          const slug = modalCompartir.dataset.slug;
-          const p = productores.find((x) => x.slug === slug);
+          const id = modalCompartir.dataset.id;
+          const p = productores.find((x) => x.id === id);
           if (p) compartir(p);
         });
         imageViewer.addEventListener("click", (e) => {
@@ -1628,8 +1629,8 @@
         window.addEventListener("hashchange", abrirModalDesdeUrl);
         window.addEventListener("popstate", () => {
           const params = new URLSearchParams(location.search);
-          const slug = params.get("p") || location.hash.replace(/^#/, "");
-          if (!slug) cerrarModal(false);
+          const id = params.get("p") || location.hash.replace(/^#/, "");
+          if (!id) cerrarModal(false);
           else abrirModalDesdeUrl();
         });
 

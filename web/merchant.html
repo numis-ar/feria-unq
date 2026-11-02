@@ -4024,7 +4024,7 @@
             const response = await fetch("./productores.json", { cache: "no-store" });
             if (!response.ok) throw new Error(`productores.json: ${response.status}`);
             const producers = await response.json();
-            published = producers.find((producer) => producer.slug === user || producer.id === user);
+            published = producers.find((producer) => producer.id === user);
           }
 
           const phone = profilePhoneForInput(profile.telefono);
@@ -4055,7 +4055,7 @@
 
           const publishedMatches = Boolean(
             published &&
-            (published.slug === user || published.id === user) &&
+            published.id === user &&
             Object.keys(expected).every((field) => expected[field] === actual[field]),
           );
           if (user === INSTANCE_ID) setProfilePublicationPending(!publishedMatches);
@@ -4080,7 +4080,7 @@
             const producersResponse = await fetch("./productores.json", { cache: "no-store" });
             if (!producersResponse.ok) throw new Error("productores.json");
             const producers = await producersResponse.json();
-            publishedProfile = producers.find((producer) => producer.slug === user || producer.id === user) || {};
+            publishedProfile = producers.find((producer) => producer.id === user) || {};
             profile = publishedProfile;
           } else {
             throw new Error(`info.json: ${infoResponse.status}`);
