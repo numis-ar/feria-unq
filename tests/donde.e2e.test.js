@@ -33,6 +33,17 @@ const producers = [
     descripcion: 'Sin fotos ni rubro',
     imagen: './screenshots/productor-placeholder.svg',
   },
+  {
+    id: 'broken',
+    nombreEmprendimiento: 'Rotas',
+    rubro: 'Artesanías',
+    descripcion: 'Imágenes rotas',
+    imagen: './productores/broken/perfil.png',
+    imagen1: './productores/broken/1.png',
+    imagen2: './productores/broken/2.png',
+    imagen3: './productores/broken/3.png',
+    imagen4: './productores/broken/4.png',
+  },
 ];
 
 describe('Galería del detalle de productor', () => {
@@ -50,6 +61,11 @@ describe('Galería del detalle de productor', () => {
         return;
       }
       if (cleanUrl === '/') cleanUrl = '/donde.html';
+      if (/^\/productores\/(four|two)\/.+\.png$/.test(cleanUrl)) {
+        res.setHeader('Content-Type', 'image/png');
+        fs.createReadStream(path.join(process.cwd(), 'web', 'mapa-unq.png')).pipe(res);
+        return;
+      }
       const filePath = path.join(process.cwd(), 'web', cleanUrl.replace(/^\/+/, ''));
       if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         const ext = path.extname(filePath);
@@ -128,5 +144,21 @@ describe('Galería del detalle de productor', () => {
     assert.equal(await page.locator('#image-viewer').getAttribute('aria-hidden'), 'true');
     assert.equal(await page.locator('.producer-card[data-id="none"] .producer-card__tag').count(), 0);
     assert.equal(await page.locator('.producer-card[data-id="four"] .producer-card__tag').count(), 1);
+  });
+
+  it('usa el placeholder en perfiles rotos y omite las fotos de galería que fallan', async () => {
+    await page.goto(`${baseUrl}/donde.html?p=broken`);
+    await page.locator('#modal-overlay[aria-hidden="false"]').waitFor();
+    await page.locator('.producer-card[data-id="broken"] .producer-card__image').scrollIntoViewIfNeeded();
+
+    await page.waitForFunction(() => {
+      const images = document.querySelectorAll('.producer-card[data-id="broken"] .producer-card__image, .modal__image');
+      return images.length === 2 && Array.from(images).every((image) =>
+        image.src.endsWith('/screenshots/productor-placeholder.svg') && image.complete && image.naturalWidth > 0
+      );
+    });
+    await page.locator('.producer-gallery').waitFor({ state: 'detached' });
+
+    assert.equal(await page.locator('.producer-gallery__button').count(), 0);
   });
 });

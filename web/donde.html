@@ -1595,6 +1595,29 @@
           if (p) abrirModal(p, null, false);
         }
 
+        function manejarErrorImagen(e) {
+          const image = e.target;
+          if (!(image instanceof HTMLImageElement)) return;
+
+          if (image.matches(".producer-card__image, .modal__image")) {
+            if (image.dataset.placeholderAplicado) return;
+            image.dataset.placeholderAplicado = "true";
+            image.src = "./screenshots/productor-placeholder.svg";
+            return;
+          }
+
+          if (image.matches(".producer-gallery__image")) {
+            const button = image.closest(".producer-gallery__button");
+            const gallery = image.closest(".producer-gallery");
+            button?.remove();
+            if (gallery && !gallery.querySelector(".producer-gallery__button")) {
+              gallery.remove();
+            }
+          }
+        }
+
+        grid.addEventListener("error", manejarErrorImagen, true);
+        modalContenido.addEventListener("error", manejarErrorImagen, true);
         modalContenido.addEventListener("click", (e) => {
           const button = e.target.closest(".producer-gallery__button");
           if (button) abrirVisorImagen(button);
