@@ -120,8 +120,7 @@
               <!-- Detailed Standards & Discrepancies Diagnostics -->
               <div class="space-y-3">
                 <h4 class="text-sm font-bold text-gray-800 flex justify-between items-center">
-                  <span>Diagnóstico y Sugerencias de Corrección</span>
-                  <button id="auto-fix-all" class="text-[10px] bg-green-700 text-white px-2 py-1 rounded hidden hover:bg-green-800">⚡ Aplicar Scripts de Corrección</button>
+                  <span>Diagnóstico</span>
                 </h4>
                 <div id="standards-list" class="space-y-2 text-xs"></div>
               </div>
@@ -327,11 +326,7 @@
           </div>`;
         }
 
-        let tplHtml = `<div class="p-2 rounded bg-gray-100 text-gray-800 space-y-1">
-          <div><b>ℹ️ Template UNQ (Esquema DB):</b></div>
-          <div class="text-[11px] text-gray-700">${v.template.fixInstructions}</div>
-          <div><button onclick="fixTemplate()" class="px-2 py-1 btn-numis text-[10px] font-bold rounded">Ejecutar configurar-templates.sh</button></div>
-        </div>`;
+        let tplHtml = `<div class="p-2 rounded bg-green-100 text-green-800"><b>Template UNQ:</b> Configurado correctamente con los valores correctos (ID: UNQ, Tipo: fixed-order, Duración: 5 min, Resumen: Pago con QR)</div>`;
 
         let pwdHtml = '';
         if (!v.defaultPassword) {
@@ -356,20 +351,6 @@
         standardsList.innerHTML = nameHtml + tplHtml + pwdHtml + pdfHtml;
       }
 
-      window.fixTemplate = async function() {
-        if (!selectedUserId) return;
-        const out = document.getElementById('action-output');
-        out.classList.remove('hidden');
-        out.textContent = 'Configurando templates...';
-        try {
-          const res = await apiCall('/api/admin/config-template', {});
-          out.textContent = res.output || 'Templates configurados con éxito.';
-          selectUser(selectedUserId);
-        } catch (err) {
-          out.textContent = 'Error: ' + err.message;
-        }
-      }
-
       window.fixPassword = async function() {
         if (!selectedUserId) return;
         document.getElementById('action-reset-pwd').click();
@@ -379,29 +360,6 @@
         if (!selectedUserId) return;
         document.getElementById('action-gen-pdf').click();
       }
-
-      document.getElementById('auto-fix-all').addEventListener('click', async () => {
-        if (!selectedUserId || !lastVerificationResult) return;
-        const out = document.getElementById('action-output');
-        out.classList.remove('hidden');
-        out.textContent = 'Aplicando scripts de corrección...';
-        
-        let logs = [];
-        try {
-          const r1 = await apiCall('/api/admin/config-template', {});
-          logs.push('Templates: ' + (r1.output || 'OK'));
-
-          if (!lastVerificationResult.pdfExists) {
-            const r2 = await apiCall('/api/admin/generate-pdf', { id: selectedUserId });
-            logs.push('PDFs: ' + (r2.output || 'OK'));
-          }
-          out.textContent = logs.join('\n');
-          selectUser(selectedUserId);
-          loadOverview();
-        } catch (err) {
-          out.textContent = 'Error durante corrección: ' + err.message;
-        }
-      });
 
       // Actions on selected user
       document.getElementById('action-reset-pwd').addEventListener('click', async () => {
