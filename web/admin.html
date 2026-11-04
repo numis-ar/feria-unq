@@ -258,16 +258,20 @@
         const extraListEl = document.getElementById('extra-list');
         const filteredExtras = overviewData.extras.filter(e => {
           if (!query) return true;
-          return e.id.toLowerCase().includes(query);
+          const prod = producersMap.get(e.id);
+          const name = prod ? prod.nombreEmprendimiento.toLowerCase() : '';
+          return e.id.toLowerCase().includes(query) || name.includes(query);
         });
         document.getElementById('extra-count').textContent = filteredExtras.length;
         extraListEl.innerHTML = filteredExtras.length === 0 ? '<div class="text-gray-400 text-xs p-1">Sin usuarios extras</div>' : filteredExtras.map(e => {
+          const prod = producersMap.get(e.id);
+          const name = prod ? prod.nombreEmprendimiento : e.id;
           let badge = [];
           if (e.inMerchant) badge.push('M');
           if (e.inBank) badge.push('B');
           if (e.inProducers) badge.push('P');
           return `<div onclick="selectUser('${e.id}')" class="p-2 hover:bg-orange-100 cursor-pointer rounded flex justify-between items-center ${selectedUserId === e.id ? 'bg-orange-200 font-bold' : ''}">
-            <span class="text-xs font-mono">${e.id}</span>
+            <span class="text-xs truncate">${name} <span class="text-[10px] text-gray-500 font-mono">(${e.id})</span></span>
             <span class="text-[10px] bg-orange-200 text-orange-800 px-1 rounded">[${badge.join(',')}]</span>
           </div>`;
         }).join('');
@@ -294,7 +298,6 @@
 
         const standardsList = document.getElementById('standards-list');
         standardsList.innerHTML = '<div class="text-gray-500">Analizando base de datos y esquemas...</div>';
-        document.getElementById('auto-fix-all').classList.add('hidden');
 
         try {
           const res = await apiCall('/api/admin/verify-user', { id });
@@ -307,11 +310,6 @@
 
       function renderStandards(v) {
         const standardsList = document.getElementById('standards-list');
-        const hasDiscrepancies = !v.namesMatch || !v.defaultPassword || !v.pdfExists;
-        
-        if (hasDiscrepancies) {
-          document.getElementById('auto-fix-all').classList.remove('hidden');
-        }
 
         let nameHtml = '';
         if (v.namesMatch) {
