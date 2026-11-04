@@ -1736,6 +1736,102 @@ export async function sendAdminNotification(opts: { message: string; title?: str
   return sent;
 }
 
+function getAdminTokens(): string[] {
+  const tokensEnv = process.env.ADMIN_TOKENS || process.env.ADMIN_TOKEN || '';
+  return tokensEnv.split(',').map(t => t.trim()).filter(Boolean);
+}
+
+function validateAdminToken(req: http.IncomingMessage): boolean {
+  const allowedTokens = getAdminTokens();
+  if (allowedTokens.length === 0) return false;
+  const token = req.headers['x-admin-token'] || bearerToken(req, 'authorization') || '';
+  return typeof token === 'string' && allowedTokens.includes(token);
+}
+
+export async function callAdminScript(scriptName: string, args: string[]): Promise<string> {
+  const env = {
+    ...process.env,
+    MERCHANT_PASSWORD: process.env.MERCHANT_PASSWORD || '',
+    BANK_PASSWORD: process.env.BANK_PASSWORD || '',
+  };
+  const scriptPath = path.join(process.cwd(), 'scripts', scriptName);
+  const { stdout, stderr } = await execFileAsync(scriptPath, args, { env });
+  return (stdout + '\n' + stderr).trim();
+}
+
+export async function handleAdminLateSignup(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const name = body?.name;
+    if (!name || typeof name !== 'string') {
+      sendError(res, 400, 'Missing name');
+      return;
+    }
+    const output = await callAdminScript('late-signup.sh', [name]);
+    sendJson(res, 200, { type: 'ok', output });
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Script execution failed');
+  }
+}
+
+export async function handleAdminResetPassword(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const user = body?.user;
+    if (!user || typeof user !== 'string') {
+      sendError(res, 400, 'Missing user');
+      return;
+    }
+    const output = await callAdminScript('reset-password.sh', [user]);
+    sendJson(res, 200, { type: 'ok', output });
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Script execution failed');
+  }
+}
+
+export async function handleAdminGeneratePdf(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const id = body?.id;
+    if (!id || typeof id !== 'string') {
+      sendError(res, 400, 'Missing id');
+      return;
+    }
+    const output = await callAdminScript('generate-pdf.sh', [id]);
+    sendJson(res, 200, { type: 'ok', output });
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Script execution failed');
+  }
+}
+
+export async function handleAdminProductoresUpdate(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const id = body?.id;
+    const args = id ? ['--update', id] : ['--update'];
+    const output = await callAdminScript('productores.sh', args);
+    sendJson(res, 200, { type: 'ok', output });
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Script execution failed');
+  }
+}
+
 export async function handleAdminNotify(req: http.IncomingMessage, res: http.ServerResponse) {
   const sessionId = getSessionId(req);
   const adminToken = getAdminToken();
@@ -2010,6 +2106,26 @@ export const server = http.createServer((req, res) => {
 
   if (path === '/api/admin/notify' && req.method === 'POST') {
     handleAdminNotify(req, res);
+    return;
+  }
+
+  if (path === '/api/admin/late-signup' && req.method === 'POST') {
+    handleAdminLateSignup(req, res);
+    return;
+  }
+
+  if (path === '/api/admin/reset-password' && req.method === 'POST') {
+    handleAdminResetPassword(req, res);
+    return;
+  }
+
+  if (path === '/api/admin/generate-pdf' && req.method === 'POST') {
+    handleAdminGeneratePdf(req, res);
+    return;
+  }
+
+  if (path === '/api/admin/productores-update' && req.method === 'POST') {
+    handleAdminProductoresUpdate(req, res);
     return;
   }
 

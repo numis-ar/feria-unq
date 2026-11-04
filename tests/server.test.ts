@@ -1156,4 +1156,30 @@ describe('Backend tests', () => {
       assert.strictEqual(tokenHits, 2);
     });
   });
+
+  describe('Admin script endpoints whitelist and auth', () => {
+    beforeEach(() => {
+      process.env.ADMIN_TOKENS = 'token1,token2';
+    });
+    afterEach(() => {
+      delete process.env.ADMIN_TOKENS;
+      delete process.env.ADMIN_TOKEN;
+    });
+
+    it('returns 403 without admin token for late-signup', async () => {
+      await request(server).post('/api/admin/late-signup').send({ name: 'Test' }).expect(403);
+    });
+
+    it('returns 403 with invalid admin token for reset-password', async () => {
+      await request(server).post('/api/admin/reset-password').set('X-Admin-Token', 'wrong').send({ user: 'test' }).expect(403);
+    });
+
+    it('returns 400 when name is missing for late-signup with valid token', async () => {
+      await request(server).post('/api/admin/late-signup').set('X-Admin-Token', 'token1').send({}).expect(400);
+    });
+
+    it('returns 400 when user is missing for reset-password with valid token', async () => {
+      await request(server).post('/api/admin/reset-password').set('X-Admin-Token', 'token2').send({}).expect(400);
+    });
+  });
 });
