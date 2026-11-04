@@ -10,7 +10,4 @@ ID=$(echo $NAME | iconv -f UTF-8 -t ASCII//TRANSLIT | tr '[:upper:]' '[:lower:]'
 
 taler-harness deployment provision-bank-and-merchant https://merchant.taler.ar https://bank.taler.ar --merchant-management-password=$MERCHANT_PASSWORD --bank-admin-password=$BANK_PASSWORD "--legal-name=$NAME" "--id=$ID" --password=$DEFAULT_PWD
 
-ROOT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-"$ROOT_DIR/scripts/generate-pdf.sh" "$ID"
-
 echo "$ID"

@@ -6,13 +6,8 @@ PASSWORD=".numis123."
 set -e
 echo ====== USR $USER
 
-if [ "$EUID" -eq 0 ]; then
-  runuser -u taler-merchant-httpd -- env TALER_MERCHANT_PASSWORD=$PASSWORD taler-merchant-passwd -i "$USER" || true
-  runuser -u libeufin-bank -- libeufin-bank passwd "$USER" "$PASSWORD" -L WARN || true
-else
-  sudo -u taler-merchant-httpd TALER_MERCHANT_PASSWORD=$PASSWORD taler-merchant-passwd -i "$USER" || true
-  sudo -u libeufin-bank libeufin-bank passwd "$USER" "$PASSWORD" -L WARN || true
-fi
+sudo -u taler-merchant-httpd TALER_MERCHANT_PASSWORD=$PASSWORD taler-merchant-passwd -i "$USER" || true
+sudo -u libeufin-bank libeufin-bank passwd "$USER" "$PASSWORD" -L WARN || true
 
 TOKEN=$(curl -s -u "admin:$MERCHANT_PASSWORD" -H "Content-Type: application/json" -d '{"scope":"all"}' https://merchant.taler.ar/instances/admin/private/token | jq -r '.access_token // .token')
 if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
