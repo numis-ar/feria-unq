@@ -103,7 +103,7 @@
           <!-- User Details / Verification Panel -->
           <div id="user-detail-panel" class="lg:col-span-2 bg-gray-50 p-6 rounded border border-gray-200">
             <div id="no-user-selected" class="text-center py-12 text-gray-500 text-sm">
-              Seleccioná un usuario de la lista para ver su diagnóstico detallado y corregir discrepancias automáticamente.
+              Seleccioná un usuario de la lista para ver su diagnóstico detallado y sugerencias de corrección.
             </div>
             <div id="user-content" class="hidden space-y-6">
               <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 gap-3">
@@ -120,8 +120,8 @@
               <!-- Detailed Standards & Discrepancies Diagnostics -->
               <div class="space-y-3">
                 <h4 class="text-sm font-bold text-gray-800 flex justify-between items-center">
-                  <span>Diagnóstico de Cumplimiento</span>
-                  <button id="auto-fix-all" class="text-[10px] bg-green-700 text-white px-2 py-1 rounded hidden hover:bg-green-800">⚡ Auto-corregir Template y PDFs</button>
+                  <span>Diagnóstico y Sugerencias de Corrección</span>
+                  <button id="auto-fix-all" class="text-[10px] bg-green-700 text-white px-2 py-1 rounded hidden hover:bg-green-800">⚡ Aplicar Scripts de Corrección</button>
                 </h4>
                 <div id="standards-list" class="space-y-2 text-xs"></div>
               </div>
@@ -294,7 +294,7 @@
         document.getElementById('detail-subtitle').textContent = prod ? prod.nombreEmprendimiento : 'Usuario sin datos de productor';
 
         const standardsList = document.getElementById('standards-list');
-        standardsList.innerHTML = '<div class="text-gray-500">Verificando sistemas y diagnosticando discrepancias...</div>';
+        standardsList.innerHTML = '<div class="text-gray-500">Analizando base de datos y esquemas...</div>';
         document.getElementById('auto-fix-all').classList.add('hidden');
 
         try {
@@ -308,7 +308,7 @@
 
       function renderStandards(v) {
         const standardsList = document.getElementById('standards-list');
-        const hasDiscrepancies = !v.namesMatch || !v.singleAccount || !v.creditFacade.ok || !v.template.correct || v.defaultPassword || !v.pdfExists;
+        const hasDiscrepancies = !v.namesMatch || !v.defaultPassword || !v.pdfExists;
         
         if (hasDiscrepancies) {
           document.getElementById('auto-fix-all').classList.remove('hidden');
@@ -316,41 +316,22 @@
 
         let nameHtml = '';
         if (v.namesMatch) {
-          nameHtml = `<div class="p-2 rounded bg-green-100 text-green-800"><b>Coincidencia de Nombres:</b> OK (Merchant: "${v.merchantName}", Banco: "${v.bankName}", Productor: "${v.producerName}")</div>`;
+          nameHtml = `<div class="p-2 rounded bg-green-100 text-green-800"><b>Coincidencia de Nombres (Banco vs Productores):</b> OK ("${v.bankName}")</div>`;
         } else {
           nameHtml = `<div class="p-2 rounded bg-red-100 text-red-800 space-y-1">
             <div><b>❌ Discrepancia en Nombres:</b></div>
-            <div class="text-[11px] font-mono pl-2">· Merchant Backend: "${v.merchantName || 'N/A'}"</div>
             <div class="text-[11px] font-mono pl-2">· Core Bank: "${v.bankName || 'N/A'}"</div>
             <div class="text-[11px] font-mono pl-2">· productores.json: "${v.producerName || 'N/A'}"</div>
             ${v.nameMismatches.map(m => `<div class="text-[11px] text-red-900">↳ ${m}</div>`).join('')}
+            <div class="mt-1 text-[11px] text-blue-800 font-semibold">Sugerencia: Actualizar el nombre legal en datos personales y correr la sincronización de productores.</div>
           </div>`;
         }
 
-        let accHtml = '';
-        if (v.singleAccount) {
-          accHtml = `<div class="p-2 rounded bg-green-100 text-green-800"><b>Cuenta única en Merchant:</b> OK (1 cuenta activa)</div>`;
-        } else {
-          accHtml = `<div class="p-2 rounded bg-red-100 text-red-800"><b>❌ Cuentas en Merchant:</b> Se detectaron ${v.accountsCount} cuentas (se espera exactamente 1).</div>`;
-        }
-
-        let cfHtml = '';
-        if (v.creditFacade.ok) {
-          cfHtml = `<div class="p-2 rounded bg-green-100 text-green-800"><b>Credit Facade:</b> OK (Usuario: ${v.creditFacade.username}, tipo: ${v.creditFacade.type})</div>`;
-        } else {
-          cfHtml = `<div class="p-2 rounded bg-red-100 text-red-800"><b>❌ Credit Facade:</b> ${v.creditFacade.error || 'Configuración incorrecta o faltante'}</div>`;
-        }
-
-        let tplHtml = '';
-        if (v.template.correct) {
-          tplHtml = `<div class="p-2 rounded bg-green-100 text-green-800"><b>Template UNQ:</b> OK (Configurado correctamente)</div>`;
-        } else {
-          tplHtml = `<div class="p-2 rounded bg-red-100 text-red-800 space-y-2">
-            <div><b>❌ Discrepancia en Template UNQ:</b></div>
-            ${v.template.mismatches.map(m => `<div class="text-[11px]">· ${m}</div>`).join('')}
-            <div><button onclick="fixTemplate()" class="px-2 py-1 bg-red-700 text-white font-bold rounded hover:bg-red-800 text-[10px]">⚙️ Corregir Template Automáticamente</button></div>
-          </div>`;
-        }
+        let tplHtml = `<div class="p-2 rounded bg-gray-100 text-gray-800 space-y-1">
+          <div><b>ℹ️ Template UNQ (Esquema DB):</b></div>
+          <div class="text-[11px] text-gray-700">${v.template.fixInstructions}</div>
+          <div><button onclick="fixTemplate()" class="px-2 py-1 btn-numis text-[10px] font-bold rounded">Ejecutar configurar-templates.sh</button></div>
+        </div>`;
 
         let pwdHtml = '';
         if (!v.defaultPassword) {
@@ -372,19 +353,18 @@
           </div>`;
         }
 
-        standardsList.innerHTML = nameHtml + accHtml + cfHtml + tplHtml + pwdHtml + pdfHtml;
+        standardsList.innerHTML = nameHtml + tplHtml + pwdHtml + pdfHtml;
       }
 
       window.fixTemplate = async function() {
         if (!selectedUserId) return;
         const out = document.getElementById('action-output');
         out.classList.remove('hidden');
-        out.textContent = 'Configurando template UNQ...';
+        out.textContent = 'Configurando templates...';
         try {
           const res = await apiCall('/api/admin/config-template', {});
-          out.textContent = res.output || 'Template configurado con éxito.';
+          out.textContent = res.output || 'Templates configurados con éxito.';
           selectUser(selectedUserId);
-          loadOverview();
         } catch (err) {
           out.textContent = 'Error: ' + err.message;
         }
@@ -404,23 +384,22 @@
         if (!selectedUserId || !lastVerificationResult) return;
         const out = document.getElementById('action-output');
         out.classList.remove('hidden');
-        out.textContent = 'Aplicando correcciones automáticas...';
+        out.textContent = 'Aplicando scripts de corrección...';
         
         let logs = [];
         try {
-          if (!lastVerificationResult.template.correct) {
-            const r1 = await apiCall('/api/admin/config-template', {});
-            logs.push('Template: ' + (r1.output || 'OK'));
-          }
+          const r1 = await apiCall('/api/admin/config-template', {});
+          logs.push('Templates: ' + (r1.output || 'OK'));
+
           if (!lastVerificationResult.pdfExists) {
             const r2 = await apiCall('/api/admin/generate-pdf', { id: selectedUserId });
             logs.push('PDFs: ' + (r2.output || 'OK'));
           }
-          out.textContent = logs.join('\n') || 'Correcciones aplicadas.';
+          out.textContent = logs.join('\n');
           selectUser(selectedUserId);
           loadOverview();
         } catch (err) {
-          out.textContent = 'Error durante auto-corrección: ' + err.message;
+          out.textContent = 'Error durante corrección: ' + err.message;
         }
       });
 
@@ -458,7 +437,7 @@
         e.preventDefault();
         const name = document.getElementById('signup-name').value.trim();
         const resEl = document.getElementById('signup-result');
-        resEl.classList.remove('hidden');
+        resEl.classList.add('hidden');
         resEl.textContent = 'Procesando inscripción tardía...';
         try {
           const res = await apiCall('/api/admin/late-signup', { name });
