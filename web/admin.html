@@ -183,6 +183,97 @@
       let producersMap = new Map();
       let lastVerificationResult = null;
 
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function normalizeText(s) {
+        return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+
+      // Fuzzy match: todas las letras de la consulta deben aparecer en orden
+      // dentro del texto. Devuelve un puntaje (menor = mejor) o null si no hay match.
+      function fuzzyScore(query, text) {
+        const q = normalizeText(query);
+        const t = normalizeText(text);
+        if (!q) return 0;
+        let qi = 0;
+        let score = 0;
+        let last = -1;
+        for (let i = 0; i < t.length && qi < q.length; i++) {
+          if (t[i] === q[qi]) {
+            score += last === -1 ? i : i - last - 1;
+            last = i;
+            qi++;
+          }
+        }
+        return qi === q.length ? score : null;
+      }
+
+      function fuzzyFilter(entries, query, getTexts) {
+        if (!query) return entries;
+        return entries
+          .map(entry => {
+            const scores = getTexts(entry).map(txt => fuzzyScore(query, txt)).filter(s => s !== null);
+            return { entry, score: scores.length ? Math.min(...scores) : null };
+          })
+          .filter(x => x.score !== null)
+          .sort((a, b) => a.score - b.score)
+          .map(x => x.entry);
+      }
+
+      function getTimestampMs(ts) {
+        if (!ts) return null;
+        if (typeof ts === 'object') {
+          if (typeof ts.t_ms === 'number') return ts.t_ms;
+          if (typeof ts.t_s === 'number') return ts.t_s * 1000;
+          return null;
+        }
+        if (typeof ts === 'number') return ts > 1e10 ? ts : ts * 1000;
+        if (typeof ts === 'string') {
+          const n = Number(ts);
+          if (Number.isNaN(n)) {
+            const parsed = Date.parse(ts);
+            return Number.isNaN(parsed) ? null : parsed;
+          }
+          return n > 1e10 ? n : n * 1000;
+        }
+        return null;
+      }
+
+      function extractAccountFromPayto(paytoUri) {
+        if (!paytoUri || typeof paytoUri !== 'string') return '';
+        try {
+          const url = new URL(paytoUri.replace('payto://', 'http://'));
+          const parts = url.pathname.split('/').filter(Boolean);
+          return parts[parts.length - 1] || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      // Determina dirección y contraparte de la transacción respecto del
+      // usuario seleccionado.
+      function counterpartInfo(tx) {
+        const debtor = extractAccountFromPayto(tx.debtor_payto_uri || tx.debit_account);
+        const creditor = extractAccountFromPayto(tx.creditor_payto_uri || tx.credit_account);
+        let isCredit;
+        if (tx.direction === 'credit' || tx.direction === 'debit') {
+          isCredit = tx.direction === 'credit';
+        } else {
+          // Sin campo direction: se deduce por qué cuenta es la del usuario.
+          isCredit = debtor !== selectedUserId;
+        }
+        const account = isCredit ? debtor : creditor;
+        const prod = account ? producersMap.get(account) : null;
+        return { isCredit, account, name: prod && prod.nombreEmprendimiento ? prod.nombreEmprendimiento : '' };
+      }
+
       function getToken() {
         return sessionStorage.getItem('admin_token') || '';
       }
@@ -242,44 +333,40 @@
       }
 
       function renderLists() {
-        const query = document.getElementById('search-input').value.toLowerCase().trim();
-        
+        const query = document.getElementById('search-input').value.trim();
+
         // Official
         const officialListEl = document.getElementById('official-list');
-        const filteredOfficial = overviewData.official.filter(id => {
-          if (!query) return true;
+        const filteredOfficial = fuzzyFilter(overviewData.official, query, id => {
           const prod = producersMap.get(id);
-          const name = prod ? prod.nombreEmprendimiento.toLowerCase() : '';
-          return id.toLowerCase().includes(query) || name.includes(query);
+          return [id, prod && prod.nombreEmprendimiento ? prod.nombreEmprendimiento : ''];
         });
         document.getElementById('official-count').textContent = filteredOfficial.length;
         officialListEl.innerHTML = filteredOfficial.length === 0 ? '<div class="text-gray-400 text-xs p-1">Sin resultados</div>' : filteredOfficial.map(id => {
           const prod = producersMap.get(id);
-          const name = prod ? prod.nombreEmprendimiento : id;
+          const name = prod && prod.nombreEmprendimiento ? prod.nombreEmprendimiento : id;
           return `<div onclick="selectUser('${id}')" class="p-2 hover:bg-green-100 cursor-pointer rounded flex justify-between items-center ${selectedUserId === id ? 'bg-green-200 font-bold' : ''}">
-            <span class="text-xs truncate">${name}</span>
-            <span class="text-[10px] text-gray-500 font-mono">${id}</span>
+            <span class="text-xs truncate">${escapeHtml(name)}</span>
+            <span class="text-[10px] text-gray-500 font-mono">${escapeHtml(id)}</span>
           </div>`;
         }).join('');
 
         // Extras
         const extraListEl = document.getElementById('extra-list');
-        const filteredExtras = overviewData.extras.filter(e => {
-          if (!query) return true;
+        const filteredExtras = fuzzyFilter(overviewData.extras, query, e => {
           const prod = producersMap.get(e.id);
-          const name = prod ? prod.nombreEmprendimiento.toLowerCase() : '';
-          return e.id.toLowerCase().includes(query) || name.includes(query);
+          return [e.id, prod && prod.nombreEmprendimiento ? prod.nombreEmprendimiento : ''];
         });
         document.getElementById('extra-count').textContent = filteredExtras.length;
         extraListEl.innerHTML = filteredExtras.length === 0 ? '<div class="text-gray-400 text-xs p-1">Sin usuarios extras</div>' : filteredExtras.map(e => {
           const prod = producersMap.get(e.id);
-          const name = prod ? prod.nombreEmprendimiento : e.id;
+          const name = prod && prod.nombreEmprendimiento ? prod.nombreEmprendimiento : e.id;
           let badge = [];
           if (e.inMerchant) badge.push('M');
           if (e.inBank) badge.push('B');
           if (e.inProducers) badge.push('P');
           return `<div onclick="selectUser('${e.id}')" class="p-2 hover:bg-orange-100 cursor-pointer rounded flex justify-between items-center ${selectedUserId === e.id ? 'bg-orange-200 font-bold' : ''}">
-            <span class="text-xs truncate">${name} <span class="text-[10px] text-gray-500 font-mono">(${e.id})</span></span>
+            <span class="text-xs truncate">${escapeHtml(name)} <span class="text-[10px] text-gray-500 font-mono">(${escapeHtml(e.id)})</span></span>
             <span class="text-[10px] bg-orange-200 text-orange-800 px-1 rounded">[${badge.join(',')}]</span>
           </div>`;
         }).join('');
@@ -302,7 +389,7 @@
 
         document.getElementById('detail-userid').textContent = id;
         const prod = producersMap.get(id);
-        document.getElementById('detail-subtitle').textContent = prod ? prod.nombreEmprendimiento : 'Usuario sin datos de productor';
+        document.getElementById('detail-subtitle').textContent = prod && prod.nombreEmprendimiento ? prod.nombreEmprendimiento : 'Usuario sin datos de productor';
 
         const standardsList = document.getElementById('standards-list');
         standardsList.innerHTML = '<div class="text-gray-500">Analizando base de datos y esquemas...</div>';
@@ -322,12 +409,22 @@
           if (txs.length === 0) {
             txList.innerHTML = '<div class="text-gray-400">Sin transferencias registradas.</div>';
           } else {
-            txList.innerHTML = txs.map(tx => `
-              <div class="py-1 border-b flex justify-between items-center">
-                <span><b>${tx.amount}</b> - ${tx.subject || 'Sin asunto'}</span>
-                <span class="text-gray-500 text-[10px]">${new Date(tx.timestamp?.t_ms || tx.date || Date.now()).toLocaleString()}</span>
+            txList.innerHTML = txs.map(tx => {
+              const tsMs = getTimestampMs(tx.timestamp) || getTimestampMs(tx.date);
+              const dateStr = tsMs ? new Date(tsMs).toLocaleString('es-AR') : '—';
+              const cp = counterpartInfo(tx);
+              const arrow = cp.isCredit ? '↓' : '↑';
+              const colorClass = cp.isCredit ? 'text-green-700' : 'text-red-700';
+              const cpLabel = cp.name
+                ? `${cp.name} (${cp.account})`
+                : (cp.account || 'desconocido');
+              return `
+              <div class="py-1 border-b flex justify-between items-center gap-2">
+                <span class="${colorClass}"><b>${arrow} ${escapeHtml(tx.amount)}</b> ${cp.isCredit ? 'de' : 'a'} ${escapeHtml(cpLabel)} — ${escapeHtml(tx.subject || 'Sin asunto')}</span>
+                <span class="text-gray-500 text-[10px] whitespace-nowrap">${dateStr}</span>
               </div>
-            `).join('');
+            `;
+            }).join('');
           }
         } catch (err) {
           standardsList.innerHTML = `<div class="text-red-600">Error en verificación: ${err.message}</div>`;
@@ -346,7 +443,7 @@
             <div><b>❌ Discrepancia en Nombres:</b></div>
             <div class="text-[11px] font-mono pl-2">· Core Bank: "${v.bankName || 'N/A'}"</div>
             <div class="text-[11px] font-mono pl-2">· productores.json: "${v.producerName || 'N/A'}"</div>
-            ${v.nameMismatches.map(m => `<div class="text-[11px] text-red-900">↳ ${m}</div>`).join('')}
+            ${(v.nameMismatches || []).map(m => `<div class="text-[11px] text-red-900">↳ ${escapeHtml(m)}</div>`).join('')}
             <div class="mt-1 text-[11px] text-blue-800 font-semibold">Sugerencia: Actualizar el nombre legal en datos personales y correr la sincronización de productores.</div>
           </div>`;
         }
