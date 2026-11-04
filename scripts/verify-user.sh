@@ -16,12 +16,7 @@ const userId = process.argv[2];
 const merchantBaseUrl = process.env.MERCHANT_BASE_URL || 'https://merchant.taler.ar';
 const bankBaseUrl = process.env.BANK_URL || 'https://bank.taler.ar';
 const merchantPwd = process.env.MERCHANT_PASSWORD || '';
-
-async function merchantRequest(url, options = {}) {
-  const res = await fetch(url, { ...options, signal: AbortSignal.timeout(10000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
+const bankPwd = process.env.BANK_PASSWORD || '';
 
 async function main() {
   const report = {
@@ -46,68 +41,120 @@ async function main() {
   };
 
   try {
-    const creds = Buffer.from(`admin:${merchantPwd}`).toString('base64');
-    const tokenRes = await fetch(`${merchantBaseUrl}/instances/admin/private/token`, {
-      method: 'POST',
-      headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scope: 'all' })
-    });
-    const tokenData = await tokenRes.json();
-    const token = tokenData.access_token || tokenData.token;
-
-    if (token) {
-      try {
-        const inst = await merchantRequest(`${merchantBaseUrl}/management/instances/${encodeURIComponent(userId)}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        report.merchantName = inst.name || null;
-      } catch (e) {
-        report.merchantName = `Error: ${e.message}`;
+    // 1. Get Merchant Admin Token
+    let merchantToken = null;
+    try {
+      const creds = Buffer.from(`admin:${merchantPwd}`).toString('base64');
+      const tokenRes = await fetch(`${merchantBaseUrl}/instances/admin/private/token`, {
+        method: 'POST',
+        headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: 'all' })
+      });
+      if (tokenRes.ok) {
+        const tokenData = await tokenRes.json();
+        merchantToken = tokenData.access_token || tokenData.token;
       }
+    } catch (e) {
+      report.nameMismatches.push(`No se pudo autenticar en Merchant: ${e.message}`);
+    }
+
+    if (merchantToken) {
+      try {
+        const instRes = await fetch(`${merchantBaseUrl}/management/instances/${encodeURIComponent(userId)}`, {
+          headers: { Authorization: `Bearer ${merchantToken}` }
+        });
+        if (instRes.ok) {
+          const inst = await instRes.json();
+          report.merchantName = inst.name || null;
+        }
+      } catch {}
 
       try {
-        const tpl = await merchantRequest(`${merchantBaseUrl}/instances/${encodeURIComponent(userId)}/private/templates/UNQ`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const tplRes = await fetch(`${merchantBaseUrl}/instances/${encodeURIComponent(userId)}/private/templates/UNQ`, {
+          headers: { Authorization: `Bearer ${merchantToken}` }
         });
-        report.template.exists = true;
-        report.template.actual = tpl;
-        const contract = tpl.template_contract || {};
-        const mismatches = [];
-        if (tpl.template_description !== 'UNQ') mismatches.push(`Descripción esperada 'UNQ', obtenido '${tpl.template_description}'`);
-        if (contract.template_type !== 'fixed-order') mismatches.push(`Tipo esperado 'fixed-order', obtenido '${contract.template_type}'`);
-        if (contract.pay_duration?.d_us !== 300000000) mismatches.push(`Duración esperada 300000000 us (5 min), obtenido ${contract.pay_duration?.d_us}`);
-        if (contract.summary !== 'Pago con QR') mismatches.push(`Resumen esperado 'Pago con QR', obtenido '${contract.summary}'`);
-        
-        report.template.mismatches = mismatches;
-        report.template.correct = mismatches.length === 0;
-      } catch (e) {
-        report.template.exists = false;
-        report.template.mismatches.push(`Template UNQ no encontrado en merchant: ${e.message}`);
-      }
-
-      try {
-        const accs = await merchantRequest(`${merchantBaseUrl}/instances/${encodeURIComponent(userId)}/private/accounts`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const accounts = accs.accounts || [];
-        report.accountsCount = accounts.length;
-        report.singleAccount = accounts.length === 1;
-        if (accounts.length > 0) {
-          const acc = accounts[0];
-          const cf = acc.credit_facade_credentials;
-          report.creditFacade.username = cf?.username || null;
-          report.creditFacade.type = cf?.type || null;
-          const cfOk = cf && cf.type === 'basic' && cf.username === userId;
-          report.creditFacade.ok = cfOk;
-          if (!cfOk) report.creditFacade.error = `Credit facade inválida o credenciales incorrectas (usuario: ${cf?.username})`;
+        if (tplRes.ok) {
+          const tpl = await tplRes.json();
+          report.template.exists = true;
+          report.template.actual = tpl;
+          const contract = tpl.template_contract || {};
+          const mismatches = [];
+          if (tpl.template_description !== 'UNQ') mismatches.push(`Descripción esperada 'UNQ', obtenido '${tpl.template_description}'`);
+          if (contract.template_type !== 'fixed-order') mismatches.push(`Tipo esperado 'fixed-order', obtenido '${contract.template_type}'`);
+          if (contract.pay_duration?.d_us !== 300000000) mismatches.push(`Duración esperada 300000000 us (5 min), obtenido ${contract.pay_duration?.d_us}`);
+          if (contract.summary !== 'Pago con QR') mismatches.push(`Resumen esperado 'Pago con QR', obtenido '${contract.summary}'`);
+          
+          report.template.mismatches = mismatches;
+          report.template.correct = mismatches.length === 0;
         } else {
-          report.creditFacade.error = 'No hay cuentas bancarias asociadas en merchant';
+          report.template.exists = false;
+          report.template.mismatches.push(`Template UNQ no encontrado (HTTP ${tplRes.status})`);
         }
       } catch (e) {
-        report.creditFacade.error = `No se pudieron obtener cuentas del merchant: ${e.message}`;
+        report.template.exists = false;
+        report.template.mismatches.push(`Error obteniendo template UNQ: ${e.message}`);
+      }
+
+      try {
+        const accsRes = await fetch(`${merchantBaseUrl}/instances/${encodeURIComponent(userId)}/private/accounts`, {
+          headers: { Authorization: `Bearer ${merchantToken}` }
+        });
+        if (accsRes.ok) {
+          const accs = await accsRes.json();
+          const accounts = accs.accounts || [];
+          report.accountsCount = accounts.length;
+          report.singleAccount = accounts.length === 1;
+          if (accounts.length > 0) {
+            const acc = accounts[0];
+            const cf = acc.credit_facade_credentials;
+            report.creditFacade.username = cf?.username || null;
+            report.creditFacade.type = cf?.type || null;
+            const cfOk = cf && cf.type === 'basic' && cf.username === userId;
+            report.creditFacade.ok = cfOk;
+            if (!cfOk) report.creditFacade.error = `Credit facade inválida o credenciales incorrectas (usuario: ${cf?.username})`;
+          } else {
+            report.creditFacade.error = 'No hay cuentas bancarias asociadas en merchant';
+          }
+        } else {
+          report.creditFacade.error = `No se pudieron obtener cuentas de merchant (HTTP ${accsRes.status})`;
+        }
+      } catch (e) {
+        report.creditFacade.error = `Error obteniendo cuentas de merchant: ${e.message}`;
       }
     }
 
+    // 2. Get Bank Admin Token & Bank Info
+    let bankAdminToken = null;
+    try {
+      const bCreds = Buffer.from(`admin:${bankPwd}`).toString('base64');
+      const bTokenRes = await fetch(`${bankBaseUrl}/accounts/admin/token`, {
+        method: 'POST',
+        headers: { Authorization: `Basic ${bCreds}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: 'readwrite' })
+      });
+      if (bTokenRes.ok) {
+        const bTokenData = await bTokenRes.json();
+        bankAdminToken = bTokenData.access_token || bTokenData.token;
+      }
+    } catch {}
+
+    if (bankAdminToken) {
+      try {
+        const bInfoRes = await fetch(`${bankBaseUrl}/accounts/${encodeURIComponent(userId)}`, {
+          headers: { Authorization: `Bearer ${bankAdminToken}` }
+        });
+        if (bInfoRes.ok) {
+          const bInfo = await bInfoRes.json();
+          report.bankName = bInfo.full_name || bInfo.name || null;
+        } else {
+          report.bankName = `Cuenta no encontrada en banco (HTTP ${bInfoRes.status})`;
+        }
+      } catch (e) {
+        report.bankName = `Error consultando banco: ${e.message}`;
+      }
+    }
+
+    // Password check with default .numis123.
     try {
       const bAuth = Buffer.from(`${userId}:.numis123.`).toString('base64');
       const bRes = await fetch(`${bankBaseUrl}/accounts/${encodeURIComponent(userId)}/token`, {
@@ -118,32 +165,29 @@ async function main() {
       report.defaultPassword = bRes.ok;
     } catch {}
 
-    try {
-      const bInfo = await merchantRequest(`${bankBaseUrl}/accounts/${encodeURIComponent(userId)}`);
-      report.bankName = bInfo.full_name || bInfo.name || null;
-    } catch (e) {
-      report.bankName = `Error: ${e.message}`;
-    }
-
+    // Producers json
     try {
       const prodRaw = await fs.readFile(path.join('web', 'productores.json'), 'utf8');
       const producers = JSON.parse(prodRaw);
       const prod = producers.find(p => p.id === userId);
-      if (prod) report.producerName = prod.nombreEmprendimiento || null;
+      if (prod) {
+        report.producerName = prod.nombreEmprendimiento || null;
+      } else {
+        report.nameMismatches.push(`El ID '${userId}' no se encuentra en productores.json`);
+      }
     } catch (e) {
       report.producerName = `Error leyendo productores.json: ${e.message}`;
     }
 
     const nameMismatches = [];
     if (report.merchantName !== report.producerName) {
-      nameMismatches.nameMismatch = true;
       nameMismatches.push(`Merchant name ("${report.merchantName}") no coincide con Producers ("${report.producerName}")`);
     }
-    if (report.bankName !== report.merchantName) {
+    if (report.bankName && report.merchantName && report.bankName !== report.merchantName) {
       nameMismatches.push(`Bank name ("${report.bankName}") no coincide con Merchant name ("${report.merchantName}")`);
     }
-    report.nameMismatches = nameMismatches;
-    report.namesMatch = nameMismatches.length === 0;
+    report.nameMismatches = [...report.nameMismatches, ...nameMismatches];
+    report.namesMatch = report.nameMismatches.length === 0;
 
     try {
       await fs.access(path.join('web', 'pdfs', `${userId}_frente.pdf`));
