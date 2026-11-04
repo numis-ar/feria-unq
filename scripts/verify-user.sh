@@ -24,15 +24,23 @@ async function merchantRequest(url, options = {}) {
 }
 
 async function main() {
-  const result = {
+  const report = {
     id: userId,
-    nameMatch: false,
     merchantName: null,
     bankName: null,
     producerName: null,
+    namesMatch: false,
+    nameMismatches: [],
+    accountsCount: 0,
     singleAccount: false,
-    creditFacadeOk: false,
-    templateOk: false,
+    creditFacade: { ok: false, username: null, type: null, error: null },
+    template: {
+      exists: false,
+      correct: false,
+      actual: null,
+      expected: { description: 'UNQ', type: 'fixed-order', duration_us: 300000000, summary: 'Pago con QR' },
+      mismatches: []
+    },
     defaultPassword: true,
     pdfExists: false,
   };
@@ -52,34 +60,52 @@ async function main() {
         const inst = await merchantRequest(`${merchantBaseUrl}/management/instances/${encodeURIComponent(userId)}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        result.merchantName = inst.name || null;
-      } catch {}
+        report.merchantName = inst.name || null;
+      } catch (e) {
+        report.merchantName = `Error: ${e.message}`;
+      }
 
       try {
         const tpl = await merchantRequest(`${merchantBaseUrl}/instances/${encodeURIComponent(userId)}/private/templates/UNQ`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        report.template.exists = true;
+        report.template.actual = tpl;
         const contract = tpl.template_contract || {};
-        result.templateOk = (
-          tpl.template_description === 'UNQ' &&
-          contract.template_type === 'fixed-order' &&
-          contract.pay_duration?.d_us === 300000_000 &&
-          contract.summary === 'Pago con QR'
-        );
-      } catch {}
+        const mismatches = [];
+        if (tpl.template_description !== 'UNQ') mismatches.push(`Descripción esperada 'UNQ', obtenido '${tpl.template_description}'`);
+        if (contract.template_type !== 'fixed-order') mismatches.push(`Tipo esperado 'fixed-order', obtenido '${contract.template_type}'`);
+        if (contract.pay_duration?.d_us !== 300000000) mismatches.push(`Duración esperada 300000000 us (5 min), obtenido ${contract.pay_duration?.d_us}`);
+        if (contract.summary !== 'Pago con QR') mismatches.push(`Resumen esperado 'Pago con QR', obtenido '${contract.summary}'`);
+        
+        report.template.mismatches = mismatches;
+        report.template.correct = mismatches.length === 0;
+      } catch (e) {
+        report.template.exists = false;
+        report.template.mismatches.push(`Template UNQ no encontrado en merchant: ${e.message}`);
+      }
 
       try {
         const accs = await merchantRequest(`${merchantBaseUrl}/instances/${encodeURIComponent(userId)}/private/accounts`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const accounts = accs.accounts || [];
-        result.singleAccount = accounts.length === 1;
+        report.accountsCount = accounts.length;
+        report.singleAccount = accounts.length === 1;
         if (accounts.length > 0) {
           const acc = accounts[0];
           const cf = acc.credit_facade_credentials;
-          result.creditFacadeOk = cf && cf.type === 'basic' && cf.username === userId;
+          report.creditFacade.username = cf?.username || null;
+          report.creditFacade.type = cf?.type || null;
+          const cfOk = cf && cf.type === 'basic' && cf.username === userId;
+          report.creditFacade.ok = cfOk;
+          if (!cfOk) report.creditFacade.error = `Credit facade inválida o credenciales incorrectas (usuario: ${cf?.username})`;
+        } else {
+          report.creditFacade.error = 'No hay cuentas bancarias asociadas en merchant';
         }
-      } catch {}
+      } catch (e) {
+        report.creditFacade.error = `No se pudieron obtener cuentas del merchant: ${e.message}`;
+      }
     }
 
     try {
@@ -89,36 +115,45 @@ async function main() {
         headers: { Authorization: `Basic ${bAuth}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ scope: 'readwrite' })
       });
-      result.defaultPassword = bRes.ok;
+      report.defaultPassword = bRes.ok;
     } catch {}
 
     try {
       const bInfo = await merchantRequest(`${bankBaseUrl}/accounts/${encodeURIComponent(userId)}`);
-      result.bankName = bInfo.full_name || bInfo.name || null;
-    } catch {}
+      report.bankName = bInfo.full_name || bInfo.name || null;
+    } catch (e) {
+      report.bankName = `Error: ${e.message}`;
+    }
 
     try {
       const prodRaw = await fs.readFile(path.join('web', 'productores.json'), 'utf8');
       const producers = JSON.parse(prodRaw);
       const prod = producers.find(p => p.id === userId);
-      if (prod) result.producerName = prod.nombreEmprendimiento || null;
-    } catch {}
+      if (prod) report.producerName = prod.nombreEmprendimiento || null;
+    } catch (e) {
+      report.producerName = `Error leyendo productores.json: ${e.message}`;
+    }
+
+    const nameMismatches = [];
+    if (report.merchantName !== report.producerName) {
+      nameMismatches.nameMismatch = true;
+      nameMismatches.push(`Merchant name ("${report.merchantName}") no coincide con Producers ("${report.producerName}")`);
+    }
+    if (report.bankName !== report.merchantName) {
+      nameMismatches.push(`Bank name ("${report.bankName}") no coincide con Merchant name ("${report.merchantName}")`);
+    }
+    report.nameMismatches = nameMismatches;
+    report.namesMatch = nameMismatches.length === 0;
 
     try {
       await fs.access(path.join('web', 'pdfs', `${userId}_frente.pdf`));
       await fs.access(path.join('web', 'pdfs', `${userId}_reverso.pdf`));
-      result.pdfExists = true;
-    } catch {}
+      report.pdfExists = true;
+    } catch {
+      report.pdfExists = false;
+    }
 
-    result.nameMatch = !!(
-      result.merchantName &&
-      result.producerName &&
-      result.merchantName === result.producerName &&
-      result.bankName &&
-      result.bankName === result.merchantName
-    );
-
-    console.log(JSON.stringify(result));
+    console.log(JSON.stringify(report, null, 2));
   } catch (e) {
     console.log(JSON.stringify({ error: e.message }));
     process.exit(1);

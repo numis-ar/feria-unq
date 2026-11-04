@@ -1816,7 +1816,18 @@ export async function handleAdminGeneratePdf(req: http.IncomingMessage, res: htt
   }
 }
 
-export async function handleAdminProductoresUpdate(req: http.IncomingMessage, res: http.ServerResponse) {
+export async function handleAdminConfigTemplate(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const output = await callAdminScript('configurar-templates.sh', []);
+    sendJson(res, 200, { type: 'ok', output });
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Failed to configure template');
+  }
+}
   if (!validateAdminToken(req)) {
     sendError(res, 403, 'Forbidden');
     return;
@@ -2308,7 +2319,10 @@ export const server = http.createServer((req, res) => {
     return;
   }
 
-  if (path === '/api/admin/productores-update' && req.method === 'POST') {
+  if (path === '/api/admin/config-template' && req.method === 'POST') {
+    handleAdminConfigTemplate(req, res);
+    return;
+  }
     handleAdminProductoresUpdate(req, res);
     return;
   }
