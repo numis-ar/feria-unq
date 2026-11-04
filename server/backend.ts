@@ -1964,6 +1964,39 @@ export async function handleAdminVerifyUser(req: http.IncomingMessage, res: http
   }
 }
 
+export async function handleAdminTransactions(req: http.IncomingMessage, res: http.ServerResponse, userId: string) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const adminToken = await getBankAdminToken();
+    const bankBase = getBankUrl();
+    const txRes = await new Promise<any>((resolve, reject) => {
+      const url = new URL(`/accounts/${encodeURIComponent(userId)}/transactions`, bankBase);
+      const options: https.RequestOptions = {
+        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+        path: url.pathname + url.search, method: 'GET',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Accept': 'application/json' },
+        rejectUnauthorized: false
+      };
+      const client = url.protocol === 'https:' ? https : http;
+      const req = client.request(options, (resp) => {
+        let data = '';
+        resp.on('data', c => data += c);
+        resp.on('end', () => {
+          try { resolve(JSON.parse(data)); } catch { reject(new Error('Parse error')); }
+        });
+      });
+      req.on('error', reject);
+      req.end();
+    });
+    sendJson(res, 200, txRes);
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Failed to fetch transactions');
+  }
+}
+
 export async function handleAdminNotify(req: http.IncomingMessage, res: http.ServerResponse) {
   const sessionId = getSessionId(req);
   const adminToken = getAdminToken();
@@ -2241,7 +2274,11 @@ export const server = http.createServer((req, res) => {
     return;
   }
 
-  if (path === '/api/admin/late-signup' && req.method === 'POST') {
+  const adminTxMatch = path.match(/^\/api\/admin\/transactions\/([^/]+)$/);
+  if (req.method === 'GET' && adminTxMatch) {
+    handleAdminTransactions(req, res, decodeURIComponent(adminTxMatch[1]));
+    return;
+  }
     handleAdminLateSignup(req, res);
     return;
   }

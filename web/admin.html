@@ -125,6 +125,14 @@
                 <div id="standards-list" class="space-y-2 text-xs"></div>
               </div>
 
+              <!-- Bank Transactions Section -->
+              <div class="space-y-3">
+                <h4 class="text-sm font-bold text-gray-800">Transferencias Bancarias</h4>
+                <div id="transactions-list" class="bg-white border rounded p-3 max-h-48 overflow-y-auto text-xs font-mono">
+                  <div class="text-gray-400">Seleccioná un usuario para ver sus transferencias.</div>
+                </div>
+              </div>
+
               <!-- Actions & status output -->
               <div id="action-output" class="text-xs bg-white p-3 rounded border font-mono hidden"></div>
             </div>
@@ -299,12 +307,31 @@
         const standardsList = document.getElementById('standards-list');
         standardsList.innerHTML = '<div class="text-gray-500">Analizando base de datos y esquemas...</div>';
 
+        const txList = document.getElementById('transactions-list');
+        txList.innerHTML = '<div class="text-gray-500">Cargando transferencias...</div>';
+
         try {
-          const res = await apiCall('/api/admin/verify-user', { id });
+          const [res, txRes] = await Promise.all([
+            apiCall('/api/admin/verify-user', { id }),
+            apiCall(`/api/admin/transactions/${id}`, {}, 'GET').catch(() => ({ transactions: [] }))
+          ]);
           lastVerificationResult = res;
           renderStandards(res);
+
+          const txs = txRes.transactions || (Array.isArray(txRes) ? txRes : []);
+          if (txs.length === 0) {
+            txList.innerHTML = '<div class="text-gray-400">Sin transferencias registradas.</div>';
+          } else {
+            txList.innerHTML = txs.map(tx => `
+              <div class="py-1 border-b flex justify-between items-center">
+                <span><b>${tx.amount}</b> - ${tx.subject || 'Sin asunto'}</span>
+                <span class="text-gray-500 text-[10px]">${new Date(tx.timestamp?.t_ms || tx.date || Date.now()).toLocaleString()}</span>
+              </div>
+            `).join('');
+          }
         } catch (err) {
           standardsList.innerHTML = `<div class="text-red-600">Error en verificación: ${err.message}</div>`;
+          txList.innerHTML = `<div class="text-red-600">Error cargando transferencias</div>`;
         }
       }
 
