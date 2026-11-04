@@ -1832,6 +1832,190 @@ export async function handleAdminProductoresUpdate(req: http.IncomingMessage, re
   }
 }
 
+async function fetchMerchantInstances(): Promise<string[]> {
+  try {
+    const merchantBase = getMerchantUrl();
+    const merchantPwd = process.env.MERCHANT_PASSWORD || '';
+    const creds = Buffer.from(`admin:${merchantPwd}`).toString('base64');
+    const tokenRes = await new Promise<any>((resolve, reject) => {
+      const url = new URL('/instances/admin/private/token', merchantBase);
+      const payload = JSON.stringify({ scope: 'all' });
+      const options: https.RequestOptions = {
+        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+        path: url.pathname, method: 'POST',
+        headers: { 'Authorization': `Basic ${creds}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+        rejectUnauthorized: false
+      };
+      const client = url.protocol === 'https:' ? https : http;
+      const req = client.request(options, (res) => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          try { resolve(JSON.parse(data)); } catch { reject(new Error('Parse error')); }
+        });
+      });
+      req.on('error', reject);
+      req.write(payload);
+      req.end();
+    });
+    const token = tokenRes.access_token || tokenRes.token;
+    if (!token) return [];
+
+    const instRes = await new Promise<any>((resolve, reject) => {
+      const url = new URL('/management/instances', merchantBase);
+      const options: https.RequestOptions = {
+        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+        path: url.pathname, method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+        rejectUnauthorized: false
+      };
+      const client = url.protocol === 'https:' ? https : http;
+      const req = client.request(options, (res) => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          try { resolve(JSON.parse(data)); } catch { reject(new Error('Parse error')); }
+        });
+      });
+      req.on('error', reject);
+      req.end();
+    });
+    const instances = instRes.instances || (Array.isArray(instRes) ? instRes : []);
+    return instances.map((i: any) => i.merchant_id || i.id || i.name).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchBankAccounts(): Promise<string[]> {
+  try {
+    const adminToken = await getBankAdminToken();
+    const bankBase = getBankUrl();
+    const accRes = await new Promise<any>((resolve, reject) => {
+      const url = new URL('/accounts', bankBase);
+      const options: https.RequestOptions = {
+        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+        path: url.pathname, method: 'GET',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Accept': 'application/json' },
+        rejectUnauthorized: false
+      };
+      const client = url.protocol === 'https:' ? https : http;
+      const req = client.request(options, (res) => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          try { resolve(JSON.parse(data)); } catch { reject(new Error('Parse error')); }
+        });
+      });
+      req.on('error', reject);
+      req.end();
+    });
+    const accounts = accRes.accounts || (Array.isArray(accRes) ? accRes : []);
+    return accounts.map((a: any) => a.username || a.account_id || a.name).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export async function handleAdminOverview(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const [merchantIdsArr, bankIdsArr, producersRaw] = await Promise.all([
+      fetchMerchantInstances(),
+      fetchBankAccounts(),
+      fs.promises.readFile(path.join(process.cwd(), 'web', 'productores.json'), 'utf8').catch(() => '[]')
+    ]);
+
+    const merchantSet = new Set(merchantIdsArr);
+    const bankSet = new Set(bankIdsArr);
+    let producers: any[] = [];
+    try { producers = JSON.parse(producersRaw); } catch {}
+    const producerMap = new Map(producers.map((p: any) => [p.id, p]));
+    const producerSet = new Set(producerMap.keys());
+
+    const allIds = new Set([...merchantSet, ...bankSet, ...producerSet]);
+    const official: string[] = [];
+    const extras: Array<{ id: string; inMerchant: boolean; inBank: boolean; inProducers: boolean }> = [];
+
+    for (const id of allIds) {
+      if (['admin', 'exchange', 'closing_account'].includes(id)) continue;
+      const inMerchant = merchantSet.has(id);
+      const inBank = bankSet.has(id);
+      const inProducers = producerSet.has(id);
+
+      if (inMerchant && inBank && inProducers) {
+        official.push(id);
+      } else {
+        extras.push({ id, inMerchant, inBank, inProducers });
+      }
+    }
+
+    const pendingSync: string[] = [];
+    const personalDir = path.join(process.cwd(), 'web', 'productores');
+    try {
+      const entries = await fs.promises.readdir(personalDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const id = entry.name;
+        const prod = producerMap.get(id);
+        if (!prod) {
+          pendingSync.push(id);
+          continue;
+        }
+        try {
+          const infoRaw = await fs.promises.readFile(path.join(personalDir, id, 'info.json'), 'utf8');
+          const info = JSON.parse(infoRaw);
+          const fields = ['descripcion', 'instagram', 'facebook', 'twitter', 'telefono', 'whatsapp', 'ubicacion'];
+          let outdated = false;
+          for (const f of fields) {
+            if (info[f] !== undefined && prod[f] !== info[f]) {
+              outdated = true;
+              break;
+            }
+          }
+          if (outdated) pendingSync.push(id);
+        } catch {}
+      }
+    } catch {}
+
+    sendJson(res, 200, {
+      official,
+      extras,
+      pendingSync,
+      producers
+    });
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Overview error');
+  }
+}
+
+export async function handleAdminVerifyUser(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (!validateAdminToken(req)) {
+    sendError(res, 403, 'Forbidden');
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const id = body?.id;
+    if (!id || typeof id !== 'string') {
+      sendError(res, 400, 'Missing id');
+      return;
+    }
+    const output = await callAdminScript('verify-user.sh', [id]);
+    try {
+      const json = JSON.parse(output);
+      sendJson(res, 200, json);
+    } catch {
+      sendJson(res, 200, { raw: output });
+    }
+  } catch (e: any) {
+    sendError(res, 500, e.message || 'Verification failed');
+  }
+}
+
 export async function handleAdminNotify(req: http.IncomingMessage, res: http.ServerResponse) {
   const sessionId = getSessionId(req);
   const adminToken = getAdminToken();
@@ -2126,6 +2310,16 @@ export const server = http.createServer((req, res) => {
 
   if (path === '/api/admin/productores-update' && req.method === 'POST') {
     handleAdminProductoresUpdate(req, res);
+    return;
+  }
+
+  if (path === '/api/admin/overview' && req.method === 'GET') {
+    handleAdminOverview(req, res);
+    return;
+  }
+
+  if (path === '/api/admin/verify-user' && req.method === 'POST') {
+    handleAdminVerifyUser(req, res);
     return;
   }
 
