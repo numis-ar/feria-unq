@@ -1847,54 +1847,9 @@ export async function handleAdminProductoresUpdate(req: http.IncomingMessage, re
 
 async function fetchMerchantInstances(): Promise<string[]> {
   try {
-    const merchantBase = getMerchantUrl();
-    const merchantPwd = process.env.MERCHANT_PASSWORD || '';
-    const creds = Buffer.from(`admin:${merchantPwd}`).toString('base64');
-    const tokenRes = await new Promise<any>((resolve, reject) => {
-      const url = new URL('/instances/admin/private/token', merchantBase);
-      const payload = JSON.stringify({ scope: 'all' });
-      const options: https.RequestOptions = {
-        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
-        path: url.pathname, method: 'POST',
-        headers: { 'Authorization': `Basic ${creds}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
-        rejectUnauthorized: false
-      };
-      const client = url.protocol === 'https:' ? https : http;
-      const req = client.request(options, (res) => {
-        let data = '';
-        res.on('data', c => data += c);
-        res.on('end', () => {
-          try { resolve(JSON.parse(data)); } catch { reject(new Error('Parse error')); }
-        });
-      });
-      req.on('error', reject);
-      req.write(payload);
-      req.end();
-    });
-    const token = tokenRes.access_token || tokenRes.token;
-    if (!token) return [];
-
-    const instRes = await new Promise<any>((resolve, reject) => {
-      const url = new URL('/management/instances', merchantBase);
-      const options: https.RequestOptions = {
-        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
-        path: url.pathname, method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-        rejectUnauthorized: false
-      };
-      const client = url.protocol === 'https:' ? https : http;
-      const req = client.request(options, (res) => {
-        let data = '';
-        res.on('data', c => data += c);
-        res.on('end', () => {
-          try { resolve(JSON.parse(data)); } catch { reject(new Error('Parse error')); }
-        });
-      });
-      req.on('error', reject);
-      req.end();
-    });
-    const instances = instRes.instances || (Array.isArray(instRes) ? instRes : []);
-    return instances.map((i: any) => i.merchant_id || i.id || i.name).filter(Boolean);
+    const raw = await fs.promises.readFile(path.join(process.cwd(), 'web', 'productores.json'), 'utf8');
+    const producers = JSON.parse(raw);
+    return producers.map((p: any) => p.id).filter(Boolean);
   } catch {
     return [];
   }
@@ -1902,29 +1857,9 @@ async function fetchMerchantInstances(): Promise<string[]> {
 
 async function fetchBankAccounts(): Promise<string[]> {
   try {
-    const adminToken = await getBankAdminToken();
-    const bankBase = getBankUrl();
-    const accRes = await new Promise<any>((resolve, reject) => {
-      const url = new URL('/accounts', bankBase);
-      const options: https.RequestOptions = {
-        hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
-        path: url.pathname, method: 'GET',
-        headers: { 'Authorization': `Bearer ${adminToken}`, 'Accept': 'application/json' },
-        rejectUnauthorized: false
-      };
-      const client = url.protocol === 'https:' ? https : http;
-      const req = client.request(options, (res) => {
-        let data = '';
-        res.on('data', c => data += c);
-        res.on('end', () => {
-          try { resolve(JSON.parse(data)); } catch { reject(new Error('Parse error')); }
-        });
-      });
-      req.on('error', reject);
-      req.end();
-    });
-    const accounts = accRes.accounts || (Array.isArray(accRes) ? accRes : []);
-    return accounts.map((a: any) => a.username || a.account_id || a.name).filter(Boolean);
+    const raw = await fs.promises.readFile(path.join(process.cwd(), 'web', 'productores.json'), 'utf8');
+    const producers = JSON.parse(raw);
+    return producers.map((p: any) => p.id).filter(Boolean);
   } catch {
     return [];
   }
