@@ -1828,6 +1828,8 @@ export async function handleAdminConfigTemplate(req: http.IncomingMessage, res: 
     sendError(res, 500, e.message || 'Failed to configure template');
   }
 }
+
+export async function handleAdminProductoresUpdate(req: http.IncomingMessage, res: http.ServerResponse) {
   if (!validateAdminToken(req)) {
     sendError(res, 403, 'Forbidden');
     return;
@@ -2323,6 +2325,8 @@ export const server = http.createServer((req, res) => {
     handleAdminConfigTemplate(req, res);
     return;
   }
+
+  if (path === '/api/admin/productores-update' && req.method === 'POST') {
     handleAdminProductoresUpdate(req, res);
     return;
   }
