@@ -2279,6 +2279,7 @@ export const server = http.createServer((req, res) => {
     handleAdminTransactions(req, res, decodeURIComponent(adminTxMatch[1]));
     return;
   }
+  if (path === '/api/admin/late-signup' && req.method === 'POST') {
     handleAdminLateSignup(req, res);
     return;
   }
