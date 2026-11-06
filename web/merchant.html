@@ -186,7 +186,7 @@
         color: var(--numis-text-muted) !important;
       }
       .text-slate-400 {
-        color: #6b7280 !important;
+        color: var(--numis-text-muted) !important;
       }
       .text-slate-900 {
         color: var(--numis-text) !important;
@@ -245,19 +245,19 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 12px;
+        font-size: 0.8125rem;
         font-weight: 700;
         color: var(--numis-text-muted);
       }
       .withdraw-stepper .step-number {
-        width: 24px;
-        height: 24px;
+        width: 1.5rem;
+        height: 1.5rem;
         display: grid;
         place-items: center;
         border-radius: 50%;
         background: var(--numis-cream);
         color: var(--numis-text-muted);
-        font-size: 11px;
+        font-size: 0.75rem;
         font-weight: 900;
         flex: none;
       }
@@ -295,7 +295,7 @@
       #qr-modal-footer p {
         margin: 0;
         color: var(--numis-white);
-        font-size: 13px;
+        font-size: 0.875rem;
         line-height: 1.35;
         flex: 1;
         text-align: left;
@@ -311,7 +311,7 @@
         border-radius: 8px;
         padding: 0.6rem 1.25rem;
         font-family: inherit;
-        font-size: 14px;
+        font-size: 0.875rem;
         font-weight: 900;
         text-transform: uppercase;
         text-decoration: none;
@@ -337,6 +337,18 @@
         }
         #qr-modal-footer .btn-pay {
           width: 100%;
+        }
+      }
+
+      /* Celu: letra más grande (base 18px respetando la config del navegador)
+         y piso de ~14px para el texto más chico */
+      @media (max-width: 767px) {
+        html {
+          font-size: 112.5%;
+        }
+        html .text-xs {
+          font-size: 0.8125rem;
+          line-height: 1.25rem;
         }
       }
 
@@ -491,15 +503,38 @@
               data-i18n="password_lbl"
               >Password</label
             >
-            <input
-              id="auth-pass"
-              type="password"
-              placeholder="..."
-              aria-required="true"
-              aria-invalid="false"
-              aria-describedby="login-error"
-              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            />
+            <div class="relative">
+              <input
+                id="auth-pass"
+                type="password"
+                placeholder="..."
+                autocomplete="current-password"
+                aria-required="true"
+                aria-invalid="false"
+                aria-describedby="login-error"
+                class="w-full rounded-xl border border-slate-300 pl-4 pr-12 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+              <button
+                id="toggle-auth-pass"
+                type="button"
+                class="pass-toggle absolute inset-y-0 right-0 flex items-center justify-center w-11 text-slate-500 hover:text-slate-700 rounded-r-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                aria-controls="auth-pass"
+                aria-pressed="false"
+                aria-label="Mostrar contraseña"
+                data-i18n-aria-label="show_password"
+              >
+                <svg data-eye="show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg data-eye="hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94" />
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19" />
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                </svg>
+              </button>
+            </div>
           </div>
           <p
             id="login-error"
@@ -774,13 +809,26 @@
             ></path>
           </svg>
         </button>
-        <h3
-          id="transfer-modal-title"
-          class="text-xl font-bold text-slate-800 mb-2"
-          data-i18n="bank_transfer"
-        >
-          Transfer
-        </h3>
+        <div class="flex items-center gap-2 mb-2 pr-8">
+          <button
+            id="btn-transfer-back-3"
+            type="button"
+            data-i18n-aria-label="btn_back"
+            aria-label="Volver"
+            class="hidden -ml-2 p-1 rounded-lg text-slate-500 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <h3
+            id="transfer-modal-title"
+            class="text-xl font-bold text-slate-800"
+            data-i18n="bank_transfer"
+          >
+            Transfer
+          </h3>
+        </div>
 
         <div class="withdraw-stepper" id="transfer-stepper">
           <div class="step active" data-step="1">
@@ -825,7 +873,7 @@
           <p
             id="transfer-step1-error"
             role="alert"
-            class="hidden text-xs text-red-600 font-medium"
+            class="hidden text-sm text-red-600 font-medium"
           ></p>
           <div class="flex gap-3 mt-6">
             <button
@@ -874,7 +922,7 @@
           <p
             id="transfer-step2-error"
             role="alert"
-            class="hidden text-xs text-red-600 font-medium"
+            class="hidden text-sm text-red-600 font-medium"
           ></p>
           <div class="flex gap-3 mt-6">
             <button
@@ -902,35 +950,48 @@
         </div>
 
         <!-- Step 3: Confirm -->
-        <div id="transfer-step-3" class="space-y-4 hidden">
-          <div
-            id="transfer-confirm-summary"
-            class="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl"
-          ></div>
-          <div class="flex gap-3 mt-6">
-            <button
-              id="btn-transfer-cancel-3"
-              class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition"
-              data-i18n="btn_cancel"
-            >
-              Cancel
-            </button>
-            <button
-              id="btn-transfer-back-3"
-              class="w-full bg-slate-200 text-slate-800 rounded-xl py-3 font-semibold hover:bg-slate-300 transition"
-              data-i18n="btn_back"
-            >
-              Back
-            </button>
-            <button
-              id="btn-transfer-confirm"
-              class="w-full bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
-            >
-              <span class="btn-text" data-i18n="btn_confirm">Confirm</span>
-              <span class="btn-loading-text hidden" data-i18n="confirming">Confirming...</span>
-              <span class="sr-only btn-loading-announcer" aria-live="polite"></span>
-            </button>
-          </div>
+        <div id="transfer-step-3" class="hidden">
+          <p
+            class="text-center text-slate-600 font-medium"
+            data-i18n="transfer_review_title"
+          >
+            Revisá si está todo bien
+          </p>
+          <p
+            id="transfer-confirm-amount"
+            class="text-center text-4xl font-bold text-slate-800 my-4"
+          ></p>
+          <dl class="text-sm bg-slate-50 rounded-xl p-4 space-y-3">
+            <div class="flex gap-4">
+              <dt class="w-14 shrink-0 text-slate-500" data-i18n="transfer_to_label">Para</dt>
+              <dd class="min-w-0">
+                <div id="transfer-confirm-name" class="font-semibold text-slate-800 break-words"></div>
+                <div class="text-slate-500">
+                  <span data-i18n="transfer_step_alias">Alias</span>:
+                  <span id="transfer-confirm-alias"></span>
+                </div>
+              </dd>
+            </div>
+            <div class="flex gap-4">
+              <dt class="w-14 shrink-0 text-slate-500" data-i18n="transfer_from_label">Desde</dt>
+              <dd class="font-semibold text-slate-800" data-i18n="transfer_from_value">Tu caja</dd>
+            </div>
+          </dl>
+          <button
+            id="btn-transfer-confirm"
+            class="w-full mt-6 bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
+          >
+            <span class="btn-text" data-i18n="bank_transfer">Transferir</span>
+            <span class="btn-loading-text hidden" data-i18n="confirming">Confirming...</span>
+            <span class="sr-only btn-loading-announcer" aria-live="polite"></span>
+          </button>
+          <button
+            id="btn-transfer-cancel-3"
+            class="w-full mt-2 text-slate-600 rounded-xl py-3 font-semibold hover:bg-slate-100 transition"
+            data-i18n="btn_cancel"
+          >
+            Cancelar
+          </button>
         </div>
       </div>
     </div>
@@ -1016,7 +1077,7 @@
           <p
             id="withdraw-dialog-error"
             role="alert"
-            class="hidden text-xs text-red-600 font-medium"
+            class="hidden text-sm text-red-600 font-medium"
           ></p>
           <div class="flex gap-3 mt-6">
             <button
@@ -1119,14 +1180,36 @@
               data-i18n="old_password"
               >Old Password</label
             >
+            <div class="relative">
             <input
               id="old-pass"
               type="password"
+              autocomplete="current-password"
               aria-required="true"
               aria-invalid="false"
               aria-describedby="form-error"
-              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              class="w-full rounded-xl border border-slate-300 pl-4 pr-12 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
+              <button
+                type="button"
+                class="pass-toggle absolute inset-y-0 right-0 flex items-center justify-center w-11 text-slate-500 hover:text-slate-700 rounded-r-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                aria-controls="old-pass"
+                aria-pressed="false"
+                aria-label="Mostrar contraseña"
+                data-i18n-aria-label="show_password"
+              >
+                <svg data-eye="show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg data-eye="hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94" />
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19" />
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div>
             <label
@@ -1135,18 +1218,40 @@
               data-i18n="new_password"
               >New Password</label
             >
+            <div class="relative">
             <input
               id="new-pass"
               type="password"
+              autocomplete="new-password"
               aria-required="true"
               aria-invalid="false"
               aria-describedby="new-pass-error"
-              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              class="w-full rounded-xl border border-slate-300 pl-4 pr-12 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
+              <button
+                type="button"
+                class="pass-toggle absolute inset-y-0 right-0 flex items-center justify-center w-11 text-slate-500 hover:text-slate-700 rounded-r-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                aria-controls="new-pass"
+                aria-pressed="false"
+                aria-label="Mostrar contraseña"
+                data-i18n-aria-label="show_password"
+              >
+                <svg data-eye="show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg data-eye="hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94" />
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19" />
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                </svg>
+              </button>
+            </div>
             <p
               id="new-pass-error"
               role="alert"
-              class="hidden mt-1 text-xs text-red-600 font-medium"
+              class="hidden mt-1 text-sm text-red-600 font-medium"
             ></p>
           </div>
           <div>
@@ -1156,18 +1261,40 @@
               data-i18n="repeat_password"
               >Repeat Password</label
             >
+            <div class="relative">
             <input
               id="repeat-pass"
               type="password"
+              autocomplete="new-password"
               aria-required="true"
               aria-invalid="false"
               aria-describedby="repeat-pass-error"
-              class="w-full rounded-xl border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              class="w-full rounded-xl border border-slate-300 pl-4 pr-12 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
+              <button
+                type="button"
+                class="pass-toggle absolute inset-y-0 right-0 flex items-center justify-center w-11 text-slate-500 hover:text-slate-700 rounded-r-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                aria-controls="repeat-pass"
+                aria-pressed="false"
+                aria-label="Mostrar contraseña"
+                data-i18n-aria-label="show_password"
+              >
+                <svg data-eye="show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg data-eye="hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94" />
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19" />
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                </svg>
+              </button>
+            </div>
             <p
               id="repeat-pass-error"
               role="alert"
-              class="hidden mt-1 text-xs text-red-600 font-medium"
+              class="hidden mt-1 text-sm text-red-600 font-medium"
             ></p>
           </div>
           <button
@@ -1184,6 +1311,99 @@
             class="hidden text-sm text-red-600 font-medium text-center"
           ></p>
         </div>
+      </div>
+    </div>
+
+    <!-- Password Changed Modal Overlay -->
+    <div
+      id="pass-changed-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pass-changed-modal-title"
+      aria-describedby="pass-changed-modal-body"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
+    >
+      <div
+        class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative text-center"
+      >
+        <div
+          class="mx-auto mb-4 w-14 h-14 rounded-full bg-green-100 text-green-700 flex items-center justify-center"
+          aria-hidden="true"
+        >
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" focusable="false">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h3
+          id="pass-changed-modal-title"
+          class="text-xl font-bold text-slate-800 mb-2"
+          data-i18n="pass_changed"
+        >
+          ¡Contraseña cambiada con éxito!
+        </h3>
+        <p
+          id="pass-changed-modal-body"
+          class="text-slate-600 text-sm leading-relaxed"
+          data-i18n="pass_changed_desc"
+        >
+          La próxima vez que entres, usá tu contraseña nueva.
+        </p>
+        <button
+          id="btn-pass-changed-ok"
+          class="w-full mt-6 bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
+          data-i18n="btn_ok"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+
+    <!-- Sale QR Modal Overlay -->
+    <div
+      id="sale-qr-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sale-qr-modal-title"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden"
+    >
+      <div
+        class="bg-white p-3 md:p-4 rounded-3xl shadow-2xl w-full max-w-md mx-2 relative text-center"
+      >
+        <button
+          id="btn-close-sale-qr-modal"
+          data-i18n-aria-label="aria_close"
+          aria-label="Cerrar"
+          class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        <h3
+          id="sale-qr-modal-title"
+          class="sr-only"
+          data-i18n="sale_qr_title"
+        >
+          QR de venta
+        </h3>
+        <!-- Same face as the printed stall poster (web/cartel/imprimir-qr-a4.html) -->
+        <div
+          id="sale-qr-cara"
+          class="mx-auto mt-10 w-full rounded-xl overflow-hidden"
+        ></div>
+        <!-- Fallback if the poster template can't be loaded -->
+        <img
+          id="sale-qr-img"
+          class="hidden mx-auto mt-10 w-full max-w-[22rem] aspect-square rounded-xl border border-slate-200"
+          alt=""
+        />
+        <button
+          id="btn-sale-qr-ok"
+          class="w-full mt-3 md:mt-4 bg-indigo-600 text-white rounded-xl py-3 font-semibold hover:bg-indigo-700 transition"
+          data-i18n="aria_close"
+        >
+          Cerrar
+        </button>
       </div>
     </div>
 
@@ -1274,6 +1494,31 @@
             ></path>
           </svg>
           <span class="hidden md:inline" data-i18n="btn_install">Install</span>
+        </button>
+        <button
+          id="btn-open-sale-qr"
+          data-i18n-aria-label="sale_qr_btn"
+          aria-label="Mostrar QR de venta"
+          class="flex items-center gap-1.5 bg-white text-[#064d2d] p-2.5 md:px-3 md:py-2 rounded-xl text-sm font-bold transition hover:bg-[#cfe3d8]"
+        >
+          <svg
+            class="w-6 h-6 md:w-5 md:h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z"
+            ></path>
+          </svg>
+          <span class="hidden md:inline" data-i18n="sale_qr_btn"
+            >Mostrar QR de venta</span
+          >
         </button>
         <button
           id="btn-open-change-pass"
@@ -1572,7 +1817,7 @@
               class="w-full text-left text-sm text-slate-600"
             >
               <thead
-                class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100"
+                class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100"
               >
                 <tr>
                   <th
@@ -1755,7 +2000,7 @@
               class="w-full text-left text-sm text-slate-600"
             >
               <thead
-                class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100"
+                class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100"
               >
                 <tr>
                   <th
@@ -2103,6 +2348,8 @@
           login_title: "Merchant Login",
           username_lbl: "Username",
           password_lbl: "Password",
+          show_password: "Show password",
+          hide_password: "Hide password",
           login_btn: "Login",
           modal_qr_withdrawing: "Withdrawing $ ",
           modal_qr_scan: "Scan the qr code with a taler wallet",
@@ -2139,6 +2386,11 @@
           bank_withdraw: "Withdraw",
           bank_withdraw_desc: "Withdraw your balance",
           bank_transfer: "Transfer",
+          transfer_review_title: "Check that everything is right",
+          transfer_to_label: "To",
+          transfer_from_label: "From",
+          transfer_from_value: "Your cash account",
+          transfer_self_error: "You can't transfer to your own cash account.",
           bank_transfer_desc: "Transfer to another merchant",
           transfer_link: "Transfer &rarr;",
           transfer_send_funds: "Send funds",
@@ -2225,11 +2477,15 @@
           user_title: "User Settings",
           user_desc: "Manage your account and session.",
           change_password: "Change Password",
+          sale_qr_btn: "Show sale QR",
+          sale_qr_title: "Sale QR",
+          sale_qr_alt: "QR code to pay at this stall",
           old_password: "Old Password",
           new_password: "New Password",
           repeat_password: "Repeat Password",
           btn_update_pass: "Update Password",
           pass_changed: "Password changed successfully!",
+          pass_changed_desc: "Next time you log in, use your new password.",
           pass_mismatch: "New passwords do not match.",
           temp_pass_warning:
             "You are using a temporary password. It MUST be changed before doing anything else.",
@@ -2278,28 +2534,29 @@
           transfer_step_alias: "Alias",
           transfer_step_amount: "Amount",
           transfer_step_confirm: "Confirm",
-          transfer_summary: "You are about to transfer <strong>{amount}</strong> from <strong>{from}</strong> to <strong>{to}</strong>.",
           help_stat_sold_title: "Sold",
-          help_stat_sold_desc: "Total paid orders minus refunds. This is what customers have paid you.",
+          help_stat_sold_desc: "Everything customers have paid you, minus refunds. It adds up what is <strong>In Transit</strong> and what is already <strong>Settled</strong>.",
           help_stat_intransit_title: "In Transit",
-          help_stat_intransit_desc: "Paid orders that are still being processed by the exchange before settling in your account.",
+          help_stat_intransit_desc: "Paid sales that haven't reached your cash account yet. They usually arrive within a few minutes, and then move to <strong>Settled</strong>.",
           help_stat_settled_title: "Settled",
-          help_stat_settled_desc: "Funds already transferred to your cash account and available for withdrawal.",
+          help_stat_settled_desc: "Total sales that have already reached your cash account. It's a running total: it doesn't go down when you withdraw or transfer. To see what you can use right now, check <strong>Available</strong>.",
           help_bank_avail_title: "Available",
-          help_bank_avail_desc: "Balance ready to withdraw or transfer to another merchant.",
+          help_bank_avail_desc: "What you have in your cash account right now. You can move it to your wallet with a QR code.",
           help_bank_transfer_title: "Transfer",
-          help_bank_transfer_desc: "Send funds from your account to another merchant using their alias.",
+          help_bank_transfer_desc: "Send money from your cash account to another merchant at the fair using their alias. Before confirming, we show you whose account it is so you can check it's the right one.",
           help_orders_title_title: "Latest Orders",
-          help_orders_title_desc: "List of recent sales and their status: pending, confirmed, settled or refunded.",
+          help_orders_title_desc: "Your most recent sales and the status of each one:<br><strong>Unpaid</strong>: the customer hasn't paid yet. If they don't pay in time, the order expires and leaves the list.<br><strong>In Transit</strong>: paid, on its way to your cash account.<br><strong>Settled</strong>: the money is already in your cash account.<br><strong>Refunded</strong>: the money was returned to the customer.",
           help_tx_title_title: "Latest Transactions",
-          help_tx_title_desc: "Record of movements in your cash account: sales, withdrawals, transfers and closures.",
+          help_tx_title_desc: "Everything coming into (green) and going out of (red) your cash account:<br><strong>sales</strong>: settled sales credited to your account.<br><strong>withdraw</strong>: money you moved to your wallet.<br><strong>transfer</strong>: money sent to or received from another merchant.<br><strong>closing</strong>: balance sent to administration when closing the account.",
           help_btn_close_account_title: "Close Account",
-          help_btn_close_account_desc: "Closes your cash account and transfers the remaining balance to administration. This action cannot be undone.",
+          help_btn_close_account_desc: "Closes your cash account and transfers any remaining balance to the fair's administration. Only use it when you won't be selling anymore. <strong>This cannot be undone.</strong>",
         },
         es: {
           login_title: "Acceso de Productorxs",
           username_lbl: "Usuario",
           password_lbl: "Contraseña",
+          show_password: "Mostrar contraseña",
+          hide_password: "Ocultar contraseña",
           login_btn: "Entrar",
           modal_qr_withdrawing: "Retirando $ ",
           modal_qr_scan: "Escanea el código QR con una billetera Taler",
@@ -2336,6 +2593,11 @@
           bank_withdraw: "Generar QR",
           bank_withdraw_desc: "Retirar tu saldo",
           bank_transfer: "Transferir",
+          transfer_review_title: "Revisá si está todo bien",
+          transfer_to_label: "Para",
+          transfer_from_label: "Desde",
+          transfer_from_value: "Tu caja",
+          transfer_self_error: "No podés transferirte a tu propia caja.",
           bank_transfer_desc: "Transferir a otro productor",
           transfer_link: "Transferir &rarr;",
           transfer_send_funds: "Enviar fondos",
@@ -2423,11 +2685,15 @@
           user_title: "Ajustes de Usuario",
           user_desc: "Gestiona tu cuenta y sesión.",
           change_password: "Cambiar Contraseña",
+          sale_qr_btn: "Mostrar QR de venta",
+          sale_qr_title: "QR de venta",
+          sale_qr_alt: "Código QR para pagar en este puesto",
           old_password: "Contraseña actual",
           new_password: "Nueva contraseña",
           repeat_password: "Repetir la nueva contraseña",
           btn_update_pass: "Actualizar",
           pass_changed: "¡Contraseña cambiada con éxito!",
+          pass_changed_desc: "La próxima vez que entres, usá tu contraseña nueva.",
           pass_mismatch: "Las nuevas contraseñas no coinciden.",
           temp_pass_warning:
             "Estás usando una contraseña temporal. DEBE ser cambiada antes de hacer cualquier otra cosa.",
@@ -2477,23 +2743,22 @@
           transfer_step_alias: "Alias",
           transfer_step_amount: "Monto",
           transfer_step_confirm: "Confirmar",
-          transfer_summary: "Vas a transferir <strong>{amount}</strong> desde <strong>{from}</strong> a <strong>{to}</strong>.",
           help_stat_sold_title: "Vendido",
-          help_stat_sold_desc: "Total de ventas cobradas menos reembolsos. Es lo que te pagaron los clientes.",
+          help_stat_sold_desc: "Todo lo que te pagaron los clientes, descontando los reembolsos. Suma lo que está <strong>En proceso</strong> y lo ya <strong>Liquidado</strong>.",
           help_stat_intransit_title: "En proceso",
-          help_stat_intransit_desc: "Pagos confirmados que el exchange aún está procesando antes de acreditarse en tu caja.",
+          help_stat_intransit_desc: "Ventas ya cobradas que todavía no llegaron a tu caja. Suelen acreditarse en unos minutos, y cuando llegan pasan a <strong>Liquidado</strong>.",
           help_stat_settled_title: "Liquidado",
-          help_stat_settled_desc: "Fondos ya transferidos a tu caja y disponibles para retirar.",
+          help_stat_settled_desc: "Total de ventas que ya llegaron a tu caja. Es un acumulado: no baja cuando retirás o transferís. Para saber cuánto podés usar ahora, mirá <strong>Disponible</strong>.",
           help_bank_avail_title: "Disponible",
-          help_bank_avail_desc: "Saldo listo para retirar o transferir a otro productor.",
+          help_bank_avail_desc: "Lo que tenés en tu caja ahora. Podés pasarlo a tu billetera con un QR.",
           help_bank_transfer_title: "Transferir",
-          help_bank_transfer_desc: "Envía fondos de tu cuenta a otro productor usando su alias.",
+          help_bank_transfer_desc: "Enviá fondos de tu caja a otro productor de la feria usando su alias. Antes de confirmar te mostramos a nombre de quién está la cuenta, para que verifiques que es la correcta.",
           help_orders_title_title: "Últimos Pedidos",
-          help_orders_title_desc: "Listado de ventas recientes y su estado: pendiente, confirmado, acreditado o reembolsado.",
+          help_orders_title_desc: "Tus ventas más recientes y en qué estado está cada una:<br><strong>Pendiente</strong>: el cliente todavía no pagó. Si no paga a tiempo, el pedido vence y sale de la lista.<br><strong>Confirmado</strong>: pagado, en camino a tu caja.<br><strong>Acreditado</strong>: el pago ya está en tu caja.<br><strong>Reembolsado</strong>: se le devolvió el pago al cliente.",
           help_tx_title_title: "Últimos Movimientos",
-          help_tx_title_desc: "Registro de movimientos en tu caja: ventas, retiros, transferencias y cierres.",
+          help_tx_title_desc: "Todo lo que entra (en verde) y sale (en rojo) de tu caja:<br><strong>ventas</strong>: ventas liquidadas que entraron a tu caja.<br><strong>retiro</strong>: fondos que pasaste a tu billetera.<br><strong>transferencia</strong>: fondos que enviaste o recibiste de otro productor.<br><strong>cierre</strong>: saldo enviado a administración al cerrar la caja.",
           help_btn_close_account_title: "Cerrar CAJA",
-          help_btn_close_account_desc: "Cierra tu caja y transfiere el saldo restante a administración. Esta acción no se puede deshacer.",
+          help_btn_close_account_desc: "Cierra tu caja y transfiere todo el saldo que quede a la administración de la feria. Usalo solo cuando ya no vayas a vender más. <strong>No se puede deshacer.</strong>",
         },
       };
 
@@ -2747,6 +3012,12 @@
           closeDialog("help-modal");
         });
 
+      document.getElementById("btn-pass-changed-ok").addEventListener("click", () => {
+        document.getElementById("pass-changed-modal").classList.add("hidden");
+        document.body.classList.remove("modal-active");
+        closeDialog("pass-changed-modal");
+      });
+
       document.getElementById("btn-help-ok").addEventListener("click", () => {
         document.getElementById("help-modal").classList.add("hidden");
         document.body.classList.remove("modal-active");
@@ -2846,6 +3117,30 @@
         }
       });
 
+      function setPassVisible(btn, visible) {
+        const input = document.getElementById(btn.getAttribute("aria-controls"));
+        if (!input) return;
+        input.type = visible ? "text" : "password";
+        const key = visible ? "hide_password" : "show_password";
+        btn.setAttribute("aria-pressed", String(visible));
+        btn.setAttribute("data-i18n-aria-label", key);
+        btn.setAttribute("aria-label", t(key));
+        btn.querySelector('[data-eye="show"]').classList.toggle("hidden", visible);
+        btn.querySelector('[data-eye="hide"]').classList.toggle("hidden", !visible);
+      }
+      function hidePasswords(container) {
+        container.querySelectorAll(".pass-toggle").forEach((btn) => setPassVisible(btn, false));
+      }
+      document.querySelectorAll(".pass-toggle").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const input = document.getElementById(btn.getAttribute("aria-controls"));
+          const pos = input.selectionStart;
+          setPassVisible(btn, input.type === "password");
+          input.focus();
+          if (pos !== null) input.setSelectionRange(pos, pos);
+        });
+      });
+
       document.getElementById("login-form").addEventListener("submit", (e) => {
         e.preventDefault();
         const user = document.getElementById("auth-user").value || "default";
@@ -2894,6 +3189,7 @@
         }
 
         document.getElementById("auth-pass").value = "";
+        hidePasswords(document.getElementById("auth-modal"));
         document.getElementById("sidebar").classList.add("hidden");
         document.getElementById("main-content").classList.add("hidden");
         document.getElementById("top-bar").classList.add("hidden");
@@ -3023,7 +3319,7 @@
           const dayKey = d ? formatDate(tsMs, currentLang) : "N/A";
           if (dayKey !== lastDay) {
             lastDay = dayKey;
-            htmlBuffer += `<tr role="row"><td colspan="3" aria-colspan="3" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${escapeHtml(dayKey)}</td></tr>`;
+            htmlBuffer += `<tr role="row"><td colspan="3" aria-colspan="3" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-sm font-semibold">${escapeHtml(dayKey)}</td></tr>`;
           }
           const timeStr = d ? formatTime(tsMs, currentLang) : "";
 
@@ -3222,7 +3518,7 @@
           const dayKey = d ? formatDate(tsMs, currentLang) : "N/A";
           if (dayKey !== lastDay) {
             lastDay = dayKey;
-            htmlBuffer += `<tr role="row"><td colspan="2" aria-colspan="2" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-xs font-semibold uppercase">${escapeHtml(dayKey)}</td></tr>`;
+            htmlBuffer += `<tr role="row"><td colspan="2" aria-colspan="2" class="px-6 py-2 text-center bg-slate-50 text-slate-400 text-sm font-semibold">${escapeHtml(dayKey)}</td></tr>`;
           }
           const timeStr = d ? formatTime(tsMs, currentLang) : "";
 
@@ -4479,14 +4775,15 @@
               oldPassEl.value = "";
               newPassEl.value = "";
               repeatPassEl.value = "";
+              hidePasswords(document.getElementById("change-pass-modal"));
               document
                 .getElementById("temp-password-warning")
                 .classList.add("hidden");
-              showToast(
-                t("toast_success"),
-                translations[currentLang]["pass_changed"],
-                "success",
-              );
+              document.getElementById("change-pass-modal").classList.add("hidden");
+              closeDialog("change-pass-modal", { restoreFocus: false });
+              document.getElementById("pass-changed-modal").classList.remove("hidden");
+              document.body.classList.add("modal-active");
+              openDialog("pass-changed-modal", document.getElementById("btn-pass-changed-ok"));
             }
           } catch (e) {
             const entry =
@@ -4500,9 +4797,167 @@
           }
         });
 
+      // Sale QR: same URI as the stall poster (scripts/generar-pdfs.sh)
+      function saleQrUri() {
+        return `taler://pay-template/merchant.taler.ar/instances/${encodeURIComponent(INSTANCE_ID)}/UNQ`;
+      }
+
+      function renderQrDataUrl(text, size = 600) {
+        const q = window.qrcode(0, "M");
+        q.addData(text);
+        q.make();
+        const n = q.getModuleCount();
+        const margin = 4;
+        const cell = Math.max(1, Math.floor(size / (n + margin * 2)));
+        const full = cell * (n + margin * 2);
+        const canvas = document.createElement("canvas");
+        canvas.width = full;
+        canvas.height = full;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, full, full);
+        ctx.fillStyle = "#161826";
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            if (q.isDark(r, c)) ctx.fillRect((c + margin) * cell, (r + margin) * cell, cell, cell);
+          }
+        }
+        return canvas.toDataURL("image/png");
+      }
+
+      function closeSaleQrModal() {
+        document.getElementById("sale-qr-modal").classList.add("hidden");
+        document.body.classList.remove("modal-active");
+        closeDialog("sale-qr-modal");
+      }
+
+      // Loads the poster face (logo, title, footer, glyphs) from the same file the PDF uses.
+      let carteloPromise = null;
+      function loadCartel() {
+        if (!carteloPromise) {
+          carteloPromise = fetch("./cartel/imprimir-qr-a4.html")
+            .then((r) => {
+              if (!r.ok) throw new Error(`cartel: ${r.status}`);
+              return r.text();
+            })
+            .then((html) => {
+              const doc = new DOMParser().parseFromString(html, "text/html");
+              const fija = doc.getElementById("cara-fija");
+              const clip = doc.getElementById("texto-sub-clip-izquierda");
+              const cara = doc.getElementById("cara-izquierda");
+              const sub = html.match(/const SUB = (\{[\s\S]*?\});\n/);
+              if (!fija || !clip || !cara || !sub) throw new Error("cartel: formato inesperado");
+              return { fija, clip, cara, SUB: JSON.parse(sub[1]) };
+            })
+            .catch((e) => {
+              carteloPromise = null;
+              throw e;
+            });
+        }
+        return carteloPromise;
+      }
+
+      // Same QR modules as the poster: qrcode-generator, level M, byte mode, 46mm square.
+      function qrPath(text) {
+        const q = window.qrcode(0, "M");
+        q.addData(text, "Byte");
+        q.make();
+        const n = q.getModuleCount();
+        let d = "";
+        for (let r = 0; r < n; r++) {
+          let c = 0;
+          while (c < n) {
+            if (!q.isDark(r, c)) { c++; continue; }
+            let k = c;
+            while (k < n && q.isDark(r, k)) k++;
+            d += `M${c} ${r}h${k - c}v1h-${k - c}z`;
+            c = k;
+          }
+        }
+        return { d, transform: `scale(${46 / n})` };
+      }
+
+      // Name under the QR drawn with the poster's glyphs (uppercase, kerning, "..." past the max).
+      function nameGlyphs(name, SUB) {
+        let parts = [...String(name).toUpperCase()].filter((ch) => ch in SUB.glifos);
+        if (parts.length > SUB.max) parts = parts.slice(0, SUB.max - 3).concat([".", ".", "."]);
+        let u = 0;
+        let svg = "";
+        let prev = null;
+        parts.forEach((ch, i) => {
+          if (i > 0) u += SUB.espaciado + (prev ? SUB.kern[prev + ch] || 0 : 0);
+          const g = SUB.glifos[ch];
+          if (g.d) svg += `<path transform="translate(${u} 0)" d="${g.d}"/>`;
+          u += g.a;
+          prev = ch;
+        });
+        const transform = `translate(${SUB.x} ${SUB.base}) scale(${SUB.escala} -${SUB.escala}) translate(-${u / 2} 0)`;
+        return { svg, transform };
+      }
+
+      async function saleQrName() {
+        try {
+          const res = await fetch("./productores.json", { cache: "no-store" });
+          if (res.ok) {
+            const list = await res.json();
+            const p = list.find((x) => x.id === INSTANCE_ID);
+            if (p && p.nombreEmprendimiento) return p.nombreEmprendimiento;
+          }
+        } catch (e) {
+          /* fall through */
+        }
+        return document.getElementById("bank-account-name").textContent || INSTANCE_ID;
+      }
+
+      async function renderSaleQr() {
+        const box = document.getElementById("sale-qr-cara");
+        const img = document.getElementById("sale-qr-img");
+        const uri = saleQrUri();
+        try {
+          const [{ fija, clip, cara, SUB }, name] = await Promise.all([loadCartel(), saleQrName()]);
+          const ns = (html) =>
+            html
+              .replaceAll("cara-fija", "sq-cara-fija")
+              .replaceAll("texto-sub-clip-izquierda", "sq-sub-clip")
+              .replaceAll("qr-modulos-izquierda", "sq-qr")
+              .replaceAll("qr-imagen-izquierda", "sq-qr-img")
+              .replaceAll("texto-sub-izquierda", "sq-sub");
+          box.innerHTML =
+            `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 105 123.5" role="img" class="block w-full h-auto">` +
+            `<title></title><defs>${ns(fija.outerHTML)}${ns(clip.outerHTML)}</defs>${ns(cara.outerHTML)}</svg>`;
+          box.querySelector("title").textContent = `${t("sale_qr_alt")}: ${name}`;
+          const qr = qrPath(uri);
+          const qrEl = box.querySelector("#sq-qr");
+          qrEl.setAttribute("d", qr.d);
+          qrEl.setAttribute("transform", qr.transform);
+          const nm = nameGlyphs(name, SUB);
+          const subEl = box.querySelector("#sq-sub");
+          subEl.setAttribute("transform", nm.transform);
+          subEl.innerHTML = nm.svg;
+          box.classList.remove("hidden");
+          img.classList.add("hidden");
+        } catch (e) {
+          box.classList.add("hidden");
+          box.innerHTML = "";
+          img.src = renderQrDataUrl(uri);
+          img.alt = t("sale_qr_alt");
+          img.classList.remove("hidden");
+        }
+      }
+
+      document.getElementById("btn-open-sale-qr").addEventListener("click", async () => {
+        await renderSaleQr();
+        document.getElementById("sale-qr-modal").classList.remove("hidden");
+        document.body.classList.add("modal-active");
+        openDialog("sale-qr-modal", document.getElementById("btn-sale-qr-ok"));
+      });
+      document.getElementById("btn-close-sale-qr-modal").addEventListener("click", closeSaleQrModal);
+      document.getElementById("btn-sale-qr-ok").addEventListener("click", closeSaleQrModal);
+
       document
         .getElementById("btn-open-change-pass")
         .addEventListener("click", () => {
+          hidePasswords(document.getElementById("change-pass-modal"));
           document
             .getElementById("change-pass-modal")
             .classList.remove("hidden");
@@ -4577,6 +5032,9 @@
             .classList.toggle("hidden", n !== step);
         });
         updateTransferStepper(step);
+        document
+          .getElementById("btn-transfer-back-3")
+          .classList.toggle("hidden", step !== 3);
         const focusMap = {
           1: "transfer-target",
           2: "transfer-amount",
@@ -4602,6 +5060,7 @@
       document
         .getElementById("btn-transfer-cancel-2")
         .addEventListener("click", closeTransferModal);
+
       document
         .getElementById("btn-transfer-cancel-3")
         .addEventListener("click", closeTransferModal);
@@ -4633,6 +5092,13 @@
           targetInput.setAttribute("aria-invalid", "false");
 
           if (!target) return;
+
+          if (target.toLowerCase() === String(INSTANCE_ID).toLowerCase()) {
+            targetInput.setAttribute("aria-invalid", "true");
+            errEl.textContent = t("transfer_self_error");
+            errEl.classList.remove("hidden");
+            return;
+          }
 
           const btn = document.getElementById("btn-transfer-verify");
           setButtonLoading(btn, true, t("updating"));
@@ -4700,12 +5166,11 @@
             return;
           }
 
-          const summaryEl = document.getElementById("transfer-confirm-summary");
-          summaryEl.innerHTML = tf("transfer_summary", {
-            amount: escapeHtml(formatMoney(amount)),
-            from: escapeHtml(INSTANCE_ID),
-            to: escapeHtml(verifiedAccountData?.alias || verifiedAccountData?.username || ""),
-          });
+          const alias = verifiedAccountData?.alias || verifiedAccountData?.username || "";
+          document.getElementById("transfer-confirm-amount").textContent = formatMoney(amount);
+          document.getElementById("transfer-confirm-name").textContent =
+            verifiedAccountData?.name || alias;
+          document.getElementById("transfer-confirm-alias").textContent = alias;
           goToTransferStep(3);
         });
 

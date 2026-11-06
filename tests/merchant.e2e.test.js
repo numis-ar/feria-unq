@@ -243,8 +243,10 @@ describe('Merchant UI E2E Behavior Tests (Playwright)', () => {
     await page.fill('#repeat-pass', 'NewPass123');
     await page.click('#btn-change-pass');
 
-    const toast = page.locator('#toast-container > div');
-    await toast.waitFor({ state: 'visible' });
+    await page.locator('#change-pass-modal').waitFor({ state: 'hidden' });
+    await page.locator('#pass-changed-modal').waitFor({ state: 'visible' });
+    await page.click('#btn-pass-changed-ok');
+    await page.locator('#pass-changed-modal').waitFor({ state: 'hidden' });
   });
 
   it('3. Withdraw Feature', async () => {
